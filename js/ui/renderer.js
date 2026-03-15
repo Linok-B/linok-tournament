@@ -1,5 +1,3 @@
-// js/ui/renderer.js
-
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = ''; 
