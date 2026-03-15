@@ -1,1 +1,85 @@
+:root {
+    --bg-dark: #1e1e2e;
+    --bg-panel: #2a2a3e;
+    --text-main: #cdd6f4;
+    --accent: #89b4fa;
+    --danger: #f38ba8;
+}
 
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+.controls-panel {
+    width: 300px;
+    background-color: var(--bg-panel);
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.display-panel {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(0,0,0,0.2);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+input, button {
+    padding: 10px;
+    border-radius: 4px;
+    border: none;
+    font-size: 14px;
+}
+
+input {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid #45475a;
+}
+
+button {
+    background-color: var(--accent);
+    color: var(--bg-dark);
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+button.danger {
+    background-color: var(--danger);
+}
+
+.player-card {
+    background-color: var(--bg-panel);
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    border-left: 4px solid var(--accent);
+}
