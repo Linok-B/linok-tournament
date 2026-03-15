@@ -1,28 +1,42 @@
-// THE MASTER DATA STRUCTURE
+import { generateSingleElimination } from './formats/elimination.js';
+
 export class Tournament {
     constructor() {
         this.players = [];
         this.stages = [];
-        this.settings = {
-            name: "My Custom Tournament",
-            format: "hybrid"
-        };
+        this.status = "setup"; // setup, active, completed
+        this.settings = { name: "My Custom Tournament" };
     }
 
     addPlayer(name, startingElo) {
+        if (this.status !== "setup") return null; // Can't add players after start
+        
         const newPlayer = {
-            id: crypto.randomUUID(), // Built-in browser function for unique IDs
+            id: crypto.randomUUID(),
             name: name,
             elo: parseInt(startingElo),
-            isActive: true,
-            stats: { wins: 0, losses: 0, draws: 0 }
         };
         this.players.push(newPlayer);
         return newPlayer;
     }
 
-    // We will build this out later for Swiss/Elimination
-    getTopPlayersByElo(count) {
-        return [...this.players].sort((a, b) => b.elo - a.elo).slice(0, count);
+    // Moves from Setup to Phase 1
+    startSingleElimination() {
+        if (this.players.length < 2) {
+            alert("Need at least 2 players!");
+            return false;
+        }
+
+        // Generate the bracket data
+        const stageData = generateSingleElimination(this.players);
+        
+        // Add it to pipeline
+        this.stages.push({
+            stageNumber: this.stages.length + 1,
+            data: stageData
+        });
+
+        this.status = "active";
+        return true;
     }
 }
