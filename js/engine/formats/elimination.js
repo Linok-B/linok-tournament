@@ -1,5 +1,3 @@
-// js/engine/formats/elimination.js
-
 export function generateSingleElimination(players) {
     // 1. Sort players by ELO/Seed (Highest ELO is Seed 1)
     const seededPlayers = [...players].sort((a, b) => b.elo - a.elo);
