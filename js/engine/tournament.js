@@ -1,3 +1,4 @@
+// js/engine/tournament.js
 import { generateSingleElimination } from './formats/elimination.js';
 
 export class Tournament {
@@ -20,7 +21,7 @@ export class Tournament {
         return newPlayer;
     }
 
-    // Moves from Setup to Phase 1
+    // THIS IS THE BRIDGE: Moves from Setup to Phase 1
     startSingleElimination() {
         if (this.players.length < 2) {
             alert("Need at least 2 players!");
@@ -30,7 +31,7 @@ export class Tournament {
         // Generate the bracket data
         const stageData = generateSingleElimination(this.players);
         
-        // Add it to pipeline
+        // Add it to our pipeline
         this.stages.push({
             stageNumber: this.stages.length + 1,
             data: stageData
