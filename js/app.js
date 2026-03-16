@@ -1,6 +1,6 @@
 import { Tournament } from './engine/tournament.js';
 import { saveTournamentLocally, loadTournamentLocally, clearLocalData } from './store/localData.js';
-import { renderBracket } from './ui/renderer.js';
+import { renderBracket, renderStandings } from './ui/renderer.js';
 
 let currentTournament = new Tournament();
 
@@ -50,15 +50,21 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
 
 // Master UI Sync
 function updateUI() {
-    // 1. Capture current unsaved input values before wiping the screen
     const inputs = document.querySelectorAll('#player-list-container input[type="number"]');
     const draftScores = {};
     inputs.forEach(input => { draftScores[input.id] = input.value; });
 
-    // 2. Wipe and re-render the whole board
+    // Render the Bracket
     renderBracket(currentTournament, 'player-list-container');
 
-    // 3. Put the unsaved values back into the new inputs
+    // NEW: Render the Standings ONLY if the tournament has started
+    const standingsDiv = document.getElementById('standings-container');
+    if (currentTournament.status !== "setup") {
+        renderStandings(currentTournament.players, 'standings-container');
+    } else {
+        standingsDiv.innerHTML = ''; // Clear it if in setup phase
+    }
+
     for (const [id, value] of Object.entries(draftScores)) {
         const el = document.getElementById(id);
         if (el) el.value = value;
