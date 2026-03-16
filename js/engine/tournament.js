@@ -17,9 +17,34 @@ export class Tournament {
 
     addPlayer(name, startingElo) {
         if (this.status !== "setup") return null; 
-        const newPlayer = { id: crypto.randomUUID(), name: name, elo: parseInt(startingElo) };
+        
+        const newPlayer = { 
+            id: crypto.randomUUID(), 
+            name: name, 
+            elo: parseInt(startingElo) || 1200, // Default to 1200 if left blank
+            
+            // NEW: Expanded stats for future ranking formulas
+            seed: this.players.length + 1, // Default seed is order of entry
+            stats: {
+                matchWins: 0,
+                matchLosses: 0,
+                matchDraws: 0,
+                gameWins: 0,   // For games inside a set (e.g., Best of 3)
+                gameLosses: 0,
+                points: 0      // Custom tournament points
+            }
+        };
         this.players.push(newPlayer);
         return newPlayer;
+    }
+
+    removePlayer(playerId) {
+        if (this.status !== "setup") return false; // Can only remove during setup
+        this.players = this.players.filter(p => p.id !== playerId);
+        
+        // Re-adjust seeds so they stay sequential (1, 2, 3...)
+        this.players.forEach((p, index) => p.seed = index + 1);
+        return true;
     }
 
     startTournament() {
