@@ -90,23 +90,39 @@ export class Tournament {
         match.score2 = parseInt(score2) || 0;
 
         // Allow ties in Round Robin!
+
         if (match.score1 > match.score2) match.winner = match.player1;
         else if (match.score2 > match.score1) match.winner = match.player2;
-        else match.winner = "tie"; // Special keyword for tie
+        else match.winner = "tie"; 
 
-        const isRoundComplete = currentRound.every(m => m.winner !== null);
+        // NEW: Update Player Stats based on the result!
+        // We will pull the global settings for points, or use defaults
+        const ptsForWin = this.settings.pointsForWin !== undefined ? this.settings.pointsForWin : 3;
+        const ptsForDraw = this.settings.pointsForDraw !== undefined ? this.settings.pointsForDraw : 1;
         
-        if (isRoundComplete) {
-            // DYNAMIC ADVANCEMENT
-            const formatEngine = getFormat(activeStage.config.type);
-            activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config);
+        // Find the actual player objects in the master list
+        const p1 = this.players.find(p => p.id === match.player1.id);
+        const p2 = this.players.find(p => p.id === match.player2.id);
 
-            if (activeStage.data.isComplete) {
-                activeStage.status = "completed";
-                // If there are more stages in pipeline, trigger transition here later
-                if (this.stages.length >= this.settings.pipeline.length) {
-                    this.status = "completed";
-                }
+        if (p1 && p2) {
+            p1.stats.gameWins += match.score1;
+            p1.stats.gameLosses += match.score2;
+            p2.stats.gameWins += match.score2;
+            p2.stats.gameLosses += match.score1;
+
+            if (match.winner === match.player1) {
+                p1.stats.matchWins++;
+                p1.stats.points += ptsForWin;
+                p2.stats.matchLosses++;
+            } else if (match.winner === match.player2) {
+                p2.stats.matchWins++;
+                p2.stats.points += ptsForWin;
+                p1.stats.matchLosses++;
+            } else if (match.winner === "tie") {
+                p1.stats.matchDraws++;
+                p2.stats.matchDraws++;
+                p1.stats.points += ptsForDraw;
+                p2.stats.points += ptsForDraw;
             }
         }
         return true;
