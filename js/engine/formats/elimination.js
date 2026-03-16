@@ -59,3 +59,30 @@ function getStandardSeeding(size) {
     return matches;
 }
 
+export function generateNextRound(previousRoundMatches, nextRoundNumber) {
+    let nextRoundMatches = [];
+    let matchIdCounter = 1;
+
+    // In a bracket, Match 1 winner plays Match 2 winner, Match 3 plays 4, etc.
+    for (let i = 0; i < previousRoundMatches.length; i += 2) {
+        const matchA = previousRoundMatches[i];
+        const matchB = previousRoundMatches[i + 1];
+
+        const player1 = matchA.winner;
+        const player2 = matchB ? matchB.winner : null;
+
+        nextRoundMatches.push({
+            id: `R${nextRoundNumber}-M${matchIdCounter}`,
+            round: nextRoundNumber,
+            player1: player1,
+            player2: player2,
+            score1: 0,
+            score2: 0,
+            winner: player2 === null ? player1 : null, // Auto-win if no opponent
+            isBye: player2 === null
+        });
+        matchIdCounter++;
+    }
+
+    return nextRoundMatches;
+}
