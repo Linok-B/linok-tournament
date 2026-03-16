@@ -114,3 +114,51 @@ export function renderBracket(tournament, containerId) {
         board.appendChild(roundColumn);
     });
 }
+
+// Add to bottom of js/ui/renderer.js
+
+export function renderStandings(players, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Sort players primarily by Points, then by Game Wins as a tiebreaker
+    const sortedPlayers = [...players].sort((a, b) => {
+        if (b.stats.points !== a.stats.points) {
+            return b.stats.points - a.stats.points; // Highest points first
+        }
+        // Tiebreaker: Game win difference (Games Won - Games Lost)
+        const aDiff = a.stats.gameWins - a.stats.gameLosses;
+        const bDiff = b.stats.gameWins - b.stats.gameLosses;
+        return bDiff - aDiff;
+    });
+
+    let html = `
+        <h2 style="margin-top: 40px; border-top: 1px solid #45475a; padding-top: 20px;">Current Standings</h2>
+        <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--accent);">
+                    <th style="padding: 10px;">Rank</th>
+                    <th style="padding: 10px;">Name</th>
+                    <th style="padding: 10px;">Points</th>
+                    <th style="padding: 10px;">W-L-D</th>
+                    <th style="padding: 10px;">Games (W-L)</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    sortedPlayers.forEach((player, index) => {
+        html += `
+            <tr style="border-bottom: 1px solid #45475a;">
+                <td style="padding: 10px;"><b>${index + 1}</b></td>
+                <td style="padding: 10px;">${player.name}</td>
+                <td style="padding: 10px; font-weight: bold; color: var(--accent);">${player.stats.points}</td>
+                <td style="padding: 10px;">${player.stats.matchWins} - ${player.stats.matchLosses} - ${player.stats.matchDraws}</td>
+                <td style="padding: 10px;">${player.stats.gameWins} - ${player.stats.gameLosses}</td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
