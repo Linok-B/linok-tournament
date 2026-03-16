@@ -1,4 +1,3 @@
-// js/app.js (Additions and changes)
 import { Tournament } from './engine/tournament.js';
 import { saveTournamentLocally, loadTournamentLocally, clearLocalData } from './store/localData.js';
 import { renderBracket } from './ui/renderer.js';
@@ -54,3 +53,30 @@ function updateUI() {
     // We pass the whole tournament object so renderer knows if it's active or setup
     renderBracket(currentTournament, 'player-list-container');
 }
+
+// We use Event Delegation because the score buttons are created dynamically by renderer.js
+document.getElementById('player-list-container').addEventListener('click', (e) => {
+    // Check if the clicked element is a Submit Score button
+    if (e.target && e.target.classList.contains('btn-report')) {
+        const matchId = e.target.getAttribute('data-matchid');
+        
+        // Grab the inputs specific to this match
+        const score1 = document.getElementById(`s1-${matchId}`).value;
+        const score2 = document.getElementById(`s2-${matchId}`).value;
+
+        if (score1 === score2) {
+            alert("No ties allowed in Single Elimination!");
+            return;
+        }
+
+        // Send to Engine
+        const success = currentTournament.reportMatchScore(matchId, score1, score2);
+        
+        if (success) {
+            saveTournamentLocally(currentTournament);
+            updateUI();
+        } else {
+            alert("Error reporting score.");
+        }
+    }
+});
