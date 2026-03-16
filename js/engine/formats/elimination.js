@@ -1,88 +1,80 @@
-export function generateSingleElimination(players) {
-    // 1. Sort players by ELO/Seed (Highest ELO is Seed 1)
+// js/engine/formats/elimination.js
+
+export function initStage(players, config) {
     const seededPlayers = [...players].sort((a, b) => b.elo - a.elo);
     const numPlayers = seededPlayers.length;
-
-    // 2. Calculate bracket size (next power of 2: 2, 4, 8, 16, 32...)
     const bracketSize = Math.pow(2, Math.ceil(Math.log2(numPlayers)));
-    const numByes = bracketSize - numPlayers;
-
-    // 3. Generate standard seeding pattern (e.g., 1v8, 4v5, 2v7, 3v6)
     const seedOrder = getStandardSeeding(bracketSize);
 
     let matches = [];
-    let matchIdCounter = 1;
-
-    // 4. Create Round 1 Matches
     for (let i = 0; i < bracketSize; i += 2) {
-        // Seed order is 1-indexed, array is 0-indexed
         const seed1 = seedOrder[i] - 1;
         const seed2 = seedOrder[i + 1] - 1;
-
-        const player1 = seededPlayers[seed1] || null; // Null means it's a BYE
-        const player2 = seededPlayers[seed2] || null;
+        const p1 = seededPlayers[seed1] || null;
+        const p2 = seededPlayers[seed2] || null;
 
         matches.push({
-            id: `R1-M${matchIdCounter}`,
+            id: crypto.randomUUID(),
             round: 1,
-            player1: player1,
-            player2: player2,
-            score1: 0,
-            score2: 0,
-            winner: null,
-            // If player 2 is null, player 1 automatically wins (Bye)
-            isBye: player2 === null
+            player1: p1,
+            player2: p2,
+            score1: 0, score2: 0,
+            winner: p2 === null ? p1 : null,
+            isBye: p2 === null
         });
-        matchIdCounter++;
     }
 
     return {
         type: "single_elimination",
         bracketSize: bracketSize,
-        rounds: [matches] // We will calculate future rounds dynamically later
+        rounds: [matches],
+        isComplete: false
     };
 }
 
-// Helper: Standard Bracket Folding Algorithm
+export function advanceStage(stageData, config) {
+    const currentRound = stageData.rounds[stageData.rounds.length - 1];
+    
+    // Check if stage is done (Finals completed)
+    if (currentRound.length === 1) {
+        stageData.isComplete = true;
+        return stageData;
+    }
+
+    // Generate next round
+    let nextRoundMatches = [];
+    const nextRoundNum = stageData.rounds.length + 1;
+
+    for (let i = 0; i < currentRound.length; i += 2) {
+        const matchA = currentRound[i];
+        const matchB = currentRound[i + 1];
+        const p1 = matchA.winner;
+        const p2 = matchB ? matchB.winner : null;
+
+        nextRoundMatches.push({
+            id: crypto.randomUUID(),
+            round: nextRoundNum,
+            player1: p1,
+            player2: p2,
+            score1: 0, score2: 0,
+            winner: p2 === null ? p1 : null,
+            isBye: p2 === null
+        });
+    }
+    
+    stageData.rounds.push(nextRoundMatches);
+    return stageData;
+}
+
 function getStandardSeeding(size) {
     let matches = [1, 2];
-    let rounds = Math.log2(size);
-    for (let r = 1; r < rounds; r++) {
+    for (let r = 1; r < Math.log2(size); r++) {
         let nextMatches = [];
         let sum = Math.pow(2, r + 1) + 1;
         for (let i = 0; i < matches.length; i++) {
-            nextMatches.push(matches[i]);
-            nextMatches.push(sum - matches[i]);
+            nextMatches.push(matches[i], sum - matches[i]);
         }
         matches = nextMatches;
     }
     return matches;
-}
-
-export function generateNextRound(previousRoundMatches, nextRoundNumber) {
-    let nextRoundMatches = [];
-    let matchIdCounter = 1;
-
-    // In a bracket, Match 1 winner plays Match 2 winner, Match 3 plays 4, etc.
-    for (let i = 0; i < previousRoundMatches.length; i += 2) {
-        const matchA = previousRoundMatches[i];
-        const matchB = previousRoundMatches[i + 1];
-
-        const player1 = matchA.winner;
-        const player2 = matchB ? matchB.winner : null;
-
-        nextRoundMatches.push({
-            id: `R${nextRoundNumber}-M${matchIdCounter}`,
-            round: nextRoundNumber,
-            player1: player1,
-            player2: player2,
-            score1: 0,
-            score2: 0,
-            winner: player2 === null ? player1 : null, // Auto-win if no opponent
-            isBye: player2 === null
-        });
-        matchIdCounter++;
-    }
-
-    return nextRoundMatches;
 }
