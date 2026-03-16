@@ -1,58 +1,56 @@
-// Notice the .js extensions! Essential for vanilla JS modules in the browser.
+// js/app.js (Additions and changes)
 import { Tournament } from './engine/tournament.js';
-import { calculateElo } from './engine/systems/elo.js';
 import { saveTournamentLocally, loadTournamentLocally, clearLocalData } from './store/localData.js';
-import { renderPlayerList } from './ui/renderer.js';
+import { renderBracket } from './ui/renderer.js';
 
-// 1. Initialize State
 let currentTournament = new Tournament();
 
-// 2. Load existing data if they refreshed the page
 const savedData = loadTournamentLocally();
 if (savedData) {
-    // Restore state
-    currentTournament.players = savedData.players;
-    currentTournament.stages = savedData.stages;
-    currentTournament.settings = savedData.settings;
+    // Restore state AND correct prototypes
+    currentTournament = Object.assign(new Tournament(), savedData);
 }
 
-// 3. Initial Render
 updateUI();
 
-// --- EVENT LISTENERS ---
-
-// Add Player Button
+// Add Player Event
 document.getElementById('btn-add-player').addEventListener('click', () => {
     const nameInput = document.getElementById('player-name');
     const eloInput = document.getElementById('player-elo');
-    
     if (nameInput.value.trim() === '') return;
 
-    // Tell the engine to add the player
-    currentTournament.addPlayer(nameInput.value, eloInput.value);
+    const added = currentTournament.addPlayer(nameInput.value, eloInput.value);
+    if (!added) alert("Cannot add players after tournament has started!");
     
-    // Clear the input
     nameInput.value = '';
-    
-    // Save and update
     saveTournamentLocally(currentTournament);
     updateUI();
 });
 
-// Reset Button
-document.getElementById('btn-clear-data').addEventListener('click', () => {
-    if(confirm("Are you sure? This deletes the tournament.")) {
-        clearLocalData();
-        currentTournament = new Tournament(); // Reset engine
+// Start Tournament Event
+document.getElementById('btn-start-elim').addEventListener('click', () => {
+    if (currentTournament.status !== "setup") {
+        alert("Tournament is already active!");
+        return;
+    }
+
+    if (currentTournament.startSingleElimination()) {
+        saveTournamentLocally(currentTournament);
         updateUI();
     }
 });
 
-// Master function to sync UI with Engine State
-function updateUI() {
-    renderPlayerList(currentTournament.players, 'player-list-container');
-}
+// Reset Button Event
+document.getElementById('btn-clear-data').addEventListener('click', () => {
+    if(confirm("Are you sure? This deletes the tournament.")) {
+        clearLocalData();
+        currentTournament = new Tournament(); 
+        updateUI();
+    }
+});
 
-// Quick Test of our Custom Math Engine (Check your browser console!)
-console.log("Testing ELO Engine: Player A (1200) beats Player B (1200)");
-console.log(calculateElo(1200, 1200, 1)); // 1 means Player A won
+// Master UI Sync
+function updateUI() {
+    // We pass the whole tournament object so renderer knows if it's active or setup
+    renderBracket(currentTournament, 'player-list-container');
+}
