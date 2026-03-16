@@ -50,8 +50,19 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
 
 // Master UI Sync
 function updateUI() {
-    // We pass the whole tournament object so renderer knows if it's active or setup
+    // 1. Capture current unsaved input values before wiping the screen
+    const inputs = document.querySelectorAll('#player-list-container input[type="number"]');
+    const draftScores = {};
+    inputs.forEach(input => { draftScores[input.id] = input.value; });
+
+    // 2. Wipe and re-render the whole board
     renderBracket(currentTournament, 'player-list-container');
+
+    // 3. Put the unsaved values back into the new inputs
+    for (const [id, value] of Object.entries(draftScores)) {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+    }
 }
 
 // We use Event Delegation because the score buttons are created dynamically by renderer.js
