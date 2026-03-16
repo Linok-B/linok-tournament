@@ -3,11 +3,26 @@ export function renderPlayerList(players, containerId) {
     container.innerHTML = ''; 
     if (players.length === 0) return;
 
-    const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
+    // Sort by seed by default now, instead of ELO
+    const sortedPlayers = [...players].sort((a, b) => a.seed - b.seed);
+    
     sortedPlayers.forEach(player => {
         const card = document.createElement('div');
         card.className = 'player-card';
-        card.innerHTML = `<strong>${player.name}</strong><span>ELO: ${player.elo}</span>`;
+        card.style.alignItems = 'center'; // Keep things vertically centered
+        
+        card.innerHTML = `
+            <div>
+                <strong>${player.name}</strong>
+                <span style="font-size: 12px; color: gray; margin-left: 10px;">
+                    Seed: ${player.seed} | ELO: ${player.elo}
+                </span>
+            </div>
+            <button class="btn-remove-player" data-id="${player.id}" 
+                style="background-color: var(--danger); padding: 4px 10px; border-radius: 4px;">
+                X
+            </button>
+        `;
         container.appendChild(card);
     });
 }
