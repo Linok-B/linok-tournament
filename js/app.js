@@ -33,7 +33,7 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
         return;
     }
 
-    if (currentTournament.startSingleElimination()) {
+    if (currentTournament.startTournament()) {
         saveTournamentLocally(currentTournament);
         updateUI();
     }
