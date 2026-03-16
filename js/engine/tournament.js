@@ -21,17 +21,19 @@ export class Tournament {
         const newPlayer = { 
             id: crypto.randomUUID(), 
             name: name, 
-            elo: parseInt(startingElo) || 1200, // Default to 1200 if left blank
+            elo: parseInt(startingElo) || 1200, 
+            seed: this.players.length + 1, 
             
-            // NEW: Expanded stats for future ranking formulas
-            seed: this.players.length + 1, // Default seed is order of entry
+            // FUTURE PROOFING: A place to inject JSON team data, unit weights, or custom flags later
+            metadata: {
+                teamScore: 0,
+                units: [] 
+            },
+
             stats: {
-                matchWins: 0,
-                matchLosses: 0,
-                matchDraws: 0,
-                gameWins: 0,   // For games inside a set (e.g., Best of 3)
-                gameLosses: 0,
-                points: 0      // Custom tournament points
+                matchWins: 0, matchLosses: 0, matchDraws: 0,
+                gameWins: 0, gameLosses: 0,
+                points: 0      
             }
         };
         this.players.push(newPlayer);
