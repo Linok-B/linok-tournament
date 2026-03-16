@@ -1,18 +1,6 @@
-export function renderBracket(tournament, containerId) {
+export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
-    
-    if (tournament.status === "setup" || tournament.stages.length === 0) {
-        // Fix: Build the HTML string completely FIRST, then render the list into it.
-        container.innerHTML = `
-            <h2>Setup: Add Players</h2>
-            <p>Total: ${tournament.players.length}</p>
-            <div id="players-list"></div>
-        `;
-        // Now it's safe to inject the players
-        renderPlayerList(tournament.players, 'players-list');
-        return;
-    }
-    
+    container.innerHTML = ''; 
     if (players.length === 0) return;
 
     const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
@@ -24,22 +12,27 @@ export function renderBracket(tournament, containerId) {
     });
 }
 
+// The single, correct renderBracket function
 export function renderBracket(tournament, containerId) {
     const container = document.getElementById(containerId);
     
     if (tournament.status === "setup" || tournament.stages.length === 0) {
-        container.innerHTML = '<h2>Setup: Add Players</h2><div id="players-list"></div>';
-        // ASSUMES you kept the renderPlayerList function from previous step!
-        // If not, let me know.
-        container.innerHTML += `<p>Total: ${tournament.players.length}</p>`;
+        // Build the HTML string completely FIRST, then render the list into it.
+        container.innerHTML = `
+            <h2>Setup: Add Players</h2>
+            <p>Total: ${tournament.players.length}</p>
+            <div id="players-list"></div>
+        `;
+        // Now it's safe to inject the players
+        renderPlayerList(tournament.players, 'players-list');
         return;
     }
 
     const activeStage = tournament.stages[tournament.stages.length - 1];
     
-    // Create a horizontal scrolling container for the bracket
+    // Create a horizontal scrolling container for the bracket/rounds
     container.innerHTML = `
-        <h2>Stage ${activeStage.stageNumber}: Single Elimination</h2>
+        <h2>Stage ${activeStage.stageNumber}: ${activeStage.config.type.replace('_', ' ').toUpperCase()}</h2>
         ${tournament.status === "completed" ? '<h3 style="color:#a6e3a1;">Tournament Complete!</h3>' : ''}
         <div id="bracket-board" style="display:flex; gap:30px; overflow-x:auto; padding-bottom:20px;"></div>
     `;
@@ -71,10 +64,21 @@ export function renderBracket(tournament, containerId) {
 
             // If match is finished OR is a Bye, just show the names and winner
             if (match.winner || match.isBye) {
+                let p1Display = p1Name;
+                let p2Display = p2Name;
+                
+                // Bold the winner (handle ties for Round Robin)
+                if (match.winner === match.player1 || match.winner === "tie") {
+                    p1Display = `<strong>${p1Name}</strong>`;
+                }
+                if (match.winner === match.player2 || match.winner === "tie") {
+                    p2Display = `<strong>${p2Name}</strong>`;
+                }
+
                 matchBox.innerHTML = `
-                    <div style="${match.winner?.id === match.player1?.id ? 'font-weight:bold;color:#a6e3a1;' : ''}">${p1Name} ${match.winner ? `(${match.score1})` : ''}</div>
-                    <div style="${match.winner?.id === match.player2?.id ? 'font-weight:bold;color:#a6e3a1;' : ''}">${p2Name} ${match.winner ? `(${match.score2})` : ''}</div>
-                    <small style="color:gray;">${match.isBye ? 'Auto-Advance' : 'Completed'}</small>
+                    <div style="${match.winner === match.player1 ? 'color:#a6e3a1;' : ''}">${p1Display} ${match.winner ? `(${match.score1})` : ''}</div>
+                    <div style="${match.winner === match.player2 ? 'color:#a6e3a1;' : ''}">${p2Display} ${match.winner ? `(${match.score2})` : ''}</div>
+                    <small style="color:gray;">${match.isBye ? 'Auto-Advance' : (match.winner === "tie" ? 'TIE' : 'Completed')}</small>
                 `;
             } else {
                 // Match is active, show inputs
@@ -87,7 +91,7 @@ export function renderBracket(tournament, containerId) {
                         <span>${p2Name}</span>
                         <input type="number" id="s2-${match.id}" style="width:40px; padding:2px;" value="0">
                     </div>
-                    <button class="btn-report" data-matchid="${match.id}" style="width:100%; padding:5px; font-size:12px;">Submit Score</button>
+                    <button class="btn-report" data-matchid="${match.id}" style="width:100%; padding:5px; font-size:12px; cursor:pointer;">Submit Score</button>
                 `;
             }
             roundColumn.appendChild(matchBox);
