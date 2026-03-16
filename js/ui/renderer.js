@@ -1,8 +1,18 @@
-// js/ui/renderer.js
-
-export function renderPlayerList(players, containerId) {
+export function renderBracket(tournament, containerId) {
     const container = document.getElementById(containerId);
-    container.innerHTML = ''; 
+    
+    if (tournament.status === "setup" || tournament.stages.length === 0) {
+        // Fix: Build the HTML string completely FIRST, then render the list into it.
+        container.innerHTML = `
+            <h2>Setup: Add Players</h2>
+            <p>Total: ${tournament.players.length}</p>
+            <div id="players-list"></div>
+        `;
+        // Now it's safe to inject the players
+        renderPlayerList(tournament.players, 'players-list');
+        return;
+    }
+    
     if (players.length === 0) return;
 
     const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
