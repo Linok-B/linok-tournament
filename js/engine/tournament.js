@@ -1,18 +1,16 @@
-import { generateSingleElimination } from './formats/elimination.js';
+import { getFormat } from './formats/registry.js';
 
 export class Tournament {
     constructor() {
         this.players = [];
-        this.stages = []; // Stores the active/completed match data
+        this.stages = [];
         this.status = "setup"; 
         
-        // THE BLUEPRINT: The host defines this before starting
+        // We will test Round Robin with a custom variable of maxRounds: 3
         this.settings = { 
             name: "My Custom Tournament",
             pipeline: [
-                // Right now we only have Single Elim built, but later we will add:
-                // { type: "swiss", rounds: 4 },
-                { type: "single_elimination" } 
+                { type: "round_robin", maxRounds: 3 }
             ]
         };
     }
@@ -24,49 +22,34 @@ export class Tournament {
         return newPlayer;
     }
 
-    // NEW: Generic Start Function
     startTournament() {
-        if (this.players.length < 2) return false;
-        if (this.settings.pipeline.length === 0) return false;
-
+        if (this.players.length < 2 || this.settings.pipeline.length === 0) return false;
         this.status = "active";
-        
-        // Start the first stage in the pipeline
         this.transitionToNextStage(this.players);
         return true;
     }
 
-    // THE PIPELINE MANAGER
     transitionToNextStage(incomingPlayers) {
         const nextStageIndex = this.stages.length;
-        const stageConfig = this.settings.pipeline[nextStageIndex];
+        const config = this.settings.pipeline[nextStageIndex];
 
-        if (!stageConfig) {
+        if (!config) {
             this.status = "completed";
             return;
         }
 
-        let stageData = null;
-
-        // Route to the correct mathematical generator
-        if (stageConfig.type === "single_elimination") {
-            stageData = generateSingleElimination(incomingPlayers);
-            // Resolve Byes
-            stageData.rounds[0].forEach(match => {
-                if (match.isBye) match.winner = match.player1;
-            });
-        }
-        // else if (stageConfig.type === "swiss") { ... }
+        // DYNAMIC ROUTING: Ask the registry for the format math
+        const formatEngine = getFormat(config.type);
+        const stageData = formatEngine.initStage(incomingPlayers, config);
 
         this.stages.push({
             stageNumber: nextStageIndex + 1,
-            config: stageConfig,
+            config: config,
             data: stageData,
             status: "active"
         });
     }
 
-    // UPDATED: Report Score (Kept mostly the same, but isolated logic to active stage)
     reportMatchScore(matchId, score1, score2) {
         if (this.status !== "active") return false;
 
@@ -79,39 +62,26 @@ export class Tournament {
         match.score1 = parseInt(score1) || 0;
         match.score2 = parseInt(score2) || 0;
 
+        // Allow ties in Round Robin!
         if (match.score1 > match.score2) match.winner = match.player1;
         else if (match.score2 > match.score1) match.winner = match.player2;
-        else return false; 
+        else match.winner = "tie"; // Special keyword for tie
 
         const isRoundComplete = currentRound.every(m => m.winner !== null);
         
         if (isRoundComplete) {
-            // Check if stage is complete
-            if (activeStage.config.type === "single_elimination") {
-                if (currentRound.length > 1) {
-                    // Import generateNextRound inside the function or file scope
-                    // (Ensure generateNextRound is imported at the top of this file!)
-                    this._progressEliminationRound(activeStage, currentRound);
-                } else {
-                    activeStage.status = "completed";
-                    // If there's another stage in the pipeline, we would trigger transition here.
-                    // For now, if pipeline is done, finish tournament.
-                    if (this.stages.length >= this.settings.pipeline.length) {
-                        this.status = "completed";
-                    }
+            // DYNAMIC ADVANCEMENT
+            const formatEngine = getFormat(activeStage.config.type);
+            activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config);
+
+            if (activeStage.data.isComplete) {
+                activeStage.status = "completed";
+                // If there are more stages in pipeline, trigger transition here later
+                if (this.stages.length >= this.settings.pipeline.length) {
+                    this.status = "completed";
                 }
             }
         }
         return true;
-    }
-
-    // Helper to keep code clean
-    _progressEliminationRound(activeStage, currentRound) {
-        import('./formats/elimination.js').then(module => {
-            const nextRoundNum = activeStage.data.rounds.length + 1;
-            const nextRoundMatches = module.generateNextRound(currentRound, nextRoundNum);
-            nextRoundMatches.forEach(m => { if (m.isBye) m.winner = m.player1; });
-            activeStage.data.rounds.push(nextRoundMatches);
-        });
     }
 }
