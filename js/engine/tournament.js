@@ -6,11 +6,11 @@ export class Tournament {
         this.stages = [];
         this.status = "setup"; 
         
-        // We will test Round Robin with a custom variable of maxRounds: 3
+        // Swiss System with a custom variable of maxRounds: 3
         this.settings = { 
             name: "My Custom Tournament",
             pipeline: [
-                { type: "round_robin", maxRounds: 3 }
+                { type: "swiss", maxRounds: 3 }
             ]
         };
     }
