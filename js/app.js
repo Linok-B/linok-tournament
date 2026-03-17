@@ -1,6 +1,7 @@
 import { Tournament } from './engine/tournament.js';
 import { saveTournamentLocally, loadTournamentLocally, clearLocalData } from './store/localData.js';
 import { renderBracket, renderStandings } from './ui/renderer.js';
+import { exportTournamentJSON, importTournamentJSON } from './store/export.js';
 
 let currentTournament = new Tournament();
 
@@ -46,6 +47,46 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
         currentTournament = new Tournament(); 
         updateUI();
     }
+});
+
+document.getElementById('btn-export-data').addEventListener('click', () => {
+    exportTournamentJSON(currentTournament);
+});
+
+// Import Button (Clicks the hidden file input)
+document.getElementById('btn-import-data').addEventListener('click', () => {
+    // We only allow import during the setup phase to prevent accidental overwrites mid-tournament
+    if (currentTournament.status !== "setup") {
+        if (!confirm("Tournament is currently active! Importing will overwrite ALL current progress. Continue?")) {
+            return;
+        }
+    }
+    document.getElementById('file-import').click();
+});
+
+// Handle the File Selection
+document.getElementById('file-import').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    importTournamentJSON(file, (success, parsedData) => {
+        if (success) {
+            // Restore state AND ensure it adopts the Tournament class methods
+            currentTournament = Object.assign(new Tournament(), parsedData);
+            saveTournamentLocally(currentTournament);
+            
+            // Reset the tab view to the latest stage
+            window.viewingStageIndex = currentTournament.stages.length - 1;
+            updateUI();
+            
+            alert("Tournament successfully imported!");
+        } else {
+            alert(parsedData); // Shows the error message
+        }
+        
+        // Clear the input so the same file can be selected again if needed
+        e.target.value = ''; 
+    });
 });
 
 // Master UI Sync
