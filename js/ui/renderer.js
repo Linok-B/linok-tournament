@@ -115,20 +115,27 @@ export function renderBracket(tournament, containerId) {
     });
 }
 
-// Add to bottom of js/ui/renderer.js
-
 export function renderStandings(players, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Sort players primarily by Points, then by Game Wins as a tiebreaker
+    // Bulletproof sorting: safely fallback to 0 if a stat is missing
     const sortedPlayers = [...players].sort((a, b) => {
-        if (b.stats.points !== a.stats.points) {
-            return b.stats.points - a.stats.points; // Highest points first
+        // Use Optional Chaining (?.) and Nullish Coalescing (??) to prevent crashes
+        const ptsA = a.stats?.points ?? 0;
+        const ptsB = b.stats?.points ?? 0;
+
+        if (ptsB !== ptsA) {
+            return ptsB - ptsA; 
         }
-        // Tiebreaker: Game win difference (Games Won - Games Lost)
-        const aDiff = a.stats.gameWins - a.stats.gameLosses;
-        const bDiff = b.stats.gameWins - b.stats.gameLosses;
+        
+        const aGW = a.stats?.gameWins ?? 0;
+        const aGL = a.stats?.gameLosses ?? 0;
+        const bGW = b.stats?.gameWins ?? 0;
+        const bGL = b.stats?.gameLosses ?? 0;
+
+        const aDiff = aGW - aGL;
+        const bDiff = bGW - bGL;
         return bDiff - aDiff;
     });
 
@@ -148,13 +155,21 @@ export function renderStandings(players, containerId) {
     `;
 
     sortedPlayers.forEach((player, index) => {
+        // Also ensure we safely display 0 if stats are missing here
+        const pts = player.stats?.points ?? 0;
+        const mw = player.stats?.matchWins ?? 0;
+        const ml = player.stats?.matchLosses ?? 0;
+        const md = player.stats?.matchDraws ?? 0;
+        const gw = player.stats?.gameWins ?? 0;
+        const gl = player.stats?.gameLosses ?? 0;
+
         html += `
             <tr style="border-bottom: 1px solid #45475a;">
                 <td style="padding: 10px;"><b>${index + 1}</b></td>
                 <td style="padding: 10px;">${player.name}</td>
-                <td style="padding: 10px; font-weight: bold; color: var(--accent);">${player.stats.points}</td>
-                <td style="padding: 10px;">${player.stats.matchWins} - ${player.stats.matchLosses} - ${player.stats.matchDraws}</td>
-                <td style="padding: 10px;">${player.stats.gameWins} - ${player.stats.gameLosses}</td>
+                <td style="padding: 10px; font-weight: bold; color: var(--accent);">${pts}</td>
+                <td style="padding: 10px;">${mw} - ${ml} - ${md}</td>
+                <td style="padding: 10px;">${gw} - ${gl}</td>
             </tr>
         `;
     });
