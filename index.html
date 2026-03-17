@@ -54,7 +54,22 @@
             <div id="standings-container"></div> 
         </main>
 
-    <!-- type="module" is the secret to making this work without a build step -->
+    <!-- CUSTOM WARNING MODAL -->
+    <div id="warning-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; max-width: 500px; border: 2px solid var(--danger); text-align: center;">
+            <h2 style="color: var(--danger); margin-top: 0;">⚠️ DESTRUCTIVE ACTION</h2>
+            <p id="warning-modal-text">Editing this match will permanently delete all rounds and stages that happened after it.</p>
+            <p>It is highly recommended to Export a backup before continuing.</p>
+            
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                <button id="modal-btn-cancel" style="background: #45475a; color: white;">Cancel</button>
+                <button id="modal-btn-export" style="background: #a6e3a1; color: #1e1e2e;">💾 Backup Data</button>
+                <button id="modal-btn-confirm" style="background: var(--danger); color: white;">Delete & Edit</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- type="module" to make this work without a build step -->
     <script type="module" src="./js/app.js"></script>
 </body>
 </html>
