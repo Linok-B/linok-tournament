@@ -27,35 +27,65 @@ export function renderPlayerList(players, containerId) {
     });
 }
 
-// The single, correct renderBracket function
 export function renderBracket(tournament, containerId) {
     const container = document.getElementById(containerId);
     
     if (tournament.status === "setup" || tournament.stages.length === 0) {
-        // Build the HTML string completely FIRST, then render the list into it.
         container.innerHTML = `
             <h2>Setup: Add Players</h2>
             <p>Total: ${tournament.players.length}</p>
             <div id="players-list"></div>
         `;
-        // Now it's safe to inject the players
         renderPlayerList(tournament.players, 'players-list');
         return;
     }
 
-    const activeStage = tournament.stages[tournament.stages.length - 1];
+    // NEW: Allow the UI to view a past stage if requested, otherwise default to the active/last stage
+    // (w/ a global variable 'window.viewingStageIndex' to track which tab is clicked)
+    let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
     
-    // Create a horizontal scrolling container for the bracket/rounds
-    container.innerHTML = `
-        <h2>Stage ${activeStage.stageNumber}: ${activeStage.config.type.replace('_', ' ').toUpperCase()}</h2>
-        ${tournament.status === "completed" ? '<h3 style="color:#a6e3a1;">Tournament Complete!</h3>' : ''}
+    // Failsafe bounds check
+    if (viewIndex < 0) viewIndex = 0;
+    if (viewIndex >= tournament.stages.length) viewIndex = tournament.stages.length - 1;
+
+    const stageToRender = tournament.stages[viewIndex];
+    const isActiveStage = (viewIndex === tournament.stages.length - 1 && tournament.status !== "completed");
+    
+    // BUILD THE TABS
+    let tabsHtml = `<div style="display:flex; gap:10px; margin-bottom: 20px; border-bottom: 2px solid #45475a; padding-bottom: 10px;">`;
+    tournament.stages.forEach((stage, index) => {
+        const isSelected = index === viewIndex;
+        tabsHtml += `
+            <button class="btn-stage-tab" data-index="${index}" 
+                style="
+                    background: ${isSelected ? 'var(--accent)' : 'transparent'}; 
+                    color: ${isSelected ? 'var(--bg-dark)' : 'var(--text-main)'}; 
+                    border: 1px solid var(--accent); 
+                    padding: 5px 15px; 
+                    cursor: pointer;
+                    font-weight: bold;
+                ">
+                Stage ${index + 1}: ${stage.config.type.replace('_', ' ').toUpperCase()}
+            </button>
+        `;
+    });
+    tabsHtml += `</div>`;
+
+    // RENDER THE SELECTED STAGE
+    let html = `
+        ${tabsHtml}
+        <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} 
+            ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}
+        </h2>
+        ${tournament.status === "completed" && isActiveStage ? '<h3 style="color:#a6e3a1;">Tournament Complete!</h3>' : ''}
         <div id="bracket-board" style="display:flex; gap:30px; overflow-x:auto; padding-bottom:20px;"></div>
     `;
 
+    container.innerHTML = html;
     const board = document.getElementById('bracket-board');
 
-    // Loop through all rounds and draw them as columns
-    activeStage.data.rounds.forEach((roundMatches, roundIndex) => {
+    // DRAW THE ROUNDS FOR THE SELECTED STAGE
+    stageToRender.data.rounds.forEach((roundMatches, roundIndex) => {
         const roundColumn = document.createElement('div');
         roundColumn.style.minWidth = '250px';
         roundColumn.innerHTML = `<h3>Round ${roundIndex + 1}</h3>`;
@@ -67,28 +97,17 @@ export function renderBracket(tournament, containerId) {
             matchBox.style.marginBottom = '10px';
             matchBox.style.borderRadius = '5px';
             
-            // Visual indicator if finished
-            if (match.winner) {
-                matchBox.style.borderLeft = '4px solid #a6e3a1'; // Green
-            } else {
-                matchBox.style.borderLeft = '4px solid #f38ba8'; // Red
-            }
+            if (match.winner) matchBox.style.borderLeft = '4px solid #a6e3a1'; 
+            else matchBox.style.borderLeft = '4px solid #f38ba8'; 
 
             const p1Name = match.player1 ? match.player1.name : "TBD";
             const p2Name = match.player2 ? match.player2.name : "TBD";
 
-            // If match is finished OR is a Bye, just show the names and winner
             if (match.winner || match.isBye) {
                 let p1Display = p1Name;
                 let p2Display = p2Name;
-                
-                // Bold the winner (handle ties for Round Robin)
-                if (match.winner === match.player1 || match.winner === "tie") {
-                    p1Display = `<strong>${p1Name}</strong>`;
-                }
-                if (match.winner === match.player2 || match.winner === "tie") {
-                    p2Display = `<strong>${p2Name}</strong>`;
-                }
+                if (match.winner === match.player1 || match.winner === "tie") p1Display = `<strong>${p1Name}</strong>`;
+                if (match.winner === match.player2 || match.winner === "tie") p2Display = `<strong>${p2Name}</strong>`;
 
                 matchBox.innerHTML = `
                     <div style="${match.winner === match.player1 ? 'color:#a6e3a1;' : ''}">${p1Display} ${match.winner ? `(${match.score1})` : ''}</div>
@@ -96,18 +115,27 @@ export function renderBracket(tournament, containerId) {
                     <small style="color:gray;">${match.isBye ? 'Auto-Advance' : (match.winner === "tie" ? 'TIE' : 'Completed')}</small>
                 `;
             } else {
-                // Match is active, show inputs
-                matchBox.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <span>${p1Name}</span>
-                        <input type="number" id="s1-${match.id}" style="width:40px; padding:2px;" value="0">
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span>${p2Name}</span>
-                        <input type="number" id="s2-${match.id}" style="width:40px; padding:2px;" value="0">
-                    </div>
-                    <button class="btn-report" data-matchid="${match.id}" style="width:100%; padding:5px; font-size:12px; cursor:pointer;">Submit Score</button>
-                `;
+                // Only show inputs if this is the ACTIVE stage. You cannot edit past stages!
+                if (isActiveStage) {
+                    matchBox.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span>${p1Name}</span>
+                            <input type="number" id="s1-${match.id}" style="width:40px; padding:2px;" value="0">
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <span>${p2Name}</span>
+                            <input type="number" id="s2-${match.id}" style="width:40px; padding:2px;" value="0">
+                        </div>
+                        <button class="btn-report" data-matchid="${match.id}" style="width:100%; padding:5px; font-size:12px; cursor:pointer;">Submit Score</button>
+                    `;
+                } else {
+                    // It's an active match in a past stage (which shouldn't happen, but just in case)
+                     matchBox.innerHTML = `
+                        <div>${p1Name}</div>
+                        <div>${p2Name}</div>
+                        <small style="color:gray;">Pending</small>
+                    `;
+                }
             }
             roundColumn.appendChild(matchBox);
         });
