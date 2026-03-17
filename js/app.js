@@ -105,6 +105,28 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         updateUI(); // Redraw the screen
     }
 
+    // 4. Handle "Edit Match" Button
+    if (e.target && e.target.classList.contains('btn-edit-match')) {
+        const matchId = e.target.getAttribute('data-matchid');
+        
+        // Try a safe undo first
+        let result = currentTournament.undoMatch(matchId, false);
+
+        if (result.requiresConfirmation) {
+            const warning = "WARNING: This match is from a previous round/stage. Editing it will DELETE all rounds and stages that happened after it, because the matchmaking will change. Are you sure?";
+            if (confirm(warning)) {
+                // User agreed, force destructive undo
+                result = currentTournament.undoMatch(matchId, true);
+            }
+        }
+
+        if (result && result.success) {
+            saveTournamentLocally(currentTournament);
+            // If we deleted stages, ensure we are viewing the active stage again
+            window.viewingStageIndex = currentTournament.stages.length - 1; 
+            updateUI();
+        }
+    }
     
 });
 
