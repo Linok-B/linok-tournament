@@ -102,6 +102,8 @@ export class Tournament {
         });
     }
 
+    // In js/engine/tournament.js
+
     reportMatchScore(matchId, score1, score2) {
         if (this.status !== "active") return false;
 
@@ -118,52 +120,28 @@ export class Tournament {
         else if (match.score2 > match.score1) match.winner = match.player2;
         else match.winner = "tie"; 
 
-        // Update Points
-        const ptsForWin = this.settings.pointsForWin !== undefined ? this.settings.pointsForWin : 3;
-        const ptsForDraw = this.settings.pointsForDraw !== undefined ? this.settings.pointsForDraw : 1;
-        
-        const p1 = this.players.find(p => p.id === match.player1.id);
-        const p2 = this.players.find(p => p.id === match.player2?.id); // Safe check for Byes
+        // 1. Recalculate stats from scratch!
+        this.recalculateAllStats();
 
-        if (p1 && p2) {
-            p1.stats.gameWins += match.score1;
-            p1.stats.gameLosses += match.score2;
-            p2.stats.gameWins += match.score2;
-            p2.stats.gameLosses += match.score1;
-
-            if (match.winner === match.player1) {
-                p1.stats.matchWins++; p1.stats.points += ptsForWin; p2.stats.matchLosses++;
-            } else if (match.winner === match.player2) {
-                p2.stats.matchWins++; p2.stats.points += ptsForWin; p1.stats.matchLosses++;
-            } else if (match.winner === "tie") {
-                p1.stats.matchDraws++; p2.stats.matchDraws++;
-                p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
-            }
-        }
-
-        // Check if round is finished
+        // 2. Check if round is finished
         const isRoundComplete = currentRound.every(m => m.winner !== null);
         
         if (isRoundComplete) {
             import('./formats/registry.js').then(({ getFormat }) => {
                 const formatEngine = getFormat(activeStage.config.type);
-                
-                // CRUCIAL FIX: We now pass `this.players` so formats like Swiss can read points!
                 activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config, this.players);
 
                 if (activeStage.data.isComplete) {
                     activeStage.status = "completed";
-                    
                     if (this.stages.length >= this.settings.pipeline.length) {
-                        // Entire tournament is done
                         this.status = "completed";
                     } else {
-                        // TRIGGER THE BRIDGE! Send all current players into the transition function
+                        // Instead of auto-transitioning, we just unlock the next stage button in the UI (We will build this later)
+                        // For now, we leave it as is, waiting for the host.
                         this.transitionToNextStage(this.players);
                     }
                 }
                 
-                // Force a save and UI update from inside the engine to ensure async imports work
                 import('../store/localData.js').then(({ saveTournamentLocally }) => {
                     saveTournamentLocally(this);
                     document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
@@ -171,5 +149,95 @@ export class Tournament {
             });
         }
         return true;
+    }
+
+    // NEW: Bulletproof Leaderboard Recalculation
+    recalculateAllStats() {
+        // Reset everyone to zero
+        this.players.forEach(p => {
+            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
+        });
+
+        const ptsForWin = this.settings.pointsForWin !== undefined ? this.settings.pointsForWin : 3;
+        const ptsForDraw = this.settings.pointsForDraw !== undefined ? this.settings.pointsForDraw : 1;
+
+        // Tally up every completed match
+        this.stages.forEach(stage => {
+            stage.data.rounds.forEach(round => {
+                round.forEach(match => {
+                    if (!match.winner) return;
+
+                    const p1 = this.players.find(p => p.id === match.player1?.id);
+                    const p2 = this.players.find(p => p.id === match.player2?.id);
+
+                    if (match.isBye && p1) {
+                        p1.stats.matchWins++;
+                        p1.stats.points += ptsForWin;
+                        return;
+                    }
+
+                    if (p1 && p2) {
+                        p1.stats.gameWins += match.score1; p1.stats.gameLosses += match.score2;
+                        p2.stats.gameWins += match.score2; p2.stats.gameLosses += match.score1;
+
+                        if (match.winner.id === p1.id) {
+                            p1.stats.matchWins++; p1.stats.points += ptsForWin; p2.stats.matchLosses++;
+                        } else if (match.winner.id === p2.id) {
+                            p2.stats.matchWins++; p2.stats.points += ptsForWin; p1.stats.matchLosses++;
+                        } else if (match.winner === "tie") {
+                            p1.stats.matchDraws++; p2.stats.matchDraws++;
+                            p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
+                        }
+                    }
+                });
+            });
+        });
+    }
+
+    // NEW: The Time Machine (Undo/Edit Match)
+    undoMatch(matchId, forceDestructive = false) {
+        let foundStageIndex = -1;
+        let foundRoundIndex = -1;
+        let targetMatch = null;
+
+        // Find exactly where this match lives
+        for (let s = 0; s < this.stages.length; s++) {
+            for (let r = 0; r < this.stages[s].data.rounds.length; r++) {
+                const m = this.stages[s].data.rounds[r].find(x => x.id === matchId);
+                if (m) {
+                    foundStageIndex = s; foundRoundIndex = r; targetMatch = m;
+                    break;
+                }
+            }
+        }
+
+        if (!targetMatch || !targetMatch.winner) return { success: false, reason: "Match not found or already active." };
+
+        const stage = this.stages[foundStageIndex];
+        const isLatestRound = (foundRoundIndex === stage.data.rounds.length - 1) && (foundStageIndex === this.stages.length - 1);
+
+        // If it's an old round and we haven't confirmed destruction, abort and warn the UI
+        if (!isLatestRound && !forceDestructive) {
+            return { success: false, requiresConfirmation: true };
+        }
+
+        // DESTRUCTIVE ACTION: Delete all stages that came AFTER this stage
+        this.stages = this.stages.slice(0, foundStageIndex + 1);
+        
+        // DESTRUCTIVE ACTION: Delete all rounds that came AFTER this round
+        stage.data.rounds = stage.data.rounds.slice(0, foundRoundIndex + 1);
+
+        // Reset the match
+        targetMatch.winner = null;
+        targetMatch.score1 = 0;
+        targetMatch.score2 = 0;
+
+        // Reactivate the tournament
+        stage.status = "active";
+        stage.data.isComplete = false;
+        this.status = "active";
+
+        this.recalculateAllStats();
+        return { success: true };
     }
 }
