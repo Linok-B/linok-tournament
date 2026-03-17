@@ -89,20 +89,16 @@ export class Tournament {
         match.score1 = parseInt(score1) || 0;
         match.score2 = parseInt(score2) || 0;
 
-        // Allow ties in Round Robin!
-
         if (match.score1 > match.score2) match.winner = match.player1;
         else if (match.score2 > match.score1) match.winner = match.player2;
         else match.winner = "tie"; 
 
-        // NEW: Update Player Stats based on the result!
-        // We will pull the global settings for points, or use defaults
+        // Update Points
         const ptsForWin = this.settings.pointsForWin !== undefined ? this.settings.pointsForWin : 3;
         const ptsForDraw = this.settings.pointsForDraw !== undefined ? this.settings.pointsForDraw : 1;
         
-        // Find the actual player objects in the master list
         const p1 = this.players.find(p => p.id === match.player1.id);
-        const p2 = this.players.find(p => p.id === match.player2.id);
+        const p2 = this.players.find(p => p.id === match.player2?.id); // Safe check for Byes
 
         if (p1 && p2) {
             p1.stats.gameWins += match.score1;
@@ -111,19 +107,38 @@ export class Tournament {
             p2.stats.gameLosses += match.score1;
 
             if (match.winner === match.player1) {
-                p1.stats.matchWins++;
-                p1.stats.points += ptsForWin;
-                p2.stats.matchLosses++;
+                p1.stats.matchWins++; p1.stats.points += ptsForWin; p2.stats.matchLosses++;
             } else if (match.winner === match.player2) {
-                p2.stats.matchWins++;
-                p2.stats.points += ptsForWin;
-                p1.stats.matchLosses++;
+                p2.stats.matchWins++; p2.stats.points += ptsForWin; p1.stats.matchLosses++;
             } else if (match.winner === "tie") {
-                p1.stats.matchDraws++;
-                p2.stats.matchDraws++;
-                p1.stats.points += ptsForDraw;
-                p2.stats.points += ptsForDraw;
+                p1.stats.matchDraws++; p2.stats.matchDraws++;
+                p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
             }
+        }
+
+        // Check if round is finished
+        const isRoundComplete = currentRound.every(m => m.winner !== null);
+        
+        if (isRoundComplete) {
+            import('./formats/registry.js').then(({ getFormat }) => {
+                const formatEngine = getFormat(activeStage.config.type);
+                
+                // CRUCIAL FIX: We now pass `this.players` so formats like Swiss can read points!
+                activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config, this.players);
+
+                if (activeStage.data.isComplete) {
+                    activeStage.status = "completed";
+                    if (this.stages.length >= this.settings.pipeline.length) {
+                        this.status = "completed";
+                    }
+                }
+                
+                // Force a save and UI update from inside the engine to ensure async imports work
+                import('../store/localData.js').then(({ saveTournamentLocally }) => {
+                    saveTournamentLocally(this);
+                    document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
+                });
+            });
         }
         return true;
     }
