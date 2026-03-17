@@ -112,8 +112,12 @@ export function renderBracket(tournament, containerId) {
                 matchBox.innerHTML = `
                     <div style="${match.winner === match.player1 ? 'color:#a6e3a1;' : ''}">${p1Display} ${match.winner ? `(${match.score1})` : ''}</div>
                     <div style="${match.winner === match.player2 ? 'color:#a6e3a1;' : ''}">${p2Display} ${match.winner ? `(${match.score2})` : ''}</div>
-                    <small style="color:gray;">${match.isBye ? 'Auto-Advance' : (match.winner === "tie" ? 'TIE' : 'Completed')}</small>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                        <small style="color:gray;">${match.isBye ? 'Auto-Advance' : (match.winner === "tie" ? 'TIE' : 'Completed')}</small>
+                        ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:2px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e;">Edit</button>` : ''}
+                    </div>
                 `;
+                
             } else {
                 // Only show inputs if this is the ACTIVE stage. You cannot edit past stages!
                 if (isActiveStage) {
