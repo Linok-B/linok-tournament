@@ -146,7 +146,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         updateUI(); // Redraw the screen
     }
 
-    // 4. Handle "Edit Match" Button
+    // 4. Handle "Edit Match" Button (Custom Modal)
     if (e.target && e.target.classList.contains('btn-edit-match')) {
         const matchId = e.target.getAttribute('data-matchid');
         
@@ -154,16 +154,34 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         let result = currentTournament.undoMatch(matchId, false);
 
         if (result.requiresConfirmation) {
-            const warning = "WARNING: This match is from a previous round/stage. Editing it will DELETE all rounds and stages that happened after it, because the matchmaking will change. Are you sure?";
-            if (confirm(warning)) {
-                // User agreed, force destructive undo
-                result = currentTournament.undoMatch(matchId, true);
-            }
-        }
+            // Show the Custom Modal instead of browser confirm()
+            const modal = document.getElementById('warning-modal');
+            modal.style.display = 'flex';
 
-        if (result && result.success) {
+            // Define exactly what the buttons do inside the modal
+            
+            document.getElementById('modal-btn-cancel').onclick = () => {
+                modal.style.display = 'none'; // Close modal, do nothing
+            };
+
+            document.getElementById('modal-btn-export').onclick = () => {
+                exportTournamentJSON(currentTournament); // Downloads backup, keeps modal open!
+            };
+
+            document.getElementById('modal-btn-confirm').onclick = () => {
+                // User agreed, force destructive undo
+                const finalResult = currentTournament.undoMatch(matchId, true);
+                if (finalResult.success) {
+                    saveTournamentLocally(currentTournament);
+                    window.viewingStageIndex = currentTournament.stages.length - 1; 
+                    updateUI();
+                }
+                modal.style.display = 'none'; // Close modal
+            };
+
+        } else if (result.success) {
+            // It was a safe undo (latest round), no warning needed
             saveTournamentLocally(currentTournament);
-            // If we deleted stages, ensure we are viewing the active stage again
             window.viewingStageIndex = currentTournament.stages.length - 1; 
             updateUI();
         }
