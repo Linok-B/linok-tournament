@@ -27,6 +27,15 @@
             <div class="control-group">
                 <button id="btn-clear-data" class="danger">Reset Entire Tournament</button>
             </div>
+
+            <div class="control-group">
+                <h3>Data Management</h3>
+                <button id="btn-export-data" style="background-color: #a6e3a1; color: #1e1e2e;">💾 Export to File</button>
+                
+                <!-- Hidden file input triggered by the import button -->
+                <input type="file" id="file-import" accept=".json" style="display: none;">
+                <button id="btn-import-data" style="background-color: #f9e2af; color: #1e1e2e;">📂 Import from File</button>
+            </div>
         </aside>
 
         <!-- TOURNAMENT DISPLAY -->
