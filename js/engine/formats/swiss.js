@@ -30,33 +30,61 @@ export function initStage(players, config) {
 
 export function advanceStage(stageData, config, allPlayers) {
     const currentRoundNum = stageData.rounds.length;
-
-    // 1. Log all matchups from the round that just finished so we avoid rematches
     const lastRound = stageData.rounds[currentRoundNum - 1];
+
+    // 1. Log past matchups AND track who has had a BYE
+    if (!stageData.playersWithByes) stageData.playersWithByes = [];
+    
     lastRound.forEach(m => {
-        if (m.player1 && m.player2) {
+        if (m.isBye && m.player1) {
+            stageData.playersWithByes.push(m.player1.id);
+        } else if (m.player1 && m.player2) {
             stageData.pastMatchups.push(`${m.player1.id}-${m.player2.id}`);
             stageData.pastMatchups.push(`${m.player2.id}-${m.player1.id}`);
         }
     });
 
-    // 2. Are we done?
     if (currentRoundNum >= stageData.totalRounds) {
         stageData.isComplete = true;
         return stageData;
     }
 
-    // 3. Get active players and sort them by current Points!
-    // (We filter by players who were actually in this stage)
+    // 2. Get active players and sort by Points (Highest to Lowest)
     const activePlayerIds = lastRound.flatMap(m => [m.player1?.id, m.player2?.id]).filter(id => id);
     let playersToPair = allPlayers.filter(p => activePlayerIds.includes(p.id));
-    
     playersToPair.sort((a, b) => b.stats.points - a.stats.points);
 
-    // 4. Matchmaking logic (Naive Dutch System)
     let nextRoundMatches = [];
     let pairedIds = new Set();
 
+    // 3. Handle Odd Players (The BYE)
+    if (playersToPair.length % 2 !== 0) {
+        // Find the LOWEST ranked player who hasn't had a BYE yet
+        let byePlayer = null;
+        for (let i = playersToPair.length - 1; i >= 0; i--) {
+            const p = playersToPair[i];
+            if (!stageData.playersWithByes.includes(p.id)) {
+                byePlayer = p;
+                break;
+            }
+        }
+        
+        // Failsafe: if everyone somehow had a bye (impossible in standard length), just pick the lowest
+        if (!byePlayer) byePlayer = playersToPair[playersToPair.length - 1];
+
+        pairedIds.add(byePlayer.id);
+        nextRoundMatches.push({
+            id: crypto.randomUUID(),
+            round: currentRoundNum + 1,
+            player1: byePlayer,
+            player2: null,
+            score1: 0, score2: 0,
+            winner: byePlayer,
+            isBye: true
+        });
+    }
+
+    // 4. Matchmaking logic for the remaining even number of players
     for (let i = 0; i < playersToPair.length; i++) {
         const p1 = playersToPair[i];
         if (pairedIds.has(p1.id)) continue;
@@ -75,23 +103,26 @@ export function advanceStage(stageData, config, allPlayers) {
             }
         }
 
-        // If no unique opponent found (rare in early rounds), just force play the next available person
+        // Failsafe: if no unique opponent is found, play the next available person
+        // (This happens in very small tournaments with many rounds)
         if (!opponent) {
-            opponent = playersToPair.find(p => p.id !== p1.id && !pairedIds.has(p.id)) || null;
+            opponent = playersToPair.find(p => p.id !== p1.id && !pairedIds.has(p.id));
         }
 
-        pairedIds.add(p1.id);
-        if (opponent) pairedIds.add(opponent.id);
+        if (opponent) {
+            pairedIds.add(p1.id);
+            pairedIds.add(opponent.id);
 
-        nextRoundMatches.push({
-            id: crypto.randomUUID(),
-            round: currentRoundNum + 1,
-            player1: p1,
-            player2: opponent,
-            score1: 0, score2: 0,
-            winner: opponent === null ? p1 : null,
-            isBye: opponent === null
-        });
+            nextRoundMatches.push({
+                id: crypto.randomUUID(),
+                round: currentRoundNum + 1,
+                player1: p1,
+                player2: opponent,
+                score1: 0, score2: 0,
+                winner: null,
+                isBye: false
+            });
+        }
     }
 
     stageData.rounds.push(nextRoundMatches);
