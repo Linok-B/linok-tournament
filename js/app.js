@@ -98,3 +98,5 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         }
     }
 });
+
+document.getElementById('btn-add-player').addEventListener('stateChanged', updateUI);
