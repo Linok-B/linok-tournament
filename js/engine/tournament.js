@@ -6,11 +6,14 @@ export class Tournament {
         this.stages = [];
         this.status = "setup"; 
         
-        // Swiss System with a custom variable of maxRounds: 3
+        // The Hybrid Blueprint
         this.settings = { 
             name: "My Custom Tournament",
+            pointsForWin: 3,
+            pointsForDraw: 1,
             pipeline: [
-                { type: "swiss", maxRounds: 3 }
+                { type: "swiss", maxRounds: 3 }, // Stage 1: Swiss
+                { type: "single_elimination", cutToTop: 4 } // Stage 2: Top 4 Bracket
             ]
         };
     }
@@ -65,15 +68,46 @@ export class Tournament {
             return;
         }
 
-        // DYNAMIC ROUTING: Ask the registry for the format math
-        const formatEngine = getFormat(config.type);
-        const stageData = formatEngine.initStage(incomingPlayers, config);
+        let playersForNextStage = [...incomingPlayers];
 
-        this.stages.push({
-            stageNumber: nextStageIndex + 1,
-            config: config,
-            data: stageData,
-            status: "active"
+        // THE BRIDGE: If this stage has a "Top Cut" limit, we must sort by Standings first!
+        if (config.cutToTop && config.cutToTop < playersForNextStage.length) {
+            playersForNextStage.sort((a, b) => {
+                const ptsA = a.stats?.points ?? 0;
+                const ptsB = b.stats?.points ?? 0;
+                if (ptsB !== ptsA) return ptsB - ptsA; 
+                
+                const aDiff = (a.stats?.gameWins ?? 0) - (a.stats?.gameLosses ?? 0);
+                const bDiff = (b.stats?.gameWins ?? 0) - (b.stats?.gameLosses ?? 0);
+                return bDiff - aDiff;
+            });
+
+            // Slice the top N players
+            playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
+
+            // Re-seed them based on their Stage 1 finish!
+            // (1st place in Swiss becomes Seed 1 in the Bracket)
+            playersForNextStage.forEach((p, index) => {
+                p.seed = index + 1;
+            });
+        }
+
+        import('./formats/registry.js').then(({ getFormat }) => {
+            const formatEngine = getFormat(config.type);
+            const stageData = formatEngine.initStage(playersForNextStage, config);
+
+            this.stages.push({
+                stageNumber: nextStageIndex + 1,
+                config: config,
+                data: stageData,
+                status: "active"
+            });
+
+            // Force a UI update
+            import('../store/localData.js').then(({ saveTournamentLocally }) => {
+                saveTournamentLocally(this);
+                document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
+            });
         });
     }
 
@@ -128,8 +162,13 @@ export class Tournament {
 
                 if (activeStage.data.isComplete) {
                     activeStage.status = "completed";
+                    
                     if (this.stages.length >= this.settings.pipeline.length) {
+                        // Entire tournament is done
                         this.status = "completed";
+                    } else {
+                        // TRIGGER THE BRIDGE! Send all current players into the transition function
+                        this.transitionToNextStage(this.players);
                     }
                 }
                 
