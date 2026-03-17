@@ -97,6 +97,15 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
             updateUI();
         }
     }
+
+    // 3. Handle Stage Tab Clicks
+    if (e.target && e.target.classList.contains('btn-stage-tab')) {
+        const tabIndex = parseInt(e.target.getAttribute('data-index'));
+        window.viewingStageIndex = tabIndex; // Set the global viewing index
+        updateUI(); // Redraw the screen
+    }
+
+    
 });
 
 document.getElementById('btn-add-player').addEventListener('stateChanged', updateUI);
