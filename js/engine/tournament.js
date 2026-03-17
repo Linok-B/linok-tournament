@@ -58,7 +58,7 @@ export class Tournament {
         this.transitionToNextStage(this.players);
         return true;
     }
-
+    
     transitionToNextStage(incomingPlayers) {
         const nextStageIndex = this.stages.length;
         const config = this.settings.pipeline[nextStageIndex];
@@ -70,7 +70,7 @@ export class Tournament {
 
         let playersForNextStage = [...incomingPlayers];
 
-        // THE BRIDGE: If this stage has a "Top Cut" limit, we must sort by Standings first!
+        // THE BRIDGE: Top Cut Logic
         if (config.cutToTop && config.cutToTop < playersForNextStage.length) {
             playersForNextStage.sort((a, b) => {
                 const ptsA = a.stats?.points ?? 0;
@@ -82,32 +82,23 @@ export class Tournament {
                 return bDiff - aDiff;
             });
 
-            // Slice the top N players
             playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
 
-            // Re-seed them based on their Stage 1 finish!
-            // (1st place in Swiss becomes Seed 1 in the Bracket)
             playersForNextStage.forEach((p, index) => {
                 p.seed = index + 1;
             });
         }
 
-        import('./formats/registry.js').then(({ getFormat }) => {
-            const formatEngine = getFormat(config.type);
-            const stageData = formatEngine.initStage(playersForNextStage, config);
+        // SYNCHRONOUS GENERATION
+        const formatEngine = getFormat(config.type);
+        const stageData = formatEngine.initStage(playersForNextStage, config);
 
-            this.stages.push({
-                stageNumber: nextStageIndex + 1,
-                config: config,
-                data: stageData,
-                status: "active"
-            });
-
-            // Force a UI update
-            import('../store/localData.js').then(({ saveTournamentLocally }) => {
-                saveTournamentLocally(this);
-                document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
-            });
+        this.stages.push({
+            id: crypto.randomUUID(), // Add a unique ID to the stage for historical viewing later!
+            stageNumber: nextStageIndex + 1,
+            config: config,
+            data: stageData,
+            status: "active"
         });
     }
 
