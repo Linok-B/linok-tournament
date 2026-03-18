@@ -61,6 +61,8 @@ export class Tournament {
         return true;
     }
     
+    // In js/engine/tournament.js
+
     transitionToNextStage(incomingPlayers) {
         const nextStageIndex = this.stages.length;
         const config = this.settings.pipeline[nextStageIndex];
@@ -70,37 +72,44 @@ export class Tournament {
             return;
         }
 
-        let playersForNextStage = [...incomingPlayers];
+        // NEW: Filter out eliminated players!
+        // (Later we can add `if (!config.advanceAll)` here to allow custom overrides)
+        let playersForNextStage = incomingPlayers.filter(p => !p.isEliminated);
 
-        // THE BRIDGE: Top Cut Logic
+        // Top Cut Logic (unchanged)
         if (config.cutToTop && config.cutToTop < playersForNextStage.length) {
             playersForNextStage.sort((a, b) => {
                 const ptsA = a.stats?.points ?? 0;
                 const ptsB = b.stats?.points ?? 0;
                 if (ptsB !== ptsA) return ptsB - ptsA; 
-                
                 const aDiff = (a.stats?.gameWins ?? 0) - (a.stats?.gameLosses ?? 0);
                 const bDiff = (b.stats?.gameWins ?? 0) - (b.stats?.gameLosses ?? 0);
                 return bDiff - aDiff;
             });
-
             playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
-
-            playersForNextStage.forEach((p, index) => {
-                p.seed = index + 1;
-            });
+            
+            // Re-seed based on current standings
+            playersForNextStage.forEach((p, index) => { p.seed = index + 1; });
         }
 
-        // SYNCHRONOUS GENERATION
-        const formatEngine = getFormat(config.type);
-        const stageData = formatEngine.initStage(playersForNextStage, config);
+        import('./formats/registry.js').then(({ getFormat }) => {
+            const formatEngine = getFormat(config.type);
+            const stageData = formatEngine.initStage(playersForNextStage, config);
 
-        this.stages.push({
-            id: crypto.randomUUID(), // Add a unique ID to the stage for historical viewing later!
-            stageNumber: nextStageIndex + 1,
-            config: config,
-            data: stageData,
-            status: "active"
+            this.stages.push({
+                id: crypto.randomUUID(),
+                stageNumber: nextStageIndex + 1,
+                config: config,
+                data: stageData,
+                status: "active"
+            });
+
+            import('../store/localData.js').then(({ saveTournamentLocally }) => {
+                saveTournamentLocally(this);
+                // DO NOT change window.viewingStageIndex here! 
+                // This keeps the UI looking at the completed Stage 1.
+                document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
+            });
         });
     }
 
