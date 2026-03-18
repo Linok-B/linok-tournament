@@ -58,6 +58,38 @@ function updateTitle() {
     if (lossInput) lossInput.value = currentTournament.settings.pointsForLoss;
 }
 
+function renderBlueprintList() {
+    const list = document.getElementById('blueprint-list');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    const formatNames = {
+        "single_elimination": "Single Elim",
+        "round_robin": "Round Robin",
+        "swiss": "Swiss"
+    };
+
+    currentTournament.settings.pipeline.forEach((stage, index) => {
+        // Check if this stage has already been started/completed
+        const isLocked = index < currentTournament.stages.length;
+        
+        // Format the extra options for display
+        let details = [];
+        if (stage.maxRounds) details.push(`${stage.maxRounds} Rnds`);
+        if (stage.cutToTop) details.push(`Top ${stage.cutToTop}`);
+        const detailStr = details.length > 0 ? ` <small style="color:gray;">(${details.join(', ')})</small>` : '';
+        
+        list.innerHTML += `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isLocked ? '#a6e3a1' : 'var(--accent)'};">
+                <span style="font-size: 13px;"><b>${index + 1}.</b> ${formatNames[stage.type]}${detailStr}</span>
+                ${!isLocked 
+                    ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0 5px;">X</button>` 
+                    : '<span style="font-size:10px; color:gray;">Locked</span>'}
+            </div>
+        `;
+    });
+}
+
 updateUI();
 
 // Add Player Event
@@ -158,7 +190,8 @@ document.getElementById('file-import').addEventListener('change', (e) => {
 
 // Master UI Sync
 function updateUI() {
-    updateTitle();
+    updateTitle(); 
+    renderBlueprintList();
     const inputs = document.querySelectorAll('#player-list-container input[type="number"]');
     const draftScores = {};
     inputs.forEach(input => { draftScores[input.id] = input.value; });
@@ -260,4 +293,40 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
     
 });
 
+// --- BLUEPRINT BUILDER EVENT LISTENERS ---
+
+// Add a new stage to the pipeline
+document.getElementById('btn-add-stage').addEventListener('click', () => {
+    const type = document.getElementById('blueprint-type').value;
+    const rounds = parseInt(document.getElementById('blueprint-rounds').value);
+    const cut = parseInt(document.getElementById('blueprint-cut').value);
+    
+    const newStage = { type: type };
+    if (!isNaN(rounds) && rounds > 0) newStage.maxRounds = rounds;
+    if (!isNaN(cut) && cut > 0) newStage.cutToTop = cut;
+    
+    currentTournament.settings.pipeline.push(newStage);
+    
+    // Clear inputs
+    document.getElementById('blueprint-rounds').value = '';
+    document.getElementById('blueprint-cut').value = '';
+    
+    saveTournamentLocally(currentTournament);
+    updateUI();
+});
+
+// Remove an un-started stage from the pipeline
+document.getElementById('setup-blueprint-group').addEventListener('click', (e) => {
+    if (e.target && e.target.classList.contains('btn-remove-stage')) {
+        const indexToRemove = parseInt(e.target.getAttribute('data-index'));
+        
+        // Remove it from the array
+        currentTournament.settings.pipeline.splice(indexToRemove, 1);
+        
+        saveTournamentLocally(currentTournament);
+        updateUI();
+    }
+});
+
 document.getElementById('btn-add-player').addEventListener('stateChanged', updateUI);
+
