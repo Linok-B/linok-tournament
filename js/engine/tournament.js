@@ -1,19 +1,20 @@
 import { getFormat } from './formats/registry.js';
 
 export class Tournament {
+
     constructor() {
         this.players = [];
         this.stages = [];
         this.status = "setup"; 
         
-        // The Hybrid Blueprint
         this.settings = { 
             name: "My Custom Tournament",
             pointsForWin: 3,
             pointsForDraw: 1,
+            // Keep our test pipeline for now
             pipeline: [
-                { type: "swiss", maxRounds: 3 }, // Stage 1: Swiss
-                { type: "single_elimination", cutToTop: 4 } // Stage 2: Top 4 Bracket
+                { type: "swiss", maxRounds: 3 },
+                { type: "single_elimination", cutToTop: 4 }
             ]
         };
     }
