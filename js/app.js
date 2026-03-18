@@ -290,6 +290,25 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
             updateUI();
         }
     }
+
+    // 5. Force End Stage
+    if (e.target && e.target.id === 'btn-force-end-stage') {
+        if (confirm("Are you sure you want to end this stage right now? The current standings will be used to generate the next stage!")) {
+            
+            const activeStage = currentTournament.stages[currentTournament.stages.length - 1];
+            activeStage.status = "completed";
+            activeStage.data.isComplete = true; // Tell the UI it's done
+            
+            // Check if there are more stages, if so, trigger the bridge!
+            if (currentTournament.stages.length >= currentTournament.settings.pipeline.length) {
+                currentTournament.status = "completed";
+                saveTournamentLocally(currentTournament);
+                updateUI();
+            } else {
+                currentTournament.transitionToNextStage(currentTournament.players);
+            }
+        }
+    }
     
 });
 
@@ -327,6 +346,8 @@ document.getElementById('setup-blueprint-group').addEventListener('click', (e) =
         updateUI();
     }
 });
+
+
 
 document.getElementById('btn-add-player').addEventListener('stateChanged', updateUI);
 
