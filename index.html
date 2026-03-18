@@ -44,6 +44,36 @@
                 <button id="btn-add-player">Add to Tournament</button>
             </div>
 
+            <!-- Blueprint Builder -->
+            <div class="control-group" id="setup-blueprint-group">
+                <h3>Tournament Stages</h3>
+                
+                <!-- This empty div will be filled by JavaScript -->
+                <div id="blueprint-list" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;"></div>
+                
+                <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
+                    <label style="font-size: 11px; color: gray;">Format</label>
+                    <select id="blueprint-type" style="width: 100%; margin-bottom: 5px; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                        <option value="single_elimination">Single Elimination</option>
+                        <option value="round_robin">Round Robin</option>
+                        <option value="swiss">Swiss System</option>
+                        <option value="double_elimination" disabled>Double Elim (Coming Soon)</option>
+                    </select>
+                    
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <div style="flex: 1;" title="Max rounds to play (for Swiss/Round Robin)">
+                            <label style="font-size: 11px; color: gray;">Rounds (Opt)</label>
+                            <input type="number" id="blueprint-rounds" placeholder="All" style="width: 100%; box-sizing: border-box; padding: 5px;">
+                        </div>
+                        <div style="flex: 1;" title="Only advance top N players from the Leaderboard">
+                            <label style="font-size: 11px; color: gray;">Top Cut (Opt)</label>
+                            <input type="number" id="blueprint-cut" placeholder="All" style="width: 100%; box-sizing: border-box; padding: 5px;">
+                        </div>
+                    </div>
+                    <button id="btn-add-stage" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold;">+ Add Stage</button>
+                </div>
+            </div>
+
             <!-- Format Start Group -->
             <div class="control-group">
                 <h3>Tournament Controls</h3>
