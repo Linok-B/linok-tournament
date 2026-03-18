@@ -118,9 +118,22 @@ export class Tournament {
         match.score1 = parseInt(score1) || 0;
         match.score2 = parseInt(score2) || 0;
 
+        // Forbid ties in Elimination Formats
+        if (activeStage.config.type === "single_elimination" && match.score1 === match.score2) {
+            alert("Ties are not allowed in Elimination formats!");
+            return false; 
+        }
+
         if (match.score1 > match.score2) match.winner = match.player1;
         else if (match.score2 > match.score1) match.winner = match.player2;
         else match.winner = "tie"; 
+
+        // NEW: If this is an Elimination format, mark the loser as DEAD
+        if (activeStage.config.type === "single_elimination" && match.winner !== "tie") {
+            const loserId = match.winner.id === match.player1.id ? match.player2.id : match.player1.id;
+            const loserObj = this.players.find(p => p.id === loserId);
+            if (loserObj) loserObj.isEliminated = true; // Mark them dead!
+        }
 
         // 1. Recalculate stats from scratch!
         this.recalculateAllStats();
