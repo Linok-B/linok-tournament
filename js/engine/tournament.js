@@ -12,10 +12,10 @@ export class Tournament {
             pointsForWin: 3,
             pointsForDraw: 1,
             pointsForLoss: 0,
-            // Keep our test pipeline for now
+            
+            // Default to just Single Elim
             pipeline: [
-                { type: "swiss", maxRounds: 3 },
-                { type: "single_elimination", cutToTop: 4 }
+                { type: "single_elimination" } 
             ]
         };
     }
