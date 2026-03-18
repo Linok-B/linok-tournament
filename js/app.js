@@ -11,13 +11,12 @@ if (savedData) {
     currentTournament = Object.assign(new Tournament(), savedData);
 }
 
-// In js/app.js - Put this right after your initial updateUI() call
-
 // --- SETTINGS EVENT LISTENERS ---
 
 const nameInput = document.getElementById('setting-name');
 const winInput = document.getElementById('setting-pts-win');
 const drawInput = document.getElementById('setting-pts-draw');
+const lossInput = document.getElementById('setting-pts-loss');
 
 // Sync inputs to the engine when they type or change a number
 nameInput.addEventListener('input', (e) => {
@@ -40,6 +39,13 @@ drawInput.addEventListener('change', (e) => {
     updateUI();
 });
 
+lossInput.addEventListener('change', (e) => {
+    currentTournament.settings.pointsForLoss = parseInt(e.target.value) || 0;
+    if(currentTournament.status !== "setup") currentTournament.recalculateAllStats();
+    saveTournamentLocally(currentTournament);
+    updateUI();
+});
+
 // Helper function to update the big title and sync inputs on load
 function updateTitle() {
     const titleEl = document.getElementById('main-tournament-title');
@@ -49,6 +55,7 @@ function updateTitle() {
     if (nameInput) nameInput.value = currentTournament.settings.name;
     if (winInput) winInput.value = currentTournament.settings.pointsForWin;
     if (drawInput) drawInput.value = currentTournament.settings.pointsForDraw;
+    if (lossInput) lossInput.value = currentTournament.settings.pointsForLoss;
 }
 
 updateUI();
