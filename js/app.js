@@ -292,21 +292,32 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
     }
 
     // 5. Force End Stage
+    // In js/app.js - Update the Force End block
+
     if (e.target && e.target.id === 'btn-force-end-stage') {
-        if (confirm("Are you sure you want to end this stage right now? The current standings will be used to generate the next stage!")) {
+        if (confirm("Are you sure you want to end this stage right now? Any unfinished matches in the current round will be deleted, and current standings will be used!")) {
             
             const activeStage = currentTournament.stages[currentTournament.stages.length - 1];
-            activeStage.status = "completed";
-            activeStage.data.isComplete = true; // Tell the UI it's done
             
-            // Check if there are more stages, if so, trigger the bridge!
+            // CRITICAL FIX: Delete the unfinished round!
+            const currentRound = activeStage.data.rounds[activeStage.data.rounds.length - 1];
+            const isRoundUnfinished = currentRound.some(m => m.winner === null && !m.isBye);
+            
+            if (isRoundUnfinished) {
+                activeStage.data.rounds.pop(); // Remove the pending round from existence
+            }
+
+            activeStage.status = "completed";
+            activeStage.data.isComplete = true; 
+            
             if (currentTournament.stages.length >= currentTournament.settings.pipeline.length) {
                 currentTournament.status = "completed";
-                saveTournamentLocally(currentTournament);
-                updateUI();
             } else {
                 currentTournament.transitionToNextStage(currentTournament.players);
             }
+            
+            saveTournamentLocally(currentTournament);
+            updateUI();
         }
     }
     
