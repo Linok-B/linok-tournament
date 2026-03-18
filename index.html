@@ -12,6 +12,26 @@
         <aside class="controls-panel">
             <h2>Host Controls</h2>
             
+            <!-- NEW: TOURNAMENT SETTINGS -->
+            <div class="control-group">
+                <h3>Settings</h3>
+                
+                <label style="font-size: 12px; color: gray;">Tournament Name</label>
+                <input type="text" id="setting-name" placeholder="My Custom Tournament">
+                
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; color: gray;">Win Pts</label>
+                        <input type="number" id="setting-pts-win" value="3" style="width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; color: gray;">Draw Pts</label>
+                        <input type="number" id="setting-pts-draw" value="1" style="width: 100%; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Add Player Group -->
             <div class="control-group">
                 <h3>Add Player</h3>
                 <input type="text" id="player-name" placeholder="Player/Team Name">
