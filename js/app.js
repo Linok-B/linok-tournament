@@ -42,11 +42,31 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
 
 // Reset Button Event
 document.getElementById('btn-clear-data').addEventListener('click', () => {
-    if(confirm("Are you sure? This deletes the tournament.")) {
+    const modal = document.getElementById('warning-modal');
+    
+    // Dynamically change the text for a Reset
+    document.querySelector('#warning-modal h2').innerText = "⚠️ RESET TOURNAMENT";
+    document.getElementById('warning-modal-text').innerText = "This will permanently delete the entire tournament, all players, and all match history. Are you absolutely sure?";
+    document.getElementById('modal-btn-confirm').innerText = "Delete Everything";
+    
+    modal.style.display = 'flex';
+
+    // Define the button actions for THIS specific scenario
+    document.getElementById('modal-btn-cancel').onclick = () => {
+        modal.style.display = 'none'; 
+    };
+
+    document.getElementById('modal-btn-export').onclick = () => {
+        exportTournamentJSON(currentTournament); 
+    };
+
+    document.getElementById('modal-btn-confirm').onclick = () => {
         clearLocalData();
         currentTournament = new Tournament(); 
+        window.viewingStageIndex = 0; // Reset tab view
         updateUI();
-    }
+        modal.style.display = 'none'; 
+    };
 });
 
 document.getElementById('btn-export-data').addEventListener('click', () => {
@@ -149,13 +169,16 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
     // 4. Handle "Edit Match" Button (Custom Modal)
     if (e.target && e.target.classList.contains('btn-edit-match')) {
         const matchId = e.target.getAttribute('data-matchid');
-        
-        // Try a safe undo first
         let result = currentTournament.undoMatch(matchId, false);
 
         if (result.requiresConfirmation) {
-            // Show the Custom Modal instead of browser confirm()
             const modal = document.getElementById('warning-modal');
+            
+            // Dynamically set text back to the Edit Warning
+            document.querySelector('#warning-modal h2').innerText = "⚠️ DESTRUCTIVE ACTION";
+            document.getElementById('warning-modal-text').innerText = "Editing this match will permanently delete all rounds and stages that happened after it.";
+            document.getElementById('modal-btn-confirm').innerText = "Delete & Edit";
+            
             modal.style.display = 'flex';
 
             // Define exactly what the buttons do inside the modal
