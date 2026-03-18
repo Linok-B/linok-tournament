@@ -11,6 +11,7 @@ export class Tournament {
             name: "My Custom Tournament",
             pointsForWin: 3,
             pointsForDraw: 1,
+            pointsForLoss: 0,
             // Keep our test pipeline for now
             pipeline: [
                 { type: "swiss", maxRounds: 3 },
@@ -161,6 +162,7 @@ export class Tournament {
 
         const ptsForWin = this.settings.pointsForWin !== undefined ? this.settings.pointsForWin : 3;
         const ptsForDraw = this.settings.pointsForDraw !== undefined ? this.settings.pointsForDraw : 1;
+        const ptsForLoss = this.settings.pointsForLoss !== undefined ? this.settings.pointsForLoss : 0;
 
         // Tally up every completed match
         this.stages.forEach(stage => {
@@ -182,9 +184,9 @@ export class Tournament {
                         p2.stats.gameWins += match.score2; p2.stats.gameLosses += match.score1;
 
                         if (match.winner.id === p1.id) {
-                            p1.stats.matchWins++; p1.stats.points += ptsForWin; p2.stats.matchLosses++;
+                            p1.stats.matchWins++; p1.stats.points += ptsForWin; p2.stats.matchLosses++; p2.stats.points += ptsForLoss; // NEW: Loser gets loss points!
                         } else if (match.winner.id === p2.id) {
-                            p2.stats.matchWins++; p2.stats.points += ptsForWin; p1.stats.matchLosses++;
+                            p2.stats.matchWins++; p2.stats.points += ptsForWin; p1.stats.matchLosses++; p1.stats.points += ptsForLoss;
                         } else if (match.winner === "tie") {
                             p1.stats.matchDraws++; p2.stats.matchDraws++;
                             p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
