@@ -74,9 +74,17 @@ export function renderBracket(tournament, containerId) {
     // RENDER THE SELECTED STAGE
     let html = `
         ${tabsHtml}
-        <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} 
-            ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}
-        </h2>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} 
+                ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}
+            </h2>
+            
+            ${isActiveStage ? `
+                <button id="btn-force-end-stage" style="background: var(--danger); color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    ⏹ Force End Stage Early
+                </button>
+            ` : ''}
+        </div>
         ${tournament.status === "completed" && isActiveStage ? '<h3 style="color:#a6e3a1;">Tournament Complete!</h3>' : ''}
         <div id="bracket-board" style="display:flex; gap:30px; overflow-x:auto; padding-bottom:20px;"></div>
     `;
