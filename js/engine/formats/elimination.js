@@ -32,11 +32,20 @@ export function initStage(players, config) {
     };
 }
 
+// In js/engine/formats/elimination.js - Replace advanceStage
+
 export function advanceStage(stageData, config) {
     const currentRound = stageData.rounds[stageData.rounds.length - 1];
     
-    // Check if stage is done (Finals completed)
+    // Check if the bracket is finished (Finals completed)
     if (currentRound.length === 1) {
+        stageData.isComplete = true;
+        return stageData;
+    }
+
+    // NEW: Check if the host set a custom round limit!
+    // E.g., Stop Single Elim after exactly 2 rounds.
+    if (config.maxRounds && stageData.rounds.length >= config.maxRounds) {
         stageData.isComplete = true;
         return stageData;
     }
