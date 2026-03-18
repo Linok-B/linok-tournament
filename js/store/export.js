@@ -6,13 +6,30 @@ export function exportTournamentJSON(tournamentObj) {
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     
-    // 3. Create a temporary, invisible <a> tag and force a click to download
+    // 3. Create a temporary, invisible <a> tag
     const a = document.createElement("a");
     a.href = url;
     
-    // Add the current date to the filename
-    const dateStr = new Date().toISOString().split('T')[0];
-    a.download = `Tournament_Export_${dateStr}.json`;
+    // Sanitize name
+    let safeName = tournamentObj.settings.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+    if (!safeName || safeName === '_') safeName = 'Tournament';
+    
+    const now = new Date();
+    
+    // Format Date: DD-MM-YYYY
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const yyyy = now.getFullYear();
+    const dateStr = `${dd}-${mm}-${yyyy}`;
+    
+    // Format Time: HH-MM (24-hour format)
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const timeStr = `${hh}-${min}`;
+    
+    // Final Output Example: My_Custom_Tournament_25-10-2023_14-30.json
+    a.download = `${safeName}_${dateStr}_${timeStr}.json`;
+    // -----------------------------------
     
     document.body.appendChild(a);
     a.click();
