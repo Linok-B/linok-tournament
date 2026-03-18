@@ -184,7 +184,7 @@ export class Tournament {
                         p2.stats.gameWins += match.score2; p2.stats.gameLosses += match.score1;
 
                         if (match.winner.id === p1.id) {
-                            p1.stats.matchWins++; p1.stats.points += ptsForWin; p2.stats.matchLosses++; p2.stats.points += ptsForLoss; 
+                            p1.stats.matchWins++; p1.stats.points += ptsForWin; p2.stats.matchLosses++; p2.stats.points += ptsForLoss;
                         } else if (match.winner.id === p2.id) {
                             p2.stats.matchWins++; p2.stats.points += ptsForWin; p1.stats.matchLosses++; p1.stats.points += ptsForLoss;
                         } else if (match.winner === "tie") {
