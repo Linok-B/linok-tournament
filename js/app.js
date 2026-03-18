@@ -11,6 +11,46 @@ if (savedData) {
     currentTournament = Object.assign(new Tournament(), savedData);
 }
 
+// In js/app.js - Put this right after your initial updateUI() call
+
+// --- SETTINGS EVENT LISTENERS ---
+
+const nameInput = document.getElementById('setting-name');
+const winInput = document.getElementById('setting-pts-win');
+const drawInput = document.getElementById('setting-pts-draw');
+
+// Sync inputs to the engine when they type or change a number
+nameInput.addEventListener('input', (e) => {
+    currentTournament.settings.name = e.target.value || "Untitled Tournament";
+    updateTitle();
+    saveTournamentLocally(currentTournament);
+});
+
+winInput.addEventListener('change', (e) => {
+    currentTournament.settings.pointsForWin = parseInt(e.target.value) || 0;
+    if(currentTournament.status !== "setup") currentTournament.recalculateAllStats();
+    saveTournamentLocally(currentTournament);
+    updateUI();
+});
+
+drawInput.addEventListener('change', (e) => {
+    currentTournament.settings.pointsForDraw = parseInt(e.target.value) || 0;
+    if(currentTournament.status !== "setup") currentTournament.recalculateAllStats();
+    saveTournamentLocally(currentTournament);
+    updateUI();
+});
+
+// Helper function to update the big title and sync inputs on load
+function updateTitle() {
+    const titleEl = document.getElementById('main-tournament-title');
+    if (titleEl) titleEl.innerText = currentTournament.settings.name;
+    
+    // Ensure inputs match the loaded data
+    if (nameInput) nameInput.value = currentTournament.settings.name;
+    if (winInput) winInput.value = currentTournament.settings.pointsForWin;
+    if (drawInput) drawInput.value = currentTournament.settings.pointsForDraw;
+}
+
 updateUI();
 
 // Add Player Event
@@ -111,6 +151,7 @@ document.getElementById('file-import').addEventListener('change', (e) => {
 
 // Master UI Sync
 function updateUI() {
+    updateTitle();
     const inputs = document.querySelectorAll('#player-list-container input[type="number"]');
     const draftScores = {};
     inputs.forEach(input => { draftScores[input.id] = input.value; });
