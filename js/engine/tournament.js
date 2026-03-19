@@ -65,6 +65,8 @@ export class Tournament {
         return true;
     }
 
+    // In js/engine/tournament.js - Replace transitionToNextStage
+
     transitionToNextStage(incomingPlayers) {
         const nextStageIndex = this.stages.length;
         const config = this.settings.pipeline[nextStageIndex];
@@ -74,39 +76,45 @@ export class Tournament {
             return;
         }
 
-        // Filter out eliminated players!
-        // (Later we can add `if (!config.advanceAll)` here to allow custom overrides)
+        // 1. Filter out dead players
         let playersForNextStage = incomingPlayers.filter(p => !p.isEliminated);
 
-        // Top Cut Logic (unchanged)
+        // 2. THE BRIDGE: Top Cut Logic
         if (config.cutToTop && config.cutToTop < playersForNextStage.length) {
             
-            // NEW: Use the powerful math engine to sort!
+            // Get the tiebreakers from the stage that just finished
+            let pastStageTiebreakers = this.settings.tiebreakers;
+            if (this.stages.length > 0 && this.stages[this.stages.length - 1].config.tiebreakers) {
+                pastStageTiebreakers = this.stages[this.stages.length - 1].config.tiebreakers;
+            }
+
+            // SYNCHRONOUS SORTING
             const sortFunction = calculateTiebreakers(this.players, this.stages);
-            playersForNextStage.sort((a, b) => sortFunction(a, b, this.settings.tiebreakers));
+            playersForNextStage.sort((a, b) => sortFunction(a, b, pastStageTiebreakers));
             
+            // Slice the Top N
             playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
+            
+            // Re-seed based on their finish
             playersForNextStage.forEach((p, index) => { p.seed = index + 1; });
         }
 
-        import('./formats/registry.js').then(({ getFormat }) => {
-            const formatEngine = getFormat(config.type);
-            const stageData = formatEngine.initStage(playersForNextStage, config);
+        // 3. SYNCHRONOUS GENERATION (Happens whether there is a Top Cut or not!)
+        const formatEngine = getFormat(config.type);
+        const stageData = formatEngine.initStage(playersForNextStage, config);
 
-            this.stages.push({
-                id: crypto.randomUUID(),
-                stageNumber: nextStageIndex + 1,
-                config: config,
-                data: stageData,
-                status: "active"
-            });
+        this.stages.push({
+            id: crypto.randomUUID(),
+            stageNumber: nextStageIndex + 1,
+            config: config,
+            data: stageData,
+            status: "active"
+        });
 
-            import('../store/localData.js').then(({ saveTournamentLocally }) => {
-                saveTournamentLocally(this);
-                // DO NOT change window.viewingStageIndex here! 
-                // This keeps the UI looking at the completed Stage 1.
-                document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
-            });
+        // 4. Force a UI update
+        import('../store/localData.js').then(({ saveTournamentLocally }) => {
+            saveTournamentLocally(this);
+            document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
         });
     }
 
