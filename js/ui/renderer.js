@@ -159,28 +159,32 @@ export function renderBracket(tournament, containerId) {
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
 
-// THE MATH BEHIND PANNING AND ZOOMING
-function applyPanAndZoom(viewport, board) {
-    let scale = 1, panning = false, pointX = 0, pointY = 0, startX = 0, startY = 0;
+// Global object to remember camera position across redraws!
+window.bracketCamera = window.bracketCamera || { x: 0, y: 0, scale: 1 };
+
+export function applyPanAndZoom(viewport, board) {
+    let panning = false, startX = 0, startY = 0;
 
     function setTransform() {
-        board.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        board.style.transform = `translate(${window.bracketCamera.x}px, ${window.bracketCamera.y}px) scale(${window.bracketCamera.scale})`;
     }
 
+    // Instantly apply the saved camera position on load!
+    setTransform();
+
     viewport.addEventListener('mousedown', (e) => {
-        // Don't pan if they are clicking a button or typing a score!
         if (['INPUT', 'BUTTON'].includes(e.target.tagName)) return; 
         e.preventDefault();
         panning = true;
         viewport.style.cursor = 'grabbing';
-        startX = e.clientX - pointX;
-        startY = e.clientY - pointY;
+        startX = e.clientX - window.bracketCamera.x;
+        startY = e.clientY - window.bracketCamera.y;
     });
 
     viewport.addEventListener('mousemove', (e) => {
         if (!panning) return;
-        pointX = e.clientX - startX;
-        pointY = e.clientY - startY;
+        window.bracketCamera.x = e.clientX - startX;
+        window.bracketCamera.y = e.clientY - startY;
         setTransform();
     });
 
@@ -190,22 +194,17 @@ function applyPanAndZoom(viewport, board) {
     });
 
     viewport.addEventListener('wheel', (e) => {
-        e.preventDefault(); // Prevent scrolling the whole page
+        e.preventDefault(); 
         
-        // Calculate mouse position relative to the zoom
-        let xs = (e.clientX - pointX) / scale;
-        let ys = (e.clientY - pointY) / scale;
+        let xs = (e.clientX - window.bracketCamera.x) / window.bracketCamera.scale;
+        let ys = (e.clientY - window.bracketCamera.y) / window.bracketCamera.scale;
         
-        // Zoom in or out
         let delta = e.deltaY > 0 ? -0.1 : 0.1;
-        scale += delta;
+        window.bracketCamera.scale += delta;
+        window.bracketCamera.scale = Math.min(Math.max(0.3, window.bracketCamera.scale), 2);
         
-        // Clamp scale between 0.3x (zoomed out) and 2x (zoomed in)
-        scale = Math.min(Math.max(0.3, scale), 2);
-        
-        // Re-center around mouse cursor
-        pointX = e.clientX - xs * scale;
-        pointY = e.clientY - ys * scale;
+        window.bracketCamera.x = e.clientX - xs * window.bracketCamera.scale;
+        window.bracketCamera.y = e.clientY - ys * window.bracketCamera.scale;
         
         setTransform();
     }, { passive: false });
