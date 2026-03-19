@@ -1,5 +1,3 @@
-// js/engine/systems/tiebreakers.js
-
 export function calculateTiebreakers(players, stagesConfig) {
     // 1. Calculate Buchholz scores for everyone first
     players.forEach(p => {
