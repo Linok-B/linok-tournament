@@ -27,13 +27,17 @@ export function calculateTiebreakers(players, stagesConfig) {
 
     // 2. Return the master Sorting Function that acts as the "Waterfall"
     return function sortPlayers(a, b, tiebreakerArray) {
+        
+        // Bulletproof fallback! If the tournament settings don't have this array (e.g., an old save file), use the default.
+        const activeTiebreakers = tiebreakerArray || ["game_differential", "head_to_head", "buchholz", "seed"];
+
         // 0. Primary Sort: Match Points
         const ptsA = a.stats?.points ?? 0;
         const ptsB = b.stats?.points ?? 0;
         if (ptsB !== ptsA) return ptsB - ptsA;
 
         // 1. Loop through the custom tiebreaker waterfall
-        for (let rule of tiebreakerArray) {
+        for (let rule of activeTiebreakers) { // USE THE FALLBACK VARIABLE HERE!
             
             if (rule === "game_differential") {
                 const aDiff = (a.stats?.gameWins ?? 0) - (a.stats?.gameLosses ?? 0);
