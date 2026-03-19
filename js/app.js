@@ -415,21 +415,9 @@ document.getElementById('setup-blueprint-group').addEventListener('click', (e) =
 });
 
 
-// NEW: Toggle Streamer Mode (Hides UI for OBS)
-document.getElementById('btn-toggle-stream').addEventListener('click', () => {
+// hamburgur :tongue:
+document.getElementById('btn-hamburger').addEventListener('click', () => {
     document.body.classList.toggle('streamer-mode');
-    
-    // Optional QoL: If Streamer mode is ON, change the button text so they know how to exit!
-    const btn = document.getElementById('btn-toggle-stream');
-    if (document.body.classList.contains('streamer-mode')) {
-        btn.innerText = "❌ Exit Streamer Mode";
-        btn.style.background = "var(--danger)";
-        btn.style.color = "white";
-    } else {
-        btn.innerText = "📺 Toggle Streamer Mode";
-        btn.style.background = "var(--accent)";
-        btn.style.color = "var(--bg-dark)";
-    }
 });
 
 document.getElementById('btn-add-player').addEventListener('stateChanged', updateUI);
