@@ -112,6 +112,28 @@
         </div>
     </div>
 
+    <!-- END STAGE EARLY MODAL -->
+    <div id="end-stage-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; max-width: 500px; border: 2px solid var(--accent); text-align: center;">
+            <h2 style="color: var(--accent); margin-top: 0;">⏹ FORCE END STAGE</h2>
+            <p>You have unfinished matches in the current round. How do you want to handle them?</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 25px;">
+                <button id="modal-btn-end-rollback" style="background: var(--danger); color: white; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
+                    <strong>Rollback Round</strong><br><small>Delete ALL matches in this current round. Only use previous rounds for standings.</small>
+                </button>
+                
+                <button id="modal-btn-end-tie" style="background: #f9e2af; color: #1e1e2e; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
+                    <strong>Force Ties (TCG Rules)</strong><br><small>Keep submitted scores. Force all unfinished matches to be a 0-0 Tie.</small>
+                </button>
+                
+                <button id="modal-btn-end-cancel" style="background: #45475a; color: white; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="./js/app.js"></script>
 </body>
 </html>
