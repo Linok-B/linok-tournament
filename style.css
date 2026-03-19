@@ -85,3 +85,31 @@ button.danger {
     justify-content: space-between;
     border-left: 4px solid var(--accent);
 }
+
+/* 1. STREAMER MODE TOGGLE */
+body.streamer-mode .controls-panel {
+    display: none; /* Hides the entire sidebar */
+}
+body.streamer-mode .display-panel {
+    padding: 0;
+    overflow: hidden; /* Prevent native scrollbars when zooming */
+}
+
+/* 2. THE TRIANGULAR BRACKET LAYOUT */
+.bracket-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around; /* THIS is the magic! It centers the next round automatically! */
+    min-width: 250px;
+}
+
+.match-box {
+    background: var(--bg-panel);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    position: relative;
+    border: 1px solid #45475a;
+    /* Prevent text selection when dragging the board */
+    user-select: none; 
+}
