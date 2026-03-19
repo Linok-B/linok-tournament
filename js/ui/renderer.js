@@ -161,14 +161,24 @@ export function renderStandings(tournament, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // 1. USE THE NEW MATH ENGINE!
-    // This calculates the Buchholz scores and generates our Waterfall sorting function
-    const sortFunction = calculateTiebreakers(tournament.players, tournament.stages);
+    // 1. WHICH STAGE ARE WE LOOKING AT?
+    // Same viewIndex logic as in the Bracket Tabs
+    let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
+    if (viewIndex < 0) viewIndex = 0;
     
-    // 2. SORT THE PLAYERS
-    const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, tournament.settings.tiebreakers));
+    // 2. GET THE TIEBREAKERS FOR THIS SPECIFIC STAGE
+    let stageTiebreakers = tournament.settings.tiebreakers; // Fallback to global
+    
+    if (tournament.stages.length > 0 && tournament.stages[viewIndex].config.tiebreakers) {
+        stageTiebreakers = tournament.stages[viewIndex].config.tiebreakers;
+    }
 
-    // 3. DRAW THE HTML TABLE
+    // 3. RUN THE MATH ENGINE USING THE STAGE'S TIEBREAKERS!
+    import('../engine/systems/tiebreakers.js').then(({ calculateTiebreakers }) => {
+        const sortFunction = calculateTiebreakers(tournament.players, tournament.stages);
+        const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, stageTiebreakers));
+
+    // 4. DRAW THE HTML TABLE
     let html = `
         <h2 style="margin-top: 40px; border-top: 1px solid #45475a; padding-top: 20px;">Current Standings</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
