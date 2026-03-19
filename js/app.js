@@ -123,26 +123,28 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
 document.getElementById('btn-clear-data').addEventListener('click', () => {
     const modal = document.getElementById('warning-modal');
     
-    // Dynamically change the text for a Reset
-    document.querySelector('#warning-modal h2').innerText = "⚠️ RESET TOURNAMENT";
-    document.getElementById('warning-modal-text').innerText = "This will permanently delete the entire tournament, all players, and all match history. Are you absolutely sure?";
-    document.getElementById('modal-btn-confirm').innerText = "Delete Everything";
+    document.querySelector('#warning-modal h2').innerText = "⚠️ RESTART TOURNAMENT";
+    document.getElementById('warning-modal-text').innerText = "This will delete all match history and return to the Setup phase. All players and settings will be KEPT. Are you sure?";
+    document.getElementById('modal-btn-confirm').innerText = "Restart & Keep Players";
     
     modal.style.display = 'flex';
 
-    // Define the button actions for THIS specific scenario
-    document.getElementById('modal-btn-cancel').onclick = () => {
-        modal.style.display = 'none'; 
-    };
-
-    document.getElementById('modal-btn-export').onclick = () => {
-        exportTournamentJSON(currentTournament); 
-    };
+    document.getElementById('modal-btn-cancel').onclick = () => { modal.style.display = 'none'; };
+    document.getElementById('modal-btn-export').onclick = () => { exportTournamentJSON(currentTournament); };
 
     document.getElementById('modal-btn-confirm').onclick = () => {
-        clearLocalData();
-        currentTournament = new Tournament(); 
-        window.viewingStageIndex = 0; // Reset tab view
+        // NEW LOGIC: Don't create a new Tournament(), just reset the arrays!
+        currentTournament.stages = [];
+        currentTournament.status = "setup";
+        
+        // Reset player stats, but keep their names, ELO, and seeds!
+        currentTournament.players.forEach(p => {
+            p.isEliminated = false;
+            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
+        });
+
+        window.viewingStageIndex = 0; 
+        saveTournamentLocally(currentTournament);
         updateUI();
         modal.style.display = 'none'; 
     };
