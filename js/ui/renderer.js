@@ -157,30 +157,18 @@ export function renderBracket(tournament, containerId) {
     });
 }
 
-export function renderStandings(players, containerId) {
+export function renderStandings(tournament, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Bulletproof sorting: safely fallback to 0 if a stat is missing
-    const sortedPlayers = [...players].sort((a, b) => {
-        // Use Optional Chaining (?.) and Nullish Coalescing (??) to prevent crashes
-        const ptsA = a.stats?.points ?? 0;
-        const ptsB = b.stats?.points ?? 0;
+    // 1. USE THE NEW MATH ENGINE!
+    // This calculates the Buchholz scores and generates our Waterfall sorting function
+    const sortFunction = calculateTiebreakers(tournament.players, tournament.stages);
+    
+    // 2. SORT THE PLAYERS
+    const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, tournament.settings.tiebreakers));
 
-        if (ptsB !== ptsA) {
-            return ptsB - ptsA; 
-        }
-        
-        const aGW = a.stats?.gameWins ?? 0;
-        const aGL = a.stats?.gameLosses ?? 0;
-        const bGW = b.stats?.gameWins ?? 0;
-        const bGL = b.stats?.gameLosses ?? 0;
-
-        const aDiff = aGW - aGL;
-        const bDiff = bGW - bGL;
-        return bDiff - aDiff;
-    });
-
+    // 3. DRAW THE HTML TABLE
     let html = `
         <h2 style="margin-top: 40px; border-top: 1px solid #45475a; padding-top: 20px;">Current Standings</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
@@ -191,19 +179,20 @@ export function renderStandings(players, containerId) {
                     <th style="padding: 10px;">Points</th>
                     <th style="padding: 10px;">W-L-D</th>
                     <th style="padding: 10px;">Games (W-L)</th>
+                    <th style="padding: 10px;" title="Buchholz (Sum of opponents' points)">Buchholz</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
     sortedPlayers.forEach((player, index) => {
-        // Also ensure we safely display 0 if stats are missing here
         const pts = player.stats?.points ?? 0;
         const mw = player.stats?.matchWins ?? 0;
         const ml = player.stats?.matchLosses ?? 0;
         const md = player.stats?.matchDraws ?? 0;
         const gw = player.stats?.gameWins ?? 0;
         const gl = player.stats?.gameLosses ?? 0;
+        const buch = player.stats?.buchholz ?? 0; // Grab the newly calculated Buchholz score!
 
         html += `
             <tr style="border-bottom: 1px solid #45475a;">
@@ -212,6 +201,7 @@ export function renderStandings(players, containerId) {
                 <td style="padding: 10px; font-weight: bold; color: var(--accent);">${pts}</td>
                 <td style="padding: 10px;">${mw} - ${ml} - ${md}</td>
                 <td style="padding: 10px;">${gw} - ${gl}</td>
+                <td style="padding: 10px;">${buch}</td>
             </tr>
         `;
     });
