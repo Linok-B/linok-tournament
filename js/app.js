@@ -204,7 +204,7 @@ function updateUI() {
     // NEW: Render the Standings ONLY if the tournament has started
     const standingsDiv = document.getElementById('standings-container');
     if (currentTournament.status !== "setup") {
-        renderStandings(currentTournament.players, 'standings-container');
+        renderStandings(currentTournament, 'standings-container');
     } else {
         standingsDiv.innerHTML = ''; // Clear it if in setup phase
     }
