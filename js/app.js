@@ -298,10 +298,20 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         
         // Are there actually unfinished matches?
         const isRoundUnfinished = currentRound.some(m => m.winner === null && !m.isBye);
+
+        // Did they submit literally zero scores this round?
+        const matchesSubmitted = currentRound.filter(m => m.winner !== null && !m.isBye).length;
         
         if (!isRoundUnfinished) {
             // Round is fully complete anyway, just end the stage safely!
             executeEndStage(); 
+            return;
+        }
+
+        // If the round is totally empty, just delete it
+        if (matchesSubmitted === 0) {
+            activeStage.data.rounds.pop(); 
+            executeEndStage();
             return;
         }
 
