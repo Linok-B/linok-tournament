@@ -87,12 +87,39 @@ button.danger {
 }
 
 /* STREAMER MODE TOGGLE */
-body.streamer-mode .controls-panel {
-    display: none; /* Hides the entire sidebar */
+
+/* Hamburger Button */
+#btn-hamburger {
+    background: transparent;
+    color: var(--text-main);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 10px;
+    position: absolute; /* So it floats above the bracket */
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
 }
+
+/* When Streamer Mode is ON, hide all these things! */
+body.streamer-mode .controls-panel,
+body.streamer-mode #main-tournament-title,
+body.streamer-mode #standings-container,
+body.streamer-mode .stage-tabs-container,
+body.streamer-mode .stage-header-info {
+    display: none !important;
+}
+
 body.streamer-mode .display-panel {
     padding: 0;
-    overflow: hidden; /* Prevent native scrollbars when zooming */
+    overflow: hidden; 
+}
+
+/* Make the viewport take up 100% of the screen! */
+body.streamer-mode #bracket-viewport {
+    height: 100vh !important;
+    border: none !important;
 }
 
 
