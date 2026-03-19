@@ -72,40 +72,47 @@ export function renderBracket(tournament, containerId) {
         `;
     });
     tabsHtml += `</div>`;
-
+    
     // RENDER THE SELECTED STAGE
     let html = `
-        ${tabsHtml}
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} 
-                ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}
-            </h2>
-            
-            ${isActiveStage ? `
-                <button id="btn-force-end-stage" style="background: var(--danger); color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    ⏹ Force End Stage Early
-                </button>
-            ` : ''}
+        <div style="padding: 0 20px;">
+            ${tabsHtml}
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} 
+                    ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}
+                </h2>
+                ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">⏹ Force End Stage Early</button>` : ''}
+            </div>
+            ${tournament.status === "completed" && isActiveStage ? '<h3 style="color:#a6e3a1;">Tournament Complete!</h3>' : ''}
         </div>
-        ${tournament.status === "completed" && isActiveStage ? '<h3 style="color:#a6e3a1;">Tournament Complete!</h3>' : ''}
-        <div id="bracket-board" style="display:flex; gap:30px; overflow-x:auto; padding-bottom:20px;"></div>
+        
+        <!-- THE PAN & ZOOM VIEWPORT -->
+        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: #181825; border-top: 2px solid #45475a; border-bottom: 2px solid #45475a; position: relative; cursor: grab;">
+            <div id="bracket-board" style="display:flex; gap:40px; padding: 40px; height: 100%; box-sizing: border-box; transform-origin: 0 0;"></div>
+        </div>
     `;
 
     container.innerHTML = html;
     const board = document.getElementById('bracket-board');
 
-    // DRAW THE ROUNDS FOR THE SELECTED STAGE
+    // DRAW THE ROUNDS
     stageToRender.data.rounds.forEach((roundMatches, roundIndex) => {
         const roundColumn = document.createElement('div');
-        roundColumn.style.minWidth = '250px';
-        roundColumn.innerHTML = `<h3>Round ${roundIndex + 1}</h3>`;
+        roundColumn.className = 'bracket-column'; // Uses the new CSS!
+        
+        // Add round header inside the column
+        const header = document.createElement('h3');
+        header.innerText = `Round ${roundIndex + 1}`;
+        header.style.textAlign = 'center';
+        header.style.position = 'absolute'; // Keep it at the top, separate from flex layout
+        header.style.top = '-30px';
+        header.style.width = '250px';
+        roundColumn.style.position = 'relative';
+        roundColumn.appendChild(header);
 
         roundMatches.forEach(match => {
             const matchBox = document.createElement('div');
-            matchBox.style.background = 'rgba(0,0,0,0.3)';
-            matchBox.style.padding = '10px';
-            matchBox.style.marginBottom = '10px';
-            matchBox.style.borderRadius = '5px';
+            matchBox.className = 'match-box'; // Uses the new CSS!
             
             if (match.winner) matchBox.style.borderLeft = '4px solid #a6e3a1'; 
             else matchBox.style.borderLeft = '4px solid #f38ba8'; 
@@ -114,8 +121,7 @@ export function renderBracket(tournament, containerId) {
             const p2Name = match.player2 ? match.player2.name : "TBD";
 
             if (match.winner || match.isBye) {
-                let p1Display = p1Name;
-                let p2Display = p2Name;
+                let p1Display = p1Name; let p2Display = p2Name;
                 if (match.winner === match.player1 || match.winner === "tie") p1Display = `<strong>${p1Name}</strong>`;
                 if (match.winner === match.player2 || match.winner === "tie") p2Display = `<strong>${p2Name}</strong>`;
 
@@ -124,37 +130,85 @@ export function renderBracket(tournament, containerId) {
                     <div style="${match.winner === match.player2 ? 'color:#a6e3a1;' : ''}">${p2Display} ${match.winner ? `(${match.score2})` : ''}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
                         <small style="color:gray;">${match.isBye ? 'Auto-Advance' : (match.winner === "tie" ? 'TIE' : 'Completed')}</small>
-                        ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:2px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e;">Edit</button>` : ''}
+                        ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:2px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
                     </div>
                 `;
-                
             } else {
-                // Only show inputs if this is the ACTIVE stage. You cannot edit past stages!
                 if (isActiveStage) {
                     matchBox.innerHTML = `
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                             <span>${p1Name}</span>
-                            <input type="number" id="s1-${match.id}" style="width:40px; padding:2px;" value="0">
+                            <input type="number" id="s1-${match.id}" style="width:40px; padding:2px; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
                         </div>
                         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                             <span>${p2Name}</span>
-                            <input type="number" id="s2-${match.id}" style="width:40px; padding:2px;" value="0">
+                            <input type="number" id="s2-${match.id}" style="width:40px; padding:2px; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
                         </div>
-                        <button class="btn-report" data-matchid="${match.id}" style="width:100%; padding:5px; font-size:12px; cursor:pointer;">Submit Score</button>
+                        <button class="btn-report" data-matchid="${match.id}" style="width:100%; padding:5px; font-size:12px; cursor:pointer; background:var(--accent); border:none; border-radius:3px; font-weight:bold;">Submit</button>
                     `;
                 } else {
-                    // It's an active match in a past stage (which shouldn't happen, but just in case)
-                     matchBox.innerHTML = `
-                        <div>${p1Name}</div>
-                        <div>${p2Name}</div>
-                        <small style="color:gray;">Pending</small>
-                    `;
+                     matchBox.innerHTML = `<div>${p1Name}</div><div>${p2Name}</div><small style="color:gray;">Pending</small>`;
                 }
             }
             roundColumn.appendChild(matchBox);
         });
         board.appendChild(roundColumn);
     });
+
+    // --- NEW: THE PAN & ZOOM ENGINE ---
+    applyPanAndZoom(document.getElementById('bracket-viewport'), board);
+}
+
+// THE MATH BEHIND PANNING AND ZOOMING
+function applyPanAndZoom(viewport, board) {
+    let scale = 1, panning = false, pointX = 0, pointY = 0, startX = 0, startY = 0;
+
+    function setTransform() {
+        board.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+    }
+
+    viewport.addEventListener('mousedown', (e) => {
+        // Don't pan if they are clicking a button or typing a score!
+        if (['INPUT', 'BUTTON'].includes(e.target.tagName)) return; 
+        e.preventDefault();
+        panning = true;
+        viewport.style.cursor = 'grabbing';
+        startX = e.clientX - pointX;
+        startY = e.clientY - pointY;
+    });
+
+    viewport.addEventListener('mousemove', (e) => {
+        if (!panning) return;
+        pointX = e.clientX - startX;
+        pointY = e.clientY - startY;
+        setTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+        panning = false;
+        viewport.style.cursor = 'grab';
+    });
+
+    viewport.addEventListener('wheel', (e) => {
+        e.preventDefault(); // Prevent scrolling the whole page
+        
+        // Calculate mouse position relative to the zoom
+        let xs = (e.clientX - pointX) / scale;
+        let ys = (e.clientY - pointY) / scale;
+        
+        // Zoom in or out
+        let delta = e.deltaY > 0 ? -0.1 : 0.1;
+        scale += delta;
+        
+        // Clamp scale between 0.3x (zoomed out) and 2x (zoomed in)
+        scale = Math.min(Math.max(0.3, scale), 2);
+        
+        // Re-center around mouse cursor
+        pointX = e.clientX - xs * scale;
+        pointY = e.clientY - ys * scale;
+        
+        setTransform();
+    }, { passive: false });
 }
 
 export function renderStandings(tournament, containerId) {
