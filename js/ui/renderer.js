@@ -54,7 +54,7 @@ export function renderBracket(tournament, containerId) {
     const isActiveStage = (viewIndex === tournament.stages.length - 1 && tournament.status !== "completed");
     
     // BUILD THE TABS
-    let tabsHtml = `<div style="display:flex; gap:10px; margin-bottom: 20px; border-bottom: 2px solid #45475a; padding-bottom: 10px;">`;
+    let tabsHtml = `<div class="stage-tabs-container" style="display:flex; gap:10px; margin-bottom: 20px; border-bottom: 2px solid #45475a; padding-bottom: 10px;">`;
     tournament.stages.forEach((stage, index) => {
         const isSelected = index === viewIndex;
         tabsHtml += `
@@ -77,7 +77,7 @@ export function renderBracket(tournament, containerId) {
     let html = `
         <div style="padding: 0 20px;">
             ${tabsHtml}
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="stage-header-info" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} 
                     ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}
                 </h2>
