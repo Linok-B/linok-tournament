@@ -1,3 +1,5 @@
+// js/engine/systems/tiebreakers.js
+
 export function calculateTiebreakers(players, stagesConfig) {
     // 1. Calculate Buchholz scores for everyone first
     players.forEach(p => {
@@ -28,7 +30,7 @@ export function calculateTiebreakers(players, stagesConfig) {
     // 2. Return the master Sorting Function that acts as the "Waterfall"
     return function sortPlayers(a, b, tiebreakerArray) {
         
-        // Bulletproof fallback! If the tournament settings don't have this array (e.g., an old save file), use the default.
+        // BULLETPROOF FALLBACK: If tiebreakerArray is undefined/missing, use the default.
         const activeTiebreakers = tiebreakerArray || ["game_differential", "head_to_head", "buchholz", "seed"];
 
         // 0. Primary Sort: Match Points
@@ -36,8 +38,8 @@ export function calculateTiebreakers(players, stagesConfig) {
         const ptsB = b.stats?.points ?? 0;
         if (ptsB !== ptsA) return ptsB - ptsA;
 
-        // 1. Loop through the custom tiebreaker waterfall
-        for (let rule of activeTiebreakers) { // USE THE FALLBACK VARIABLE HERE!
+        // 1. Loop through the custom tiebreaker waterfall (Using the SAFE variable!)
+        for (let rule of activeTiebreakers) {
             
             if (rule === "game_differential") {
                 const aDiff = (a.stats?.gameWins ?? 0) - (a.stats?.gameLosses ?? 0);
@@ -52,7 +54,6 @@ export function calculateTiebreakers(players, stagesConfig) {
             }
             
             if (rule === "head_to_head") {
-                // Check if they played each other
                 let aBeatB = false;
                 let bBeatA = false;
                 
@@ -72,8 +73,8 @@ export function calculateTiebreakers(players, stagesConfig) {
                     });
                 });
                 
-                if (aBeatB && !bBeatA) return -1; // A wins the tie
-                if (bBeatA && !aBeatB) return 1;  // B wins the tie
+                if (aBeatB && !bBeatA) return -1; 
+                if (bBeatA && !aBeatB) return 1;  
             }
             
             if (rule === "elo") {
@@ -83,13 +84,12 @@ export function calculateTiebreakers(players, stagesConfig) {
             }
             
             if (rule === "seed") {
-                // Lower seed number is better (Seed 1 > Seed 8)
                 const aSeed = a.seed ?? 999;
                 const bSeed = b.seed ?? 999;
                 if (aSeed !== bSeed) return aSeed - bSeed;
             }
         }
 
-        return 0; // Exactly tied on every single metric!
+        return 0; // Exactly tied on every single metric
     };
 }
