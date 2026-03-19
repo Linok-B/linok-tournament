@@ -86,7 +86,7 @@ button.danger {
     border-left: 4px solid var(--accent);
 }
 
-/* 1. STREAMER MODE TOGGLE */
+/* STREAMER MODE TOGGLE */
 body.streamer-mode .controls-panel {
     display: none; /* Hides the entire sidebar */
 }
@@ -95,14 +95,30 @@ body.streamer-mode .display-panel {
     overflow: hidden; /* Prevent native scrollbars when zooming */
 }
 
-/* 2. THE TRIANGULAR BRACKET LAYOUT */
+
+/* Make the column take up the full height of the board */
 .bracket-column {
     display: flex;
     flex-direction: column;
-    justify-content: space-around; /* THIS is the magic! It centers the next round automatically! */
+    justify-content: space-around; 
     min-width: 250px;
+    height: 100%; /* Force it to stretch! */
+    padding-top: 40px; /* Make room for the Round Header so it doesn't overlap! */
+    position: relative;
 }
 
+/* Fix the Round Header */
+.bracket-column h3 {
+    position: absolute;
+    top: 0; /* Sit inside the 40px padding we just created */
+    left: 0;
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    color: var(--text-main);
+}
+
+/* Force boxes to be exactly the same height so they never jump! */
 .match-box {
     background: var(--bg-panel);
     padding: 10px;
@@ -110,6 +126,9 @@ body.streamer-mode .display-panel {
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     position: relative;
     border: 1px solid #45475a;
-    /* Prevent text selection when dragging the board */
     user-select: none; 
+    height: 80px; /* FIXED HEIGHT */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center the contents vertically */
 }
