@@ -380,13 +380,20 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
     const rounds = parseInt(document.getElementById('blueprint-rounds').value);
     const cut = parseInt(document.getElementById('blueprint-cut').value);
     
-    const newStage = { type: type };
+    // NEW: Get the selected tiebreaker profile
+    const tbProfile = document.getElementById('blueprint-tiebreakers').value;
+    
+    // Translate the profile string into the actual math array!
+    let tbArray = ["game_differential", "head_to_head", "seed"]; // default "standard"
+    if (tbProfile === "chess") tbArray = ["median_buchholz", "buchholz", "head_to_head", "seed"];
+    if (tbProfile === "elo") tbArray = ["elo", "head_to_head", "seed"];
+
+    const newStage = { type: type, tiebreakers: tbArray }; // Add it to the config!
     if (!isNaN(rounds) && rounds > 0) newStage.maxRounds = rounds;
     if (!isNaN(cut) && cut > 0) newStage.cutToTop = cut;
     
     currentTournament.settings.pipeline.push(newStage);
     
-    // Clear inputs
     document.getElementById('blueprint-rounds').value = '';
     document.getElementById('blueprint-cut').value = '';
     
