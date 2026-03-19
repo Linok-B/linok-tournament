@@ -291,22 +291,59 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         }
     }
 
-    // 5. Force End Stage
-    // In js/app.js - Update the Force End block
-
+    // 5. Force End Stage Early (W/ Options)
     if (e.target && e.target.id === 'btn-force-end-stage') {
-        if (confirm("Are you sure you want to end this stage right now? Any unfinished matches in the current round will be deleted, and current standings will be used!")) {
-            
-            const activeStage = currentTournament.stages[currentTournament.stages.length - 1];
-            
-            // CRITICAL FIX: Delete the unfinished round!
-            const currentRound = activeStage.data.rounds[activeStage.data.rounds.length - 1];
-            const isRoundUnfinished = currentRound.some(m => m.winner === null && !m.isBye);
-            
-            if (isRoundUnfinished) {
-                activeStage.data.rounds.pop(); // Remove the pending round from existence
-            }
+        const activeStage = currentTournament.stages[currentTournament.stages.length - 1];
+        const currentRound = activeStage.data.rounds[activeStage.data.rounds.length - 1];
+        
+        // Are there actually unfinished matches?
+        const isRoundUnfinished = currentRound.some(m => m.winner === null && !m.isBye);
+        
+        if (!isRoundUnfinished) {
+            // Round is fully complete anyway, just end the stage safely!
+            executeEndStage(); 
+            return;
+        }
 
+        // Round is partial. Show the new Modal!
+        const modal = document.getElementById('end-stage-modal');
+        modal.style.display = 'flex';
+
+        // OPTION 1: Rollback
+        document.getElementById('modal-btn-end-rollback').onclick = () => {
+            activeStage.data.rounds.pop(); // Delete the entire partial round
+            executeEndStage();
+            modal.style.display = 'none';
+        };
+
+        // OPTION 2: Force Ties
+        document.getElementById('modal-btn-end-tie').onclick = () => {
+            if (activeStage.config.type === "single_elimination") {
+                alert("You cannot force ties in an Elimination bracket. Please Rollback instead.");
+                return;
+            }
+            
+            // Loop through the round and force ties on pending matches
+            currentRound.forEach(m => {
+                if (m.winner === null && !m.isBye) {
+                    m.score1 = 0;
+                    m.score2 = 0;
+                    m.winner = "tie";
+                }
+            });
+            executeEndStage();
+            modal.style.display = 'none';
+        };
+
+        // CANCEL
+        document.getElementById('modal-btn-end-cancel').onclick = () => {
+            modal.style.display = 'none';
+        };
+        
+        // Helper function to finalize the end stage action
+        function executeEndStage() {
+            currentTournament.recalculateAllStats(); // Update leaderboard!
+            
             activeStage.status = "completed";
             activeStage.data.isComplete = true; 
             
