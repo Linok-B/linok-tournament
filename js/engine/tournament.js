@@ -65,8 +65,6 @@ export class Tournament {
         return true;
     }
 
-    // In js/engine/tournament.js - Replace transitionToNextStage
-
     transitionToNextStage(incomingPlayers) {
         const nextStageIndex = this.stages.length;
         const config = this.settings.pipeline[nextStageIndex];
