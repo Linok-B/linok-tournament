@@ -1,4 +1,5 @@
 import { getFormat } from './formats/registry.js';
+import { calculateTiebreakers } from './systems/tiebreakers.js';
 
 export class Tournament {
 
@@ -12,6 +13,9 @@ export class Tournament {
             pointsForWin: 3,
             pointsForDraw: 1,
             pointsForLoss: 0,
+
+            // Default waterfal (Host can change this later)
+            tiebreakers: ["game_differential", "head_to_head", "buchholz", "seed"], 
             
             // Default to just Single Elim
             pipeline: [
@@ -60,8 +64,6 @@ export class Tournament {
         this.transitionToNextStage(this.players);
         return true;
     }
-    
-    // In js/engine/tournament.js
 
     transitionToNextStage(incomingPlayers) {
         const nextStageIndex = this.stages.length;
@@ -72,23 +74,18 @@ export class Tournament {
             return;
         }
 
-        // NEW: Filter out eliminated players!
+        // Filter out eliminated players!
         // (Later we can add `if (!config.advanceAll)` here to allow custom overrides)
         let playersForNextStage = incomingPlayers.filter(p => !p.isEliminated);
 
         // Top Cut Logic (unchanged)
         if (config.cutToTop && config.cutToTop < playersForNextStage.length) {
-            playersForNextStage.sort((a, b) => {
-                const ptsA = a.stats?.points ?? 0;
-                const ptsB = b.stats?.points ?? 0;
-                if (ptsB !== ptsA) return ptsB - ptsA; 
-                const aDiff = (a.stats?.gameWins ?? 0) - (a.stats?.gameLosses ?? 0);
-                const bDiff = (b.stats?.gameWins ?? 0) - (b.stats?.gameLosses ?? 0);
-                return bDiff - aDiff;
-            });
-            playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
             
-            // Re-seed based on current standings
+            // NEW: Use the powerful math engine to sort!
+            const sortFunction = calculateTiebreakers(this.players, this.stages);
+            playersForNextStage.sort((a, b) => sortFunction(a, b, this.settings.tiebreakers));
+            
+            playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
             playersForNextStage.forEach((p, index) => { p.seed = index + 1; });
         }
 
@@ -112,8 +109,6 @@ export class Tournament {
             });
         });
     }
-
-    // In js/engine/tournament.js
 
     reportMatchScore(matchId, score1, score2) {
         if (this.status !== "active") return false;
@@ -175,7 +170,7 @@ export class Tournament {
         return true;
     }
 
-    // NEW: Bulletproof Leaderboard Recalculation
+    // Leaderboard Recalculation
     recalculateAllStats() {
         // Reset everyone to zero
         this.players.forEach(p => {
@@ -219,7 +214,7 @@ export class Tournament {
         });
     }
 
-    // NEW: The Time Machine (Undo/Edit Match)
+    // Undo/Edit Match
     undoMatch(matchId, forceDestructive = false) {
         let foundStageIndex = -1;
         let foundRoundIndex = -1;
