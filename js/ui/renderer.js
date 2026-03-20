@@ -21,15 +21,20 @@ export function renderPlayerList(players, containerId) {
         card.style.borderRadius = '6px';
         card.style.borderLeft = '4px solid var(--accent)';
         
+        card.style.gap = '10px';
+        
         card.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <span class="drag-handle" style="color: #89b4fa; font-size: 16px; font-weight: bold; cursor: grab; padding: 5px;">⋮⋮</span>
-                
-                <strong title="${player.name}"><span style="color: gray; margin-right: 5px;">${player.seed}.</span> ${player.name}</strong>
-                
-                <span style="font-size: 12px; color: gray;">(ELO: ${player.elo})</span>
+            <div class="drag-handle" style="color: #89b4fa; font-size: 16px; font-weight: bold; cursor: grab; padding: 5px; flex-shrink: 0;">⋮⋮</div>
+            
+            <!-- This container GROWS to fill all available space! -->
+            <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0;">
+                <strong title="${player.name}" style="color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <span class="seed-number" style="color: gray; margin-right: 5px;">${player.seed}.</span>${player.name}
+                </strong>
+                <span style="font-size: 12px; color: gray; flex-shrink: 0;">(ELO: ${player.elo})</span>
             </div>
-            <button class="btn-remove-player" data-id="${player.id}" style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">X</button>
+            
+            <button class="btn-remove-player" data-id="${player.id}" style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; flex-shrink: 0;">X</button>
         `;
         
         container.appendChild(card);
