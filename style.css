@@ -102,24 +102,25 @@ button.danger {
     z-index: 1000;
 }
 
-/* When Streamer Mode is ON, hide all these things! */
+/* Sidebar Hidden Mode (Hamburger) */
+body.sidebar-hidden .controls-panel { display: none !important; }
+
+/* True Streamer Mode (Eye Icon) */
 body.streamer-mode .controls-panel,
-body.streamer-mode #main-tournament-title,
+body.streamer-mode #tournament-header,
 body.streamer-mode #standings-container,
-body.streamer-mode .stage-tabs-container,
-body.streamer-mode .stage-header-info {
+body.streamer-mode .stage-header-info,
+body.streamer-mode .stage-tabs-container {
     display: none !important;
 }
 
-body.streamer-mode .display-panel {
-    padding: 0;
-    overflow: hidden; 
-}
+body.streamer-mode .display-panel { padding: 0 !important; overflow: hidden; }
 
-/* Make the viewport take up 100% of the screen! */
+/* The Viewport expansions */
 body.streamer-mode #bracket-viewport {
     height: 100vh !important;
     border: none !important;
+    border-radius: 0 !important;
 }
 
 
