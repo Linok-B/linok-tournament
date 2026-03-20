@@ -165,12 +165,24 @@ body.streamer-mode #bracket-viewport {
 
 /* The card you are physically dragging across the screen */
 .player-card.is-dragging {
-    position: fixed; /* Detaches it from the list so it can follow the mouse */
+    position: fixed; 
     z-index: 9999;
     box-shadow: 0 10px 20px rgba(0,0,0,0.5);
     opacity: 0.9;
-    pointer-events: none; /* Crucial! Prevents the ghost from blocking mouse events underneath it */
-    width: 250px; /* Keep it the size of the sidebar */
+    pointer-events: none; 
+    
+    /* Force it to exactly match the sidebar width, minus padding! */
+    width: 260px; 
+    box-sizing: border-box;
+}
+
+.player-card strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 140px; /* Leaves room for the ELO text and the X button */
+    vertical-align: middle;
 }
 
 /* The empty space left behind in the list */
