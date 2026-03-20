@@ -1,7 +1,5 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 
-// In js/ui/renderer.js - Replace renderPlayerList completely
-
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = ''; 
@@ -26,7 +24,9 @@ export function renderPlayerList(players, containerId) {
         card.innerHTML = `
             <div style="display: flex; align-items: center; gap: 15px;">
                 <span class="drag-handle" style="color: #89b4fa; font-size: 16px; font-weight: bold; cursor: grab; padding: 5px;">⋮⋮</span>
-                <strong><span style="color: gray; margin-right: 5px;">${player.seed}.</span> ${player.name}</strong>
+                
+                <strong title="${player.name}"><span style="color: gray; margin-right: 5px;">${player.seed}.</span> ${player.name}</strong>
+                
                 <span style="font-size: 12px; color: gray;">(ELO: ${player.elo})</span>
             </div>
             <button class="btn-remove-player" data-id="${player.id}" style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">X</button>
