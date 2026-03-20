@@ -82,19 +82,22 @@ export function renderBracket(tournament, containerId) {
 // ---------------------------------------------------------
 // THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines)
 // ---------------------------------------------------------
+// In js/ui/renderer.js - Replace drawBracketMath
+
 function drawBracketMath(stage, isActiveStage) {
     const board = document.getElementById('bracket-board');
+    // Clear existing SVG and Boxes before redrawing
+    board.innerHTML = '<svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>';
     const svgLayer = document.getElementById('bracket-lines');
     
     // Config values for spacing
-    const boxWidth = 220;
+    const boxWidth = 250; // WIDENED to fit the Submit button!
     const boxHeight = 85;
-    const gapX = 60;  // Horizontal space between columns
-    const gapY = 30;  // Vertical space between matches in Round 1
+    const gapX = 60;  
+    const gapY = 30;  
     const startX = 50; 
-    const startY = 50;
+    const startY = 60; // Pushed down slightly to clear the Round Header
 
-    // We need to store the exact X/Y coordinates of every match to draw lines between them!
     const matchCoordinates = {}; 
 
     // Loop through columns (Rounds)
@@ -115,38 +118,41 @@ function drawBracketMath(stage, isActiveStage) {
         roundMatches.forEach((match, matchIndex) => {
             let currentY = 0;
 
-            // ELIMINATION BRACKET MATH: Perfect Triangular Layout!
             if (stage.config.type === "single_elimination" && roundIndex > 0) {
-                // A child match is positioned exactly halfway between its two parent matches from the previous round
-                // MatchIndex 0's parents are prevRound Match 0 and 1.
-                // MatchIndex 1's parents are prevRound Match 2 and 3.
-                const parent1Id = stage.data.rounds[roundIndex - 1][matchIndex * 2]?.id;
-                const parent2Id = stage.data.rounds[roundIndex - 1][(matchIndex * 2) + 1]?.id;
+                // Find parents exactly
+                const prevRound = stage.data.rounds[roundIndex - 1];
+                const parent1 = prevRound[matchIndex * 2];
+                const parent2 = prevRound[(matchIndex * 2) + 1];
                 
-                const p1Y = matchCoordinates[parent1Id]?.y || 0;
-                const p2Y = matchCoordinates[parent2Id]?.y || p1Y; // If no parent 2, align with parent 1
-                
+                const p1Y = parent1 ? matchCoordinates[parent1.id]?.y : 0;
+                // If there's no parent 2 (because of odd numbers/byes), just align with parent 1
+                const p2Y = parent2 ? matchCoordinates[parent2.id]?.y : p1Y; 
+
+                // Place child perfectly in the middle!
                 currentY = (p1Y + p2Y) / 2;
-                
-                // DRAW SVG LINES! (Connect parents to this child)
-                if (p1Y && p2Y && p1Y !== p2Y) {
+
+                // DRAW SVG LINES!
+                if (parent1 && parent2 && p1Y !== p2Y) {
                     const lineStartX = currentX - gapX;
                     const lineEndX = currentX;
                     
-                    // Parent 1 (Top) line
+                    // Top line
                     svgLayer.innerHTML += `<path d="M ${lineStartX + boxWidth} ${p1Y + (boxHeight/2)} L ${lineStartX + boxWidth + (gapX/2)} ${p1Y + (boxHeight/2)} L ${lineStartX + boxWidth + (gapX/2)} ${currentY + (boxHeight/2)} L ${lineEndX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
-                    // Parent 2 (Bottom) line
+                    // Bottom line
                     svgLayer.innerHTML += `<path d="M ${lineStartX + boxWidth} ${p2Y + (boxHeight/2)} L ${lineStartX + boxWidth + (gapX/2)} ${p2Y + (boxHeight/2)} L ${lineStartX + boxWidth + (gapX/2)} ${currentY + (boxHeight/2)} L ${lineEndX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                } else if (parent1 && (!parent2 || p1Y === p2Y)) {
+                    // Straight line if only one parent
+                    const lineStartX = currentX - gapX;
+                    svgLayer.innerHTML += `<path d="M ${lineStartX + boxWidth} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
                 }
 
             } else {
-                // ROUND 1 (Or Swiss/Round Robin): Just stack them normally, but with our strict gapY spacing!
-                // To keep Swiss visually centered if players drop, we just multiply index
-                const multiplier = Math.pow(2, roundIndex); // Expands space for later rounds in non-elim just in case
+                // NON-ELIM FORMATS: Stack them with expanding gaps so Swiss doesn't squish later!
+                const multiplier = Math.pow(2, roundIndex); 
                 currentY = startY + (matchIndex * (boxHeight + gapY) * multiplier);
             }
 
-            // Save coords for the next round to use
+            // Save coords BEFORE drawing the HTML box!
             matchCoordinates[match.id] = { x: currentX, y: currentY };
 
             // BUILD THE BOX HTML
@@ -183,13 +189,15 @@ function drawBracketMath(stage, isActiveStage) {
                     matchBox.innerHTML = `
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                             <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1Name}</span>
-                            <input type="number" id="s1-${match.id}" style="width:40px; padding:2px; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
+                            <!-- Shortened input width from 40px to 35px for more name room! -->
+                            <input type="number" id="s1-${match.id}" style="width:35px; padding:2px; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
                         </div>
                         <div style="display:flex; justify-content:space-between;">
                             <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Name}</span>
-                            <input type="number" id="s2-${match.id}" style="width:40px; padding:2px; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
+                            <input type="number" id="s2-${match.id}" style="width:35px; padding:2px; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
                         </div>
-                        <button class="btn-report" data-matchid="${match.id}" style="position:absolute; right:-25px; top:25px; height:35px; width:45px; font-size:10px; cursor:pointer; background:var(--accent); border:none; border-radius:4px; font-weight:bold; z-index:10;">✓</button>
+                        <!-- Moved the Submit button inside the box layout -->
+                        <button class="btn-report" data-matchid="${match.id}" style="position:absolute; right:5px; top:25px; height:35px; width:40px; font-size:14px; cursor:pointer; background:var(--accent); border:none; border-radius:4px; font-weight:bold; z-index:10;">✓</button>
                     `;
                 } else {
                      matchBox.innerHTML = `<div>${p1Name}</div><div>${p2Name}</div><small style="color:gray;">Pending</small>`;
@@ -199,7 +207,6 @@ function drawBracketMath(stage, isActiveStage) {
         });
     });
 
-    // Re-apply Pan and Zoom
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
 
