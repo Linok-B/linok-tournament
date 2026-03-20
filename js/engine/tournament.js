@@ -160,10 +160,11 @@ export class Tournament {
         return true;
     }
 
+    
     recalculateAllStats() {
         // Reset everyone to zero AND revive everyone
         this.players.forEach(p => {
-            p.isEliminated = false; // NEW: Revive everyone initially!
+            p.isEliminated = false; 
             p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
         });
 
@@ -171,6 +172,7 @@ export class Tournament {
         const ptsForDraw = this.settings.pointsForDraw !== undefined ? this.settings.pointsForDraw : 1;
         const ptsForLoss = this.settings.pointsForLoss !== undefined ? this.settings.pointsForLoss : 0;
 
+        // Tally up every completed match
         this.stages.forEach(stage => {
             stage.data.rounds.forEach(round => {
                 round.forEach(match => {
@@ -181,30 +183,32 @@ export class Tournament {
 
                     if (match.isBye && p1) {
                         p1.stats.matchWins++; p1.stats.points += ptsForWin;
-                        return;
+                        return; // Byes don't kill anyone
                     }
 
                     if (p1 && p2) {
                         p1.stats.gameWins += match.score1; p1.stats.gameLosses += match.score2;
                         p2.stats.gameWins += match.score2; p2.stats.gameLosses += match.score1;
 
+                        let loserObj = null; // Track who lost this specific match
+
                         if (match.winner.id === p1.id) {
                             p1.stats.matchWins++; p1.stats.points += ptsForWin; 
                             p2.stats.matchLosses++; p2.stats.points += ptsForLoss;
+                            loserObj = p2;
                         } else if (match.winner.id === p2.id) {
                             p2.stats.matchWins++; p2.stats.points += ptsForWin; 
                             p1.stats.matchLosses++; p1.stats.points += ptsForLoss;
+                            loserObj = p1;
                         } else if (match.winner === "tie") {
                             p1.stats.matchDraws++; p2.stats.matchDraws++;
                             p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
                         }
 
-                        // NEW: Dynamically re-kill players who lost in Elimination matches!
-                        // This guarantees editing a match perfectly restores the dead/alive state.
-                        if (stage.config.type === "single_elimination" && match.winner !== "tie") {
-                            const loserId = match.winner.id === p1.id ? p2.id : p1.id;
-                            const loser = this.players.find(p => p.id === loserId);
-                            if (loser) loser.isEliminated = true;
+                        // NEW: Iron-clad Elimination check!
+                        // If this stage is single elimination, and someone lost, they are dead forever.
+                        if (stage.config.type === "single_elimination" && loserObj) {
+                            loserObj.isEliminated = true;
                         }
                     }
                 });
