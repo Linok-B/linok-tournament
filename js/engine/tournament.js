@@ -116,19 +116,19 @@ export class Tournament {
         });
     }
 
+    // In js/engine/tournament.js - Replace these two functions!
+
     reportMatchScore(matchId, score1, score2) {
         if (this.status !== "active") return false;
 
         const activeStage = this.stages[this.stages.length - 1];
         const currentRound = activeStage.data.rounds[activeStage.data.rounds.length - 1];
         const match = currentRound.find(m => m.id === matchId);
-        
         if (!match || match.winner) return false;
 
         match.score1 = parseInt(score1) || 0;
         match.score2 = parseInt(score2) || 0;
 
-        // Forbid ties in Elimination Formats
         if (activeStage.config.type === "single_elimination" && match.score1 === match.score2) {
             alert("Ties are not allowed in Elimination formats!");
             return false; 
@@ -138,48 +138,32 @@ export class Tournament {
         else if (match.score2 > match.score1) match.winner = match.player2;
         else match.winner = "tie"; 
 
-        // NEW: If this is an Elimination format, mark the loser as DEAD
-        if (activeStage.config.type === "single_elimination" && match.winner !== "tie") {
-            const loserId = match.winner.id === match.player1.id ? match.player2.id : match.player1.id;
-            const loserObj = this.players.find(p => p.id === loserId);
-            if (loserObj) loserObj.isEliminated = true; // Mark them dead!
-        }
-
-        // 1. Recalculate stats from scratch!
-        this.recalculateAllStats();
-
-        // 2. Check if round is finished
         const isRoundComplete = currentRound.every(m => m.winner !== null);
         
+        // SYNCHRONOUS ADVANCEMENT (Fixes UI not updating!)
         if (isRoundComplete) {
-            import('./formats/registry.js').then(({ getFormat }) => {
-                const formatEngine = getFormat(activeStage.config.type);
-                activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config, this.players);
+            const formatEngine = getFormat(activeStage.config.type);
+            activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config, this.players);
 
-                if (activeStage.data.isComplete) {
-                    activeStage.status = "completed";
-                    if (this.stages.length >= this.settings.pipeline.length) {
-                        this.status = "completed";
-                    } else {
-                        // Instead of auto-transitioning, we just unlock the next stage button in the UI (We will build this later)
-                        // For now, we leave it as is, waiting for the host.
-                        this.transitionToNextStage(this.players);
-                    }
+            if (activeStage.data.isComplete) {
+                activeStage.status = "completed";
+                if (this.stages.length >= this.settings.pipeline.length) {
+                    this.status = "completed";
+                } else {
+                    this.transitionToNextStage(this.players);
                 }
-                
-                import('../store/localData.js').then(({ saveTournamentLocally }) => {
-                    saveTournamentLocally(this);
-                    document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
-                });
-            });
+            }
         }
+        
+        // Recalculate stats AFTER advancement
+        this.recalculateAllStats();
         return true;
     }
 
-    // Leaderboard Recalculation
     recalculateAllStats() {
-        // Reset everyone to zero
+        // Reset everyone to zero AND revive everyone
         this.players.forEach(p => {
+            p.isEliminated = false; // NEW: Revive everyone initially!
             p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
         });
 
@@ -187,7 +171,6 @@ export class Tournament {
         const ptsForDraw = this.settings.pointsForDraw !== undefined ? this.settings.pointsForDraw : 1;
         const ptsForLoss = this.settings.pointsForLoss !== undefined ? this.settings.pointsForLoss : 0;
 
-        // Tally up every completed match
         this.stages.forEach(stage => {
             stage.data.rounds.forEach(round => {
                 round.forEach(match => {
@@ -197,8 +180,7 @@ export class Tournament {
                     const p2 = this.players.find(p => p.id === match.player2?.id);
 
                     if (match.isBye && p1) {
-                        p1.stats.matchWins++;
-                        p1.stats.points += ptsForWin;
+                        p1.stats.matchWins++; p1.stats.points += ptsForWin;
                         return;
                     }
 
@@ -207,12 +189,22 @@ export class Tournament {
                         p2.stats.gameWins += match.score2; p2.stats.gameLosses += match.score1;
 
                         if (match.winner.id === p1.id) {
-                            p1.stats.matchWins++; p1.stats.points += ptsForWin; p2.stats.matchLosses++; p2.stats.points += ptsForLoss;
+                            p1.stats.matchWins++; p1.stats.points += ptsForWin; 
+                            p2.stats.matchLosses++; p2.stats.points += ptsForLoss;
                         } else if (match.winner.id === p2.id) {
-                            p2.stats.matchWins++; p2.stats.points += ptsForWin; p1.stats.matchLosses++; p1.stats.points += ptsForLoss;
+                            p2.stats.matchWins++; p2.stats.points += ptsForWin; 
+                            p1.stats.matchLosses++; p1.stats.points += ptsForLoss;
                         } else if (match.winner === "tie") {
                             p1.stats.matchDraws++; p2.stats.matchDraws++;
                             p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
+                        }
+
+                        // NEW: Dynamically re-kill players who lost in Elimination matches!
+                        // This guarantees editing a match perfectly restores the dead/alive state.
+                        if (stage.config.type === "single_elimination" && match.winner !== "tie") {
+                            const loserId = match.winner.id === p1.id ? p2.id : p1.id;
+                            const loser = this.players.find(p => p.id === loserId);
+                            if (loser) loser.isEliminated = true;
                         }
                     }
                 });
