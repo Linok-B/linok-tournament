@@ -128,7 +128,7 @@ function drawBracketMath(stage, isActiveStage) {
     board.innerHTML = '<svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>';
     const svgLayer = document.getElementById('bracket-lines');
     
-    const boxWidth = 250; 
+    const boxWidth = 280; 
     const boxHeight = 85;
     const gapX = 60;  
     const gapY = 20;  
