@@ -440,3 +440,31 @@ document.addEventListener('click', (e) => {
         }
     }
 });
+
+// Handle Drag-and-Drop Seeding
+document.getElementById('player-list-container').addEventListener('playerReordered', (e) => {
+    // Only allow reordering during the Setup phase!
+    if (currentTournament.status !== "setup") return;
+
+    const { draggedId, targetId } = e.detail;
+    
+    // Find the players in the master array
+    const draggedIndex = currentTournament.players.findIndex(p => p.id === draggedId);
+    const targetIndex = currentTournament.players.findIndex(p => p.id === targetId);
+    
+    if (draggedIndex > -1 && targetIndex > -1) {
+        // Remove the dragged player
+        const [draggedPlayer] = currentTournament.players.splice(draggedIndex, 1);
+        
+        // Insert them at the new target index
+        currentTournament.players.splice(targetIndex, 0, draggedPlayer);
+        
+        // Recalculate all Seeds based on their new physical order!
+        currentTournament.players.forEach((p, index) => {
+            p.seed = index + 1;
+        });
+        
+        saveTournamentLocally(currentTournament);
+        updateUI();
+    }
+});
