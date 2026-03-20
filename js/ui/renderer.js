@@ -29,8 +29,6 @@ export function renderPlayerList(players, containerId) {
     });
 }
 
-// In js/ui/renderer.js - Replace renderBracket completely
-
 export function renderBracket(tournament, containerId) {
     const container = document.getElementById(containerId);
     
@@ -80,9 +78,8 @@ export function renderBracket(tournament, containerId) {
 }
 
 // ---------------------------------------------------------
-// THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines)
+// THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines, that's it)
 // ---------------------------------------------------------
-// In js/ui/renderer.js - Replace drawBracketMath
 
 function drawBracketMath(stage, isActiveStage) {
     const board = document.getElementById('bracket-board');
