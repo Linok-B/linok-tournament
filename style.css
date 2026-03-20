@@ -163,27 +163,24 @@ body.streamer-mode #bracket-viewport {
 }
 
 
+/* In style.css */
+
+/* 1. Remove the hardcoded width from the ghost! */
 .player-card.is-dragging {
     position: fixed; 
     z-index: 9999;
     box-shadow: 0 10px 20px rgba(0,0,0,0.5);
     opacity: 0.9;
     pointer-events: none; 
-    
-    /* The sidebar is 300px. Minus 40px padding = exactly 260px wide! */
-    width: 260px !important; 
     box-sizing: border-box;
+    
 }
 
+/* 2. Remove the hardcoded width from the name! */
 .player-card strong {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: inline-block;
-    
-    /* Reminder to modify till it fits ~20 characters. */
-    max-width: 180px; 
-    vertical-align: middle;
 }
 
 /* The empty space left behind in the list */
