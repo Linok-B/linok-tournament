@@ -1,5 +1,7 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 
+// In js/ui/renderer.js - Replace renderPlayerList completely
+
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = ''; 
@@ -10,10 +12,8 @@ export function renderPlayerList(players, containerId) {
     sortedPlayers.forEach(player => {
         const card = document.createElement('div');
         card.className = 'player-card';
-        card.setAttribute('draggable', 'true');
         card.setAttribute('data-id', player.id);
         
-        // Physical styling
         card.style.display = 'flex';
         card.style.justifyContent = 'space-between';
         card.style.alignItems = 'center';
@@ -22,96 +22,122 @@ export function renderPlayerList(players, containerId) {
         card.style.backgroundColor = 'var(--bg-panel)';
         card.style.borderRadius = '6px';
         card.style.borderLeft = '4px solid var(--accent)';
-        card.style.cursor = 'grab';
-        card.style.transition = 'transform 0.1s ease, margin 0.1s ease'; // Smooth animation!
         
         card.innerHTML = `
             <div style="display: flex; align-items: center; gap: 15px;">
-                <span style="color: #89b4fa; font-size: 16px; font-weight: bold; cursor: grab;">⋮⋮</span>
+                <span class="drag-handle" style="color: #89b4fa; font-size: 16px; font-weight: bold; cursor: grab; padding: 5px;">⋮⋮</span>
                 <strong><span style="color: gray; margin-right: 5px;">${player.seed}.</span> ${player.name}</strong>
                 <span style="font-size: 12px; color: gray;">(ELO: ${player.elo})</span>
             </div>
             <button class="btn-remove-player" data-id="${player.id}" style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">X</button>
         `;
         
-        // --- PHYSICAL DRAG AND DROP EVENTS ---
-        
-        card.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', player.id);
-            e.dataTransfer.effectAllowed = 'move';
-            
-            // Give the dragged item a distinct "ghost" look
-            setTimeout(() => {
-                card.style.opacity = '0.3';
-                card.style.transform = 'scale(0.98)';
-            }, 0);
-        });
-        
-        card.addEventListener('dragend', () => {
-            card.style.opacity = '1';
-            card.style.transform = 'scale(1)';
-            
-            // Reset ALL cards back to normal in case of a failed drop
-            document.querySelectorAll('.player-card').forEach(c => {
-                c.style.borderTop = 'none';
-                c.style.borderBottom = 'none';
-                c.style.marginTop = '0';
-                c.style.marginBottom = '10px';
-            });
-        });
-        
-        card.addEventListener('dragover', (e) => {
-            e.preventDefault(); 
-            e.dataTransfer.dropEffect = 'move';
-            
-            // Find out if we are hovering over the top half or bottom half of the card
-            const bounding = card.getBoundingClientRect();
-            const offset = bounding.y + (bounding.height / 2);
-            
-            // Physical push effect!
-            if (e.clientY - offset > 0) {
-                // Hovering bottom half: Push the next card down
-                card.style.borderBottom = '3px solid var(--accent)';
-                card.style.borderTop = 'none';
-                card.style.marginBottom = '25px'; // Create visual space!
-                card.style.marginTop = '0';
-            } else {
-                // Hovering top half: Push this card down
-                card.style.borderTop = '3px solid var(--accent)';
-                card.style.borderBottom = 'none';
-                card.style.marginTop = '15px'; // Create visual space!
-                card.style.marginBottom = '10px';
-            }
-        });
-        
-        card.addEventListener('dragleave', () => {
-            // Reset when mouse leaves
-            card.style.borderTop = 'none';
-            card.style.borderBottom = 'none';
-            card.style.marginTop = '0';
-            card.style.marginBottom = '10px';
-        });
-        
-        card.addEventListener('drop', (e) => {
-            e.preventDefault();
-            
-            const draggedId = e.dataTransfer.getData('text/plain');
-            const targetId = player.id;
-            
-            // Determine drop position based on where the border was drawn
-            const isDropAfter = card.style.borderBottom !== 'none';
-            
-            if (draggedId && draggedId !== targetId) {
-                // We fire the event and pass 'isDropAfter' so app.js knows exactly where to slice!
-                const event = new CustomEvent('playerReordered', {
-                    bubbles: true, // Crucial for Event Delegation to catch it!
-                    detail: { draggedId, targetId, isDropAfter }
-                });
-                card.dispatchEvent(event);
-            }
-        });
-
         container.appendChild(card);
+    });
+
+    // --- NEW: BUTTERY SMOOTH MOUSE DRAG ENGINE ---
+    applyCustomDragAndDrop(container);
+}
+
+// THE MATH BEHIND PERFECT DRAG AND DROP
+function applyCustomDragAndDrop(container) {
+    let draggingElement = null;
+    let placeholder = null;
+    let offsetY = 0;
+    
+    // Auto-scroll variables
+    const scrollParent = document.querySelector('.controls-panel'); 
+    let scrollInterval = null;
+
+    container.addEventListener('mousedown', (e) => {
+        // Only start dragging if they clicked the '⋮⋮' handle!
+        if (!e.target.classList.contains('drag-handle')) return;
+        
+        e.preventDefault();
+        const card = e.target.closest('.player-card');
+        
+        // 1. Calculate where they clicked on the card so it doesn't snap to the top-left of the mouse
+        const rect = card.getBoundingClientRect();
+        offsetY = e.clientY - rect.top;
+        
+        // 2. Create the exact-size Placeholder (The Hole)
+        placeholder = card.cloneNode(true);
+        placeholder.classList.add('is-placeholder');
+        container.insertBefore(placeholder, card);
+        
+        // 3. Turn the actual card into a "Ghost"
+        draggingElement = card;
+        draggingElement.classList.add('is-dragging');
+        draggingElement.style.top = `${e.clientY - offsetY}px`;
+        draggingElement.style.left = `${rect.left}px`;
+        
+        document.body.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!draggingElement) return;
+        
+        // 1. Move the Ghost
+        draggingElement.style.top = `${e.clientY - offsetY}px`;
+        
+        // 2. Find what card we are hovering over (excluding the ghost itself)
+        // We use elementsFromPoint to see what's directly underneath the mouse!
+        const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
+        const hoveredCard = elementsUnderMouse.find(el => el.classList.contains('player-card') && !el.classList.contains('is-dragging'));
+        
+        // 3. Move the Placeholder (The Hole) up or down the list!
+        if (hoveredCard && hoveredCard !== placeholder) {
+            const hoverRect = hoveredCard.getBoundingClientRect();
+            const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
+            
+            // If mouse is above the middle of the hovered card, move the hole above it.
+            if (e.clientY < hoverMiddleY) {
+                container.insertBefore(placeholder, hoveredCard);
+            } else {
+                container.insertBefore(placeholder, hoveredCard.nextSibling);
+            }
+        }
+        
+        // --- AUTO SCROLLING MATH ---
+        const scrollRect = scrollParent.getBoundingClientRect();
+        const edgeThreshold = 50; // Pixels from the top/bottom edge to trigger scroll
+        
+        clearInterval(scrollInterval);
+        if (e.clientY < scrollRect.top + edgeThreshold) {
+            // Scroll UP
+            scrollInterval = setInterval(() => scrollParent.scrollTop -= 5, 16);
+        } else if (e.clientY > scrollRect.bottom - edgeThreshold) {
+            // Scroll DOWN
+            scrollInterval = setInterval(() => scrollParent.scrollTop += 5, 16);
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!draggingElement) return;
+        
+        clearInterval(scrollInterval);
+        document.body.style.cursor = 'default';
+        
+        // 1. Swap the Ghost back into the Hole
+        container.insertBefore(draggingElement, placeholder);
+        draggingElement.classList.remove('is-dragging');
+        draggingElement.style.top = '';
+        draggingElement.style.left = '';
+        
+        // 2. Delete the Hole
+        placeholder.remove();
+        
+        // 3. Read the new physical order from the DOM and update the Engine!
+        const newOrderIds = Array.from(container.children).map(card => card.getAttribute('data-id'));
+        
+        // Dispatch event to app.js
+        container.dispatchEvent(new CustomEvent('playerListReordered', {
+            bubbles: true,
+            detail: { newOrderIds }
+        }));
+        
+        draggingElement = null;
+        placeholder = null;
     });
 }
 
