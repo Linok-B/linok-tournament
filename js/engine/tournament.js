@@ -247,8 +247,8 @@ export class Tournament {
 
         // Reset the match
         targetMatch.winner = null;
-        targetMatch.score1 = 0;
-        targetMatch.score2 = 0;
+        // targetMatch.score1 = 0; // Commented out just in case
+        // targetMatch.score2 = 0; // Commented out just in case
 
         // Reactivate the tournament
         stage.status = "active";
