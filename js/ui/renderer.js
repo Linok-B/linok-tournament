@@ -1,67 +1,115 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 
+// In js/ui/renderer.js - Replace renderPlayerList
+
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = ''; 
     if (players.length === 0) return;
 
-    // Sort strictly by their current Seed number!
     const sortedPlayers = [...players].sort((a, b) => a.seed - b.seed);
     
     sortedPlayers.forEach(player => {
         const card = document.createElement('div');
         card.className = 'player-card';
-        card.style.alignItems = 'center'; 
-        
-        // NEW: Make the card draggable!
         card.setAttribute('draggable', 'true');
         card.setAttribute('data-id', player.id);
+        
+        // Physical styling
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.padding = '10px 15px';
+        card.style.marginBottom = '10px';
+        card.style.backgroundColor = 'var(--bg-panel)';
+        card.style.borderRadius = '6px';
+        card.style.borderLeft = '4px solid var(--accent)';
         card.style.cursor = 'grab';
+        card.style.transition = 'transform 0.1s ease, margin 0.1s ease'; // Smooth animation!
         
         card.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="color: gray; font-size: 14px; cursor: grab;">☰</span>
-                <strong>${player.seed}. ${player.name}</strong>
-                <span style="font-size: 12px; color: gray; margin-left: 10px;">
-                    ELO: ${player.elo}
-                </span>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="color: #89b4fa; font-size: 16px; font-weight: bold; cursor: grab;">⋮⋮</span>
+                <strong><span style="color: gray; margin-right: 5px;">${player.seed}.</span> ${player.name}</strong>
+                <span style="font-size: 12px; color: gray;">(ELO: ${player.elo})</span>
             </div>
-            <button class="btn-remove-player" data-id="${player.id}" 
-                style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">
-                X
-            </button>
+            <button class="btn-remove-player" data-id="${player.id}" style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">X</button>
         `;
         
-        // --- HTML5 DRAG AND DROP EVENTS ---
+        // --- PHYSICAL DRAG AND DROP EVENTS ---
+        
         card.addEventListener('dragstart', (e) => {
             e.dataTransfer.setData('text/plain', player.id);
-            card.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+            
+            // Give the dragged item a distinct "ghost" look
+            setTimeout(() => {
+                card.style.opacity = '0.3';
+                card.style.transform = 'scale(0.98)';
+            }, 0);
         });
         
         card.addEventListener('dragend', () => {
             card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+            
+            // Reset ALL cards back to normal in case of a failed drop
+            document.querySelectorAll('.player-card').forEach(c => {
+                c.style.borderTop = 'none';
+                c.style.borderBottom = 'none';
+                c.style.marginTop = '0';
+                c.style.marginBottom = '10px';
+            });
         });
         
         card.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Necessary to allow dropping
-            card.style.borderTop = '2px solid var(--accent)';
+            e.preventDefault(); 
+            e.dataTransfer.dropEffect = 'move';
+            
+            // Find out if we are hovering over the top half or bottom half of the card
+            const bounding = card.getBoundingClientRect();
+            const offset = bounding.y + (bounding.height / 2);
+            
+            // Physical push effect!
+            if (e.clientY - offset > 0) {
+                // Hovering bottom half: Push the next card down
+                card.style.borderBottom = '3px solid var(--accent)';
+                card.style.borderTop = 'none';
+                card.style.marginBottom = '25px'; // Create visual space!
+                card.style.marginTop = '0';
+            } else {
+                // Hovering top half: Push this card down
+                card.style.borderTop = '3px solid var(--accent)';
+                card.style.borderBottom = 'none';
+                card.style.marginTop = '15px'; // Create visual space!
+                card.style.marginBottom = '10px';
+            }
         });
         
         card.addEventListener('dragleave', () => {
+            // Reset when mouse leaves
             card.style.borderTop = 'none';
+            card.style.borderBottom = 'none';
+            card.style.marginTop = '0';
+            card.style.marginBottom = '10px';
         });
         
         card.addEventListener('drop', (e) => {
             e.preventDefault();
-            card.style.borderTop = 'none';
+            
             const draggedId = e.dataTransfer.getData('text/plain');
             const targetId = player.id;
             
-            if (draggedId !== targetId) {
-                // Fire a custom event to tell app.js to reorder the players!
-                container.dispatchEvent(new CustomEvent('playerReordered', {
-                    detail: { draggedId, targetId }
-                }));
+            // Determine drop position based on where the border was drawn
+            const isDropAfter = card.style.borderBottom !== 'none';
+            
+            if (draggedId && draggedId !== targetId) {
+                // We fire the event and pass 'isDropAfter' so app.js knows exactly where to slice!
+                const event = new CustomEvent('playerReordered', {
+                    bubbles: true, // Crucial for Event Delegation to catch it!
+                    detail: { draggedId, targetId, isDropAfter }
+                });
+                card.dispatchEvent(event);
             }
         });
 
