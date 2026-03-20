@@ -416,9 +416,23 @@ document.getElementById('setup-blueprint-group').addEventListener('click', (e) =
 
 
 // hamburgur :tongue:
+// Sidebar Toggle
 document.getElementById('btn-hamburger').addEventListener('click', () => {
-    document.body.classList.toggle('streamer-mode');
+    document.body.classList.toggle('sidebar-hidden');
 });
 
-document.getElementById('btn-add-player').addEventListener('stateChanged', updateUI);
-
+// Eye Icon (Streamer Mode Toggle)
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'btn-streamer-mode') {
+        document.body.classList.toggle('streamer-mode');
+        
+        // Change icon based on state
+        if (document.body.classList.contains('streamer-mode')) {
+            e.target.innerText = "❌ Exit Stream Mode";
+            e.target.style.background = "var(--danger)";
+        } else {
+            e.target.innerText = "👁️ Stream Mode";
+            e.target.style.background = "rgba(0,0,0,0.5)";
+        }
+    }
+});
