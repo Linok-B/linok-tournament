@@ -29,90 +29,135 @@ export function renderPlayerList(players, containerId) {
     });
 }
 
+// In js/ui/renderer.js - Replace renderBracket completely
+
 export function renderBracket(tournament, containerId) {
     const container = document.getElementById(containerId);
     
     if (tournament.status === "setup" || tournament.stages.length === 0) {
-        container.innerHTML = `
-            <h2>Setup: Add Players</h2>
-            <p>Total: ${tournament.players.length}</p>
-            <div id="players-list"></div>
-        `;
-        renderPlayerList(tournament.players, 'players-list');
+        container.innerHTML = `<h2>Setup: Add Players</h2><p>Total: ${tournament.players.length}</p><div id="players-list"></div>`;
+        import('./renderer.js').then(m => m.renderPlayerList(tournament.players, 'players-list'));
         return;
     }
 
-    // NEW: Allow the UI to view a past stage if requested, otherwise default to the active/last stage
-    // (w/ a global variable 'window.viewingStageIndex' to track which tab is clicked)
     let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
-    
-    // Failsafe bounds check
     if (viewIndex < 0) viewIndex = 0;
     if (viewIndex >= tournament.stages.length) viewIndex = tournament.stages.length - 1;
 
     const stageToRender = tournament.stages[viewIndex];
     const isActiveStage = (viewIndex === tournament.stages.length - 1 && tournament.status !== "completed");
     
-    // BUILD THE TABS
     let tabsHtml = `<div class="stage-tabs-container" style="display:flex; gap:10px; margin-bottom: 20px; border-bottom: 2px solid #45475a; padding-bottom: 10px;">`;
     tournament.stages.forEach((stage, index) => {
         const isSelected = index === viewIndex;
-        tabsHtml += `
-            <button class="btn-stage-tab" data-index="${index}" 
-                style="
-                    background: ${isSelected ? 'var(--accent)' : 'transparent'}; 
-                    color: ${isSelected ? 'var(--bg-dark)' : 'var(--text-main)'}; 
-                    border: 1px solid var(--accent); 
-                    padding: 5px 15px; 
-                    cursor: pointer;
-                    font-weight: bold;
-                ">
-                Stage ${index + 1}: ${stage.config.type.replace('_', ' ').toUpperCase()}
-            </button>
-        `;
+        tabsHtml += `<button class="btn-stage-tab" data-index="${index}" style="background: ${isSelected ? 'var(--accent)' : 'transparent'}; color: ${isSelected ? 'var(--bg-dark)' : 'var(--text-main)'}; border: 1px solid var(--accent); padding: 5px 15px; cursor: pointer; font-weight: bold;">Stage ${index + 1}: ${stage.config.type.replace('_', ' ').toUpperCase()}</button>`;
     });
     tabsHtml += `</div>`;
-    
-    // RENDER THE SELECTED STAGE
+
     let html = `
-        <div style="padding: 0 20px;">
-            ${tabsHtml}
-            <div class="stage-header-info" style="display: flex; justify-content: space-between; align-items: center;">
-                <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} 
-                    ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}
-                </h2>
-                ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">⏹ Force End Stage Early</button>` : ''}
-            </div>
-            ${tournament.status === "completed" && isActiveStage ? '<h3 style="color:#a6e3a1;">Tournament Complete!</h3>' : ''}
+        ${tabsHtml}
+        <div class="stage-header-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}</h2>
+            ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">⏹ Force End Stage Early</button>` : ''}
         </div>
         
-        <!-- THE PAN & ZOOM VIEWPORT -->
-        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: #181825; border-top: 2px solid #45475a; border-bottom: 2px solid #45475a; position: relative; cursor: grab;">
-            <div id="bracket-board" style="display:flex; gap:40px; padding: 40px; height: 100%; box-sizing: border-box; transform-origin: 0 0;"></div>
+        <!-- THE NEW VIEWPORT (With the Eye Button inside!) -->
+        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: #1e1e2e; border: 2px solid #45475a; border-radius: 8px; position: relative; cursor: grab;">
+            
+            <button id="btn-streamer-mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 1px solid #45475a; padding: 5px 10px; border-radius: 4px; cursor: pointer;">👁️ Stream Mode</button>
+            
+            <!-- We will draw the boxes and lines inside this board -->
+            <div id="bracket-board" style="position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; transform-origin: 0 0;">
+                <svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
+            </div>
         </div>
     `;
 
     container.innerHTML = html;
-    const board = document.getElementById('bracket-board');
+    
+    // --- THE MATH ENGINE FOR DRAWING THE BRACKET ---
+    drawBracketMath(stageToRender, isActiveStage);
+}
 
-    // DRAW THE ROUNDS
-    stageToRender.data.rounds.forEach((roundMatches, roundIndex) => {
-        const roundColumn = document.createElement('div');
-        roundColumn.className = 'bracket-column'; // Uses the new CSS!
-        
-        // Add round header inside the column
+// ---------------------------------------------------------
+// THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines)
+// ---------------------------------------------------------
+function drawBracketMath(stage, isActiveStage) {
+    const board = document.getElementById('bracket-board');
+    const svgLayer = document.getElementById('bracket-lines');
+    
+    // Config values for spacing
+    const boxWidth = 220;
+    const boxHeight = 85;
+    const gapX = 60;  // Horizontal space between columns
+    const gapY = 30;  // Vertical space between matches in Round 1
+    const startX = 50; 
+    const startY = 50;
+
+    // We need to store the exact X/Y coordinates of every match to draw lines between them!
+    const matchCoordinates = {}; 
+
+    // Loop through columns (Rounds)
+    stage.data.rounds.forEach((roundMatches, roundIndex) => {
+        const currentX = startX + (roundIndex * (boxWidth + gapX));
+
+        // Draw "Round N" header
         const header = document.createElement('h3');
         header.innerText = `Round ${roundIndex + 1}`;
+        header.style.position = 'absolute';
+        header.style.left = `${currentX}px`;
+        header.style.top = `10px`;
+        header.style.width = `${boxWidth}px`;
         header.style.textAlign = 'center';
-        header.style.position = 'absolute'; // Keep it at the top, separate from flex layout
-        header.style.top = '-30px';
-        header.style.width = '250px';
-        roundColumn.style.position = 'relative';
-        roundColumn.appendChild(header);
+        header.style.margin = '0';
+        board.appendChild(header);
 
-        roundMatches.forEach(match => {
+        roundMatches.forEach((match, matchIndex) => {
+            let currentY = 0;
+
+            // ELIMINATION BRACKET MATH: Perfect Triangular Layout!
+            if (stage.config.type === "single_elimination" && roundIndex > 0) {
+                // A child match is positioned exactly halfway between its two parent matches from the previous round
+                // MatchIndex 0's parents are prevRound Match 0 and 1.
+                // MatchIndex 1's parents are prevRound Match 2 and 3.
+                const parent1Id = stage.data.rounds[roundIndex - 1][matchIndex * 2]?.id;
+                const parent2Id = stage.data.rounds[roundIndex - 1][(matchIndex * 2) + 1]?.id;
+                
+                const p1Y = matchCoordinates[parent1Id]?.y || 0;
+                const p2Y = matchCoordinates[parent2Id]?.y || p1Y; // If no parent 2, align with parent 1
+                
+                currentY = (p1Y + p2Y) / 2;
+                
+                // DRAW SVG LINES! (Connect parents to this child)
+                if (p1Y && p2Y && p1Y !== p2Y) {
+                    const lineStartX = currentX - gapX;
+                    const lineEndX = currentX;
+                    
+                    // Parent 1 (Top) line
+                    svgLayer.innerHTML += `<path d="M ${lineStartX + boxWidth} ${p1Y + (boxHeight/2)} L ${lineStartX + boxWidth + (gapX/2)} ${p1Y + (boxHeight/2)} L ${lineStartX + boxWidth + (gapX/2)} ${currentY + (boxHeight/2)} L ${lineEndX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                    // Parent 2 (Bottom) line
+                    svgLayer.innerHTML += `<path d="M ${lineStartX + boxWidth} ${p2Y + (boxHeight/2)} L ${lineStartX + boxWidth + (gapX/2)} ${p2Y + (boxHeight/2)} L ${lineStartX + boxWidth + (gapX/2)} ${currentY + (boxHeight/2)} L ${lineEndX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                }
+
+            } else {
+                // ROUND 1 (Or Swiss/Round Robin): Just stack them normally, but with our strict gapY spacing!
+                // To keep Swiss visually centered if players drop, we just multiply index
+                const multiplier = Math.pow(2, roundIndex); // Expands space for later rounds in non-elim just in case
+                currentY = startY + (matchIndex * (boxHeight + gapY) * multiplier);
+            }
+
+            // Save coords for the next round to use
+            matchCoordinates[match.id] = { x: currentX, y: currentY };
+
+            // BUILD THE BOX HTML
             const matchBox = document.createElement('div');
-            matchBox.className = 'match-box'; // Uses the new CSS!
+            matchBox.className = 'match-box';
+            matchBox.style.position = 'absolute';
+            matchBox.style.left = `${currentX}px`;
+            matchBox.style.top = `${currentY}px`;
+            matchBox.style.width = `${boxWidth}px`;
+            matchBox.style.height = `${boxHeight}px`;
+            matchBox.style.boxSizing = 'border-box';
             
             if (match.winner) matchBox.style.borderLeft = '4px solid #a6e3a1'; 
             else matchBox.style.borderLeft = '4px solid #f38ba8'; 
@@ -126,36 +171,35 @@ export function renderBracket(tournament, containerId) {
                 if (match.winner === match.player2 || match.winner === "tie") p2Display = `<strong>${p2Name}</strong>`;
 
                 matchBox.innerHTML = `
-                    <div style="${match.winner === match.player1 ? 'color:#a6e3a1;' : ''}">${p1Display} ${match.winner ? `(${match.score1})` : ''}</div>
-                    <div style="${match.winner === match.player2 ? 'color:#a6e3a1;' : ''}">${p2Display} ${match.winner ? `(${match.score2})` : ''}</div>
+                    <div style="${match.winner === match.player1 ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1Display} ${match.winner ? `(${match.score1})` : ''}</div>
+                    <div style="${match.winner === match.player2 ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Display} ${match.winner ? `(${match.score2})` : ''}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
                         <small style="color:gray;">${match.isBye ? 'Auto-Advance' : (match.winner === "tie" ? 'TIE' : 'Completed')}</small>
-                        ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:2px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
+                        ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:2px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer; position:relative; z-index:10;">Edit</button>` : ''}
                     </div>
                 `;
             } else {
                 if (isActiveStage) {
                     matchBox.innerHTML = `
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <span>${p1Name}</span>
+                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1Name}</span>
                             <input type="number" id="s1-${match.id}" style="width:40px; padding:2px; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
                         </div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <span>${p2Name}</span>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Name}</span>
                             <input type="number" id="s2-${match.id}" style="width:40px; padding:2px; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
                         </div>
-                        <button class="btn-report" data-matchid="${match.id}" style="width:100%; padding:5px; font-size:12px; cursor:pointer; background:var(--accent); border:none; border-radius:3px; font-weight:bold;">Submit</button>
+                        <button class="btn-report" data-matchid="${match.id}" style="position:absolute; right:-25px; top:25px; height:35px; width:45px; font-size:10px; cursor:pointer; background:var(--accent); border:none; border-radius:4px; font-weight:bold; z-index:10;">✓</button>
                     `;
                 } else {
                      matchBox.innerHTML = `<div>${p1Name}</div><div>${p2Name}</div><small style="color:gray;">Pending</small>`;
                 }
             }
-            roundColumn.appendChild(matchBox);
+            board.appendChild(matchBox);
         });
-        board.appendChild(roundColumn);
     });
 
-    // --- NEW: THE PAN & ZOOM ENGINE ---
+    // Re-apply Pan and Zoom
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
 
