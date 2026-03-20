@@ -250,15 +250,22 @@ export function applyPanAndZoom(viewport, board) {
     viewport.addEventListener('wheel', (e) => {
         e.preventDefault(); 
         
-        let xs = (e.clientX - window.bracketCamera.x) / window.bracketCamera.scale;
-        let ys = (e.clientY - window.bracketCamera.y) / window.bracketCamera.scale;
+        // NEW: Get exact position of the viewport on the screen
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Calculate mouse position relative to the current zoom/pan
+        let xs = (mouseX - window.bracketCamera.x) / window.bracketCamera.scale;
+        let ys = (mouseY - window.bracketCamera.y) / window.bracketCamera.scale;
         
         let delta = e.deltaY > 0 ? -0.1 : 0.1;
         window.bracketCamera.scale += delta;
         window.bracketCamera.scale = Math.min(Math.max(0.3, window.bracketCamera.scale), 2);
         
-        window.bracketCamera.x = e.clientX - xs * window.bracketCamera.scale;
-        window.bracketCamera.y = e.clientY - ys * window.bracketCamera.scale;
+        // Re-center around mouse cursor
+        window.bracketCamera.x = mouseX - xs * window.bracketCamera.scale;
+        window.bracketCamera.y = mouseY - ys * window.bracketCamera.scale;
         
         setTransform();
     }, { passive: false });
