@@ -1,7 +1,5 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 
-// In js/ui/renderer.js - Replace renderPlayerList
-
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = ''; 
