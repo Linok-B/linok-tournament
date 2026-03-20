@@ -173,9 +173,9 @@ function drawBracketMath(stage, isActiveStage) {
 
                 matchBox.innerHTML = `
                     <div style="display:flex; height:100%; align-items:center;">
-                        <div style="flex-grow:1; overflow:hidden;">
-                            <div style="${match.winner === match.player1 ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">${p1Display}</div>
-                            <div style="${match.winner === match.player2 ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Display}</div>
+                        <div style="flex-grow:1; overflow:hidden; width: 130px;">
+                            <div title="${p1Name}" style="${match.winner === match.player1 ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; cursor:default;">${p1Display}</div>
+                            <div title="${p2Name}" style="${match.winner === match.player2 ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:default;">${p2Display}</div>
                         </div>
                         <div style="min-width: 30px; text-align:right; font-weight:bold; margin-right: 10px;">
                             <div style="margin-bottom:5px;">${match.score1}</div>
@@ -191,19 +191,19 @@ function drawBracketMath(stage, isActiveStage) {
                 if (isActiveStage) {
                     matchBox.innerHTML = `
                         <div style="display:flex; height:100%; align-items:center;">
-                            <div style="flex-grow:1; overflow:hidden; padding-right:10px;">
-                                <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:10px; height: 20px; line-height: 20px;">${p1Name}</div>
-                                <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; height: 20px; line-height: 20px;">${p2Name}</div>
+                            <div style="overflow:hidden; padding-right:10px; width: 110px;">
+                                <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:10px; height: 20px; line-height: 20px; cursor:default;">${p1Name}</div>
+                                <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; height: 20px; line-height: 20px; cursor:default;">${p2Name}</div>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:8px;">
-                                <input type="number" id="s1-${match.id}" style="width:35px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
-                                <input type="number" id="s2-${match.id}" style="width:35px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="0">
+                                <input type="number" id="s1-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
+                                <input type="number" id="s2-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
                             </div>
                             <button class="btn-report" data-matchid="${match.id}" style="margin-left:10px; height:48px; width:40px; font-size:16px; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px; font-weight:bold;">✓</button>
                         </div>
                     `;
                 } else {
-                     matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%;"><div>${p1Name}</div><div>${p2Name}</div><small style="color:gray; margin-top:5px;">Pending</small></div>`;
+                     matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%;"><div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1Name}</div><div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Name}</div><small style="color:gray; margin-top:5px;">Pending</small></div>`;
                 }
             }
             board.appendChild(matchBox);
