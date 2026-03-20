@@ -246,6 +246,10 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
     if (e.target && e.target.classList.contains('btn-stage-tab')) {
         const tabIndex = parseInt(e.target.getAttribute('data-index'));
         window.viewingStageIndex = tabIndex; // Set the global viewing index
+
+        // Reset the camera position when switching tabs
+        window.bracketCamera = { x: 0, y: 0, scale: 1 };
+        
         updateUI(); // Redraw the screen
     }
 
