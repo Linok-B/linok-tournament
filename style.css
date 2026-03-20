@@ -162,3 +162,23 @@ body.streamer-mode #bracket-viewport {
     justify-content: center; /* Center the contents vertically */
 }
 
+
+/* The card you are physically dragging across the screen */
+.player-card.is-dragging {
+    position: fixed; /* Detaches it from the list so it can follow the mouse */
+    z-index: 9999;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    opacity: 0.9;
+    pointer-events: none; /* Crucial! Prevents the ghost from blocking mouse events underneath it */
+    width: 250px; /* Keep it the size of the sidebar */
+}
+
+/* The empty space left behind in the list */
+.player-card.is-placeholder {
+    background: transparent !important;
+    border: 2px dashed #45475a !important;
+    box-shadow: none !important;
+}
+.player-card.is-placeholder * {
+    visibility: hidden; /* Hide the text inside the hole */
+}
