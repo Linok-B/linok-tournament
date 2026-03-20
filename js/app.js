@@ -191,28 +191,33 @@ document.getElementById('file-import').addEventListener('change', (e) => {
 });
 
 // Master UI Sync
+
 function updateUI() {
-    updateTitle(); 
-    renderBlueprintList();
+    // 1. Capture current unsaved input values before wiping the screen
     const inputs = document.querySelectorAll('#player-list-container input[type="number"]');
     const draftScores = {};
     inputs.forEach(input => { draftScores[input.id] = input.value; });
 
-    // Render the Bracket
-    renderBracket(currentTournament, 'player-list-container');
+    // NEW: Capture the sidebar scroll position!
+    const sidebar = document.querySelector('.controls-panel');
+    const savedScrollTop = sidebar ? sidebar.scrollTop : 0;
 
-    // NEW: Render the Standings ONLY if the tournament has started
-    const standingsDiv = document.getElementById('standings-container');
+    updateTitle(); 
+    renderBlueprintList(); 
+    renderBracket(currentTournament, 'player-list-container');
+    
     if (currentTournament.status !== "setup") {
         renderStandings(currentTournament, 'standings-container');
-    } else {
-        standingsDiv.innerHTML = ''; // Clear it if in setup phase
     }
 
+    // 3. Put the unsaved values back into the new inputs
     for (const [id, value] of Object.entries(draftScores)) {
         const el = document.getElementById(id);
         if (el) el.value = value;
     }
+
+    // NEW: Restore the sidebar scroll position!
+    if (sidebar) sidebar.scrollTop = savedScrollTop;
 }
 
 document.getElementById('player-list-container').addEventListener('click', (e) => {
