@@ -5,26 +5,66 @@ export function renderPlayerList(players, containerId) {
     container.innerHTML = ''; 
     if (players.length === 0) return;
 
-    // Sort by seed by default now, instead of ELO
+    // Sort strictly by their current Seed number!
     const sortedPlayers = [...players].sort((a, b) => a.seed - b.seed);
     
     sortedPlayers.forEach(player => {
         const card = document.createElement('div');
         card.className = 'player-card';
-        card.style.alignItems = 'center'; // Keep things vertically centered
+        card.style.alignItems = 'center'; 
+        
+        // NEW: Make the card draggable!
+        card.setAttribute('draggable', 'true');
+        card.setAttribute('data-id', player.id);
+        card.style.cursor = 'grab';
         
         card.innerHTML = `
-            <div>
-                <strong>${player.name}</strong>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="color: gray; font-size: 14px; cursor: grab;">☰</span>
+                <strong>${player.seed}. ${player.name}</strong>
                 <span style="font-size: 12px; color: gray; margin-left: 10px;">
-                    Seed: ${player.seed} | ELO: ${player.elo}
+                    ELO: ${player.elo}
                 </span>
             </div>
             <button class="btn-remove-player" data-id="${player.id}" 
-                style="background-color: var(--danger); padding: 4px 10px; border-radius: 4px;">
+                style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">
                 X
             </button>
         `;
+        
+        // --- HTML5 DRAG AND DROP EVENTS ---
+        card.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', player.id);
+            card.style.opacity = '0.5';
+        });
+        
+        card.addEventListener('dragend', () => {
+            card.style.opacity = '1';
+        });
+        
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Necessary to allow dropping
+            card.style.borderTop = '2px solid var(--accent)';
+        });
+        
+        card.addEventListener('dragleave', () => {
+            card.style.borderTop = 'none';
+        });
+        
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            card.style.borderTop = 'none';
+            const draggedId = e.dataTransfer.getData('text/plain');
+            const targetId = player.id;
+            
+            if (draggedId !== targetId) {
+                // Fire a custom event to tell app.js to reorder the players!
+                container.dispatchEvent(new CustomEvent('playerReordered', {
+                    detail: { draggedId, targetId }
+                }));
+            }
+        });
+
         container.appendChild(card);
     });
 }
