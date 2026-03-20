@@ -442,24 +442,33 @@ document.addEventListener('click', (e) => {
 });
 
 // Handle Drag-and-Drop Seeding
-document.getElementById('player-list-container').addEventListener('playerReordered', (e) => {
-    // Only allow reordering during the Setup phase!
+document.addEventListener('playerReordered', (e) => {
     if (currentTournament.status !== "setup") return;
 
-    const { draggedId, targetId } = e.detail;
+    const { draggedId, targetId, isDropAfter } = e.detail;
     
-    // Find the players in the master array
     const draggedIndex = currentTournament.players.findIndex(p => p.id === draggedId);
-    const targetIndex = currentTournament.players.findIndex(p => p.id === targetId);
+    let targetIndex = currentTournament.players.findIndex(p => p.id === targetId);
     
     if (draggedIndex > -1 && targetIndex > -1) {
         // Remove the dragged player
         const [draggedPlayer] = currentTournament.players.splice(draggedIndex, 1);
         
-        // Insert them at the new target index
+        // If we dragged an item DOWN, the targetIndex naturally shifted up by 1 when we spliced.
+        // We must compensate for this mathematical shift.
+        if (draggedIndex < targetIndex) {
+            targetIndex--;
+        }
+        
+        // If they dropped it on the BOTTOM half of the card, insert it AFTER the target
+        if (isDropAfter) {
+            targetIndex++;
+        }
+        
+        // Insert them at the new perfect target index
         currentTournament.players.splice(targetIndex, 0, draggedPlayer);
         
-        // Recalculate all Seeds based on their new physical order!
+        // Recalculate all Seeds based on their physical order
         currentTournament.players.forEach((p, index) => {
             p.seed = index + 1;
         });
