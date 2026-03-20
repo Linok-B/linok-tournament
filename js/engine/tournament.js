@@ -116,8 +116,6 @@ export class Tournament {
         });
     }
 
-    // In js/engine/tournament.js - Replace reportMatchScore()
-
     reportMatchScore(matchId, score1, score2) {
         if (this.status !== "active") return false;
 
@@ -138,36 +136,28 @@ export class Tournament {
         else if (match.score2 > match.score1) match.winner = match.player2;
         else match.winner = "tie"; 
 
-        // CRITICAL FIX: Recalculate stats RIGHT NOW!
-        // This guarantees the loser of this exact match is marked 'isEliminated = true' 
-        // BEFORE the Bridge checks who is allowed to pass to the next stage.
+        // 1. Recalculate stats RIGHT NOW so losers are marked dead instantly!
         this.recalculateAllStats();
 
-        // Now we can safely check if the round/stage is over
+        // 2. Check if the round/stage is over
         const isRoundComplete = currentRound.every(m => m.winner !== null);
         
         if (isRoundComplete) {
-            import('./formats/registry.js').then(({ getFormat }) => {
-                const formatEngine = getFormat(activeStage.config.type);
-                activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config, this.players);
+            // SYNCHRONOUS GENERATION (No more import().then!)
+            const formatEngine = getFormat(activeStage.config.type);
+            activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config, this.players);
 
-                if (activeStage.data.isComplete) {
-                    activeStage.status = "completed";
-                    if (this.stages.length >= this.settings.pipeline.length) {
-                        this.status = "completed";
-                    } else {
-                        this.transitionToNextStage(this.players);
-                    }
+            if (activeStage.data.isComplete) {
+                activeStage.status = "completed";
+                if (this.stages.length >= this.settings.pipeline.length) {
+                    this.status = "completed";
+                } else {
+                    this.transitionToNextStage(this.players);
                 }
-                
-                // Force a save and UI update
-                import('../store/localData.js').then(({ saveTournamentLocally }) => {
-                    saveTournamentLocally(this);
-                    document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
-                });
-            });
+            }
         }
-        return true;
+        
+        return true; // We let app.js handle the saving and UI updating!
     }
 
     
