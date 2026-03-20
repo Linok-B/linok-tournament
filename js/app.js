@@ -191,17 +191,16 @@ document.getElementById('file-import').addEventListener('change', (e) => {
 });
 
 // Master UI Sync
-
 function updateUI() {
-    // 1. Capture current unsaved input values before wiping the screen
     const inputs = document.querySelectorAll('#player-list-container input[type="number"]');
     const draftScores = {};
     inputs.forEach(input => { draftScores[input.id] = input.value; });
 
-    // NEW: Capture the sidebar scroll position!
+    // 1. Capture the exact sidebar and its scroll position
     const sidebar = document.querySelector('.controls-panel');
     const savedScrollTop = sidebar ? sidebar.scrollTop : 0;
 
+    // 2. Wipe and Redraw everything
     updateTitle(); 
     renderBlueprintList(); 
     renderBracket(currentTournament, 'player-list-container');
@@ -210,14 +209,18 @@ function updateUI() {
         renderStandings(currentTournament, 'standings-container');
     }
 
-    // 3. Put the unsaved values back into the new inputs
+    // 3. Restore draft scores
     for (const [id, value] of Object.entries(draftScores)) {
         const el = document.getElementById(id);
         if (el) el.value = value;
     }
 
-    // NEW: Restore the sidebar scroll position!
-    if (sidebar) sidebar.scrollTop = savedScrollTop;
+    // 4. CRITICAL FIX: Wait for the browser to physically paint the new HTML, THEN restore the scroll!
+    if (sidebar) {
+        setTimeout(() => {
+            sidebar.scrollTop = savedScrollTop;
+        }, 0);
+    }
 }
 
 document.getElementById('player-list-container').addEventListener('click', (e) => {
