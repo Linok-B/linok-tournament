@@ -10,30 +10,10 @@
     <div class="app-container">
         <!-- HOST CONTROLS -->
         <aside class="controls-panel">
-            <h2>Host Controls</h2>
-            
-            <!-- TOURNAMENT SETTINGS -->
-            <div class="control-group">
-                <h3>Settings</h3>
-                
-                <label style="font-size: 12px; color: gray;">Tournament Name</label>
-                <input type="text" id="setting-name" placeholder="My Custom Tournament">
-                
-                <!-- NEW: Added LOSS Points! -->
-                <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <div style="flex: 1;">
-                        <label style="font-size: 11px; color: gray;">Win Pts</label>
-                        <input type="number" id="setting-pts-win" value="3" style="width: 100%; box-sizing: border-box; padding: 5px;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-size: 11px; color: gray;">Draw Pts</label>
-                        <input type="number" id="setting-pts-draw" value="1" style="width: 100%; box-sizing: border-box; padding: 5px;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-size: 11px; color: gray;">Loss Pts</label>
-                        <input type="number" id="setting-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px;">
-                    </div>
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0;">Host Controls</h2>
+                <!-- NEW: Settings Gear Button -->
+                <button id="btn-open-settings" title="Tournament Settings" style="background: transparent; border: none; font-size: 20px; cursor: pointer; color: var(--text-main);">⚙️</button>
             </div>
 
             <!-- Add Player Group -->
@@ -144,6 +124,52 @@
                     Cancel
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- TOURNAMENT SETTINGS MODAL -->
+    <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; width: 400px; border: 2px solid var(--accent);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #45475a; padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: var(--accent);">⚙️ Global Settings</h2>
+                <button id="btn-close-settings" style="background: transparent; border: none; color: gray; font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
+            </div>
+            
+            <!-- Global Info -->
+            <label style="font-size: 12px; color: gray;">Tournament Name</label>
+            <input type="text" id="setting-name" placeholder="My Custom Tournament" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 15px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+            
+            <!-- Leaderboard Points -->
+            <h4 style="margin: 0 0 5px 0; color: var(--text-main);">Leaderboard Points</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Win</label>
+                    <input type="number" id="setting-pts-win" value="3" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Draw</label>
+                    <input type="number" id="setting-pts-draw" value="1" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Loss</label>
+                    <input type="number" id="setting-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                </div>
+            </div>
+
+            <!-- Toggles -->
+            <h4 style="margin: 0 0 10px 0; color: var(--text-main);">Tournament Rules</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="setting-randomize" style="width: 16px; height: 16px; cursor: pointer;">
+                    <span style="font-size: 14px;">Randomize Seeds on Start</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="setting-third-place" style="width: 16px; height: 16px; cursor: pointer;">
+                    <span style="font-size: 14px;">Generate 3rd Place Match (Elimination)</span>
+                </label>
+            </div>
+            
+            <button id="btn-save-settings" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">Save Settings</button>
         </div>
     </div>
 
