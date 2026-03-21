@@ -36,7 +36,7 @@ export function advanceStage(stageData, config, allPlayers) {
 
     if (!isRoundComplete) return stageData;
 
-    // Stage is complete if the round that just ended was a Finals round
+    // Stage is complete if it was a Grand Finals round
     const isFinalsRound = currentRound.length === 1 || (currentRound.length === 2 && currentRound.some(m => m.isThirdPlaceMatch));
     if (isFinalsRound) {
         stageData.isComplete = true;
@@ -51,22 +51,16 @@ export function advanceStage(stageData, config, allPlayers) {
     let nextRoundMatches = [];
     const nextRoundNum = stageData.rounds.length + 1;
 
-    // SEMI-FINALS TRANSITION
     if (currentRound.length === 2) {
-        console.log("Semi-Finals detected. Generating next round...");
-
-        // 1. Grand Finals
+        // 1. Generate Grand Finals
         nextRoundMatches.push({
             id: crypto.randomUUID(), round: nextRoundNum,
             player1: currentRound[0].winner, player2: currentRound[1].winner,
             score1: 0, score2: 0, winner: null, isBye: false
         });
 
-        // 2. 3rd Place Match
+        // 2. Generate 3rd Place Match
         if (config.playThirdPlaceMatch === true) {
-            console.log("3rd Place setting is ON. Generating Bronze Match.");
-            
-            // Robust Loser Identification
             const loser1 = (currentRound[0].winner.id === currentRound[0].player1.id) ? currentRound[0].player2 : currentRound[0].player1;
             const loser2 = (currentRound[1].winner.id === currentRound[1].player1.id) ? currentRound[1].player2 : currentRound[1].player1;
             
@@ -77,7 +71,6 @@ export function advanceStage(stageData, config, allPlayers) {
             });
         }
     } else {
-        // Standard Progression
         for (let i = 0; i < currentRound.length; i += 2) {
             const m1 = currentRound[i];
             const m2 = currentRound[i + 1];
@@ -92,7 +85,6 @@ export function advanceStage(stageData, config, allPlayers) {
         }
     }
     
-    console.log(`Generated ${nextRoundMatches.length} matches for Round ${nextRoundNum}`);
     stageData.rounds.push(nextRoundMatches);
     return stageData;
 }
