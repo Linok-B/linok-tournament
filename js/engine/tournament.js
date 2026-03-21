@@ -136,8 +136,6 @@ export class Tournament {
         });
     }
 
-    // In js/engine/tournament.js - Replace reportMatchScore
-
     reportMatchScore(matchId, score1, score2) {
         if (this.status !== "active") return false;
 
@@ -165,10 +163,7 @@ export class Tournament {
         if (isRoundComplete) {
             const formatEngine = getFormat(activeStage.config.type);
             
-            // LOGGING: Check if the engine sees the 3rd place setting
-            console.log("Global 3rd Place Setting:", this.settings.playThirdPlaceMatch);
-
-            // Create a merged config where Global settings fill in the gaps for Stage settings
+            // Merge global settings into stage config so engines can see toggles like 3rd place match
             const combinedConfig = { 
                 ...this.settings, 
                 ...activeStage.config 
