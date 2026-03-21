@@ -202,7 +202,7 @@ export function renderBracket(tournament, containerId) {
 // THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines, that's it)
 // ---------------------------------------------------------
 
-function drawBracketMath(stage, isActiveStage) {
+function drawBracketMath(stage, isActiveStage, tournament) {
     const board = document.getElementById('bracket-board');
     board.innerHTML = '<svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>';
     const svgLayer = document.getElementById('bracket-lines');
@@ -217,44 +217,39 @@ function drawBracketMath(stage, isActiveStage) {
     const matchCoordinates = {}; 
     const showFull = tournament.settings.showFullBracket;
 
-    // 1. Determine how many rounds we SHOULD draw
+    // 1. Determine how many rounds to draw
     let totalRoundsToDraw = stage.data.rounds.length;
     if (showFull) {
         if (stage.config.type === "single_elimination") {
-            // For Elimination, rounds = log2(bracketSize)
             totalRoundsToDraw = Math.log2(stage.data.bracketSize);
-            // If 3rd place match is enabled, that adds a round visually but it's the same X as Finals
         } else {
-            // For Swiss/Round Robin, use the maxRounds setting
+            // Swiss/RR uses maxRounds config
             totalRoundsToDraw = stage.config.maxRounds || (stage.data.totalRounds || stage.data.rounds.length);
         }
     }
 
-    // 2. Loop through the "Visual" rounds
+    // 2. Loop through the rounds
     for (let roundIndex = 0; roundIndex < totalRoundsToDraw; roundIndex++) {
         const currentX = startX + (roundIndex * (boxWidth + gapX));
         
-        // Draw Round Header
         const header = document.createElement('h3');
         header.innerText = `Round ${roundIndex + 1}`;
         header.style.cssText = `position:absolute; left:${currentX}px; top:10px; width:${boxWidth}px; text-align:center; margin:0;`;
         board.appendChild(header);
 
-        // Determine matches for this round (Actual or Ghost)
         let matchesToDraw = [];
         const actualRound = stage.data.rounds[roundIndex];
 
         if (actualRound) {
             matchesToDraw = actualRound;
         } else if (showFull) {
-            // GENERATE GHOST MATCHES
+            // GENERATE GHOST MATCHES FOR PREVIEW
             if (stage.config.type === "single_elimination") {
                 const numGhosts = stage.data.bracketSize / Math.pow(2, roundIndex + 1);
                 for (let i = 0; i < numGhosts; i++) {
                     matchesToDraw.push({ id: `ghost-${roundIndex}-${i}`, isGhost: true });
                 }
             } else {
-                // Swiss/RR ghosts: match the count of Round 1
                 const numGhosts = stage.data.rounds[0].length;
                 for (let i = 0; i < numGhosts; i++) {
                     matchesToDraw.push({ id: `ghost-${roundIndex}-${i}`, isGhost: true });
@@ -265,36 +260,42 @@ function drawBracketMath(stage, isActiveStage) {
         matchesToDraw.forEach((match, matchIndex) => {
             let currentY = 0;
 
-            // POSITIONING
             if (stage.config.type === "single_elimination" && roundIndex > 0) {
                 if (match.isThirdPlaceMatch) {
-                    const finalsY = matchCoordinates[stage.data.rounds[roundIndex][0].id].y;
+                    const finalsMatch = stage.data.rounds[roundIndex][0];
+                    const finalsY = matchCoordinates[finalsMatch.id]?.y || startY;
                     currentY = finalsY + 140;
                 } else {
-                    // Logic to find parent positions (works for ghosts too!)
-                    // A ghost in R2-M1 looks at R1-M2 and R1-M3
-                    let p1Y, p2Y;
+                    let p1Id, p2Id;
                     if (actualRound) {
                         const prevRound = stage.data.rounds[roundIndex - 1];
-                        p1Y = matchCoordinates[prevRound[matchIndex * 2]?.id]?.y;
-                        p2Y = matchCoordinates[prevRound[(matchIndex * 2) + 1]?.id]?.y || p1Y;
+                        p1Id = prevRound[matchIndex * 2]?.id;
+                        p2Id = prevRound[(matchIndex * 2) + 1]?.id;
                     } else {
-                        // Ghost parents are always predictable
-                        const p1Id = roundIndex === 1 && stage.data.rounds[0][matchIndex * 2] ? stage.data.rounds[0][matchIndex * 2].id : `ghost-${roundIndex - 1}-${matchIndex * 2}`;
-                        const p2Id = roundIndex === 1 && stage.data.rounds[0][matchIndex * 2 + 1] ? stage.data.rounds[0][matchIndex * 2 + 1].id : `ghost-${roundIndex - 1}-${matchIndex * 2 + 1}`;
-                        p1Y = matchCoordinates[p1Id]?.y;
-                        p2Y = matchCoordinates[p2Id]?.y || p1Y;
+                        // Predict ghost parent IDs
+                        const prevRoundMatches = stage.data.rounds[roundIndex - 1];
+                        if (prevRoundMatches) {
+                            p1Id = prevRoundMatches[matchIndex * 2]?.id || `ghost-${roundIndex - 1}-${matchIndex * 2}`;
+                            p2Id = prevRoundMatches[matchIndex * 2 + 1]?.id || `ghost-${roundIndex - 1}-${matchIndex * 2 + 1}`;
+                        } else {
+                            p1Id = `ghost-${roundIndex - 1}-${matchIndex * 2}`;
+                            p2Id = `ghost-${roundIndex - 1}-${matchIndex * 2 + 1}`;
+                        }
                     }
+                    
+                    const p1Y = matchCoordinates[p1Id]?.y;
+                    const p2Y = matchCoordinates[p2Id]?.y ?? p1Y;
                     currentY = (p1Y + p2Y) / 2;
 
-                    // DRAW LINES (Ghost lines are dashed)
-                    const isGhostLine = !actualRound;
+                    // DRAW LINES
                     if (p1Y !== undefined && p2Y !== undefined) {
+                        const isGhostLine = !actualRound;
                         const midX = (currentX - gapX) + (gapX / 2);
                         const centerY = currentY + (boxHeight / 2);
-                        const style = `stroke="#45475a" stroke-width="2" fill="none" ${isGhostLine ? 'stroke-dasharray="5,5"' : ''}`;
-                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${centerY} L ${currentX} ${centerY}" ${style} />`;
-                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${centerY} L ${currentX} ${centerY}" ${style} />`;
+                        const dash = isGhostLine ? 'stroke-dasharray="5,5"' : '';
+                        
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${centerY} L ${currentX} ${centerY}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${centerY} L ${currentX} ${centerY}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
                     }
                 }
             } else {
@@ -308,28 +309,26 @@ function drawBracketMath(stage, isActiveStage) {
 
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
 
-            // DRAW BOX
             const matchBox = document.createElement('div');
             matchBox.className = 'match-box';
-            if (match.isGhost) matchBox.style.opacity = "0.3"; // Ghost matches are faded
-            
-            matchBox.style.cssText += `position:absolute; left:${currentX}px; top:${currentY}px; width:${boxWidth}px; height:${boxHeight}px; padding:8px; box-sizing:border-box;`;
+            matchBox.style.cssText = `position:absolute; left:${currentX}px; top:${currentY}px; width:${boxWidth}px; height:${boxHeight}px; padding:8px; box-sizing:border-box;`;
             
             if (match.isGhost) {
+                matchBox.style.opacity = "0.3";
+                matchBox.style.border = "1px dashed #45475a";
                 matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%; color:gray; font-style:italic;"><div>TBD</div><div style="margin-top:10px;">TBD</div></div>`;
             } else if (match.winner || match.isBye) {
-                // ... (Existing completed match HTML) ...
-                let p1Name = match.player1 ? match.player1.name : "TBD";
-                let p2Name = match.player2 ? match.player2.name : "TBD";
-                let p1Display = (match.winner === match.player1 || match.winner === "tie") ? `<strong>${p1Name}</strong>` : p1Name;
-                let p2Display = (match.winner === match.player2 || match.winner === "tie") ? `<strong>${p2Name}</strong>` : p2Name;
-                
+                const p1Name = match.player1 ? match.player1.name : "TBD";
+                const p2Name = match.player2 ? match.player2.name : "TBD";
+                let p1Disp = (match.winner?.id === match.player1?.id || match.winner === "tie") ? `<strong>${p1Name}</strong>` : p1Name;
+                let p2Disp = (match.winner?.id === match.player2?.id || match.winner === "tie") ? `<strong>${p2Name}</strong>` : p2Name;
+
                 matchBox.style.borderLeft = '4px solid #a6e3a1';
                 matchBox.innerHTML = `
                     <div style="display:flex; height:100%; align-items:center;">
                         <div style="flex-grow:1; overflow:hidden; width: 130px;">
-                            <div title="${p1Name}" style="${match.winner === match.player1 ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">${p1Display}</div>
-                            <div title="${p2Name}" style="${match.winner === match.player2 ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Display}</div>
+                            <div title="${p1Name}" style="${match.winner?.id === match.player1?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">${pDisp}</div>
+                            <div title="${p2Name}" style="${match.winner?.id === match.player2?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${pDisp}</div>
                         </div>
                         <div style="min-width: 30px; text-align:right; font-weight:bold; margin-right: 10px;">
                             <div style="margin-bottom:5px;">${match.score1}</div>
@@ -341,9 +340,8 @@ function drawBracketMath(stage, isActiveStage) {
                         </div>
                     </div>`;
             } else if (isActiveStage) {
-                // ... (Existing active match HTML) ...
-                let p1Name = match.player1 ? match.player1.name : "TBD";
-                let p2Name = match.player2 ? match.player2.name : "TBD";
+                const p1Name = match.player1 ? match.player1.name : "TBD";
+                const p2Name = match.player2 ? match.player2.name : "TBD";
                 matchBox.style.borderLeft = '4px solid #f38ba8';
                 matchBox.innerHTML = `
                     <div style="display:flex; height:100%; align-items:center;">
@@ -358,12 +356,18 @@ function drawBracketMath(stage, isActiveStage) {
                         <button class="btn-report" data-matchid="${match.id}" style="margin-left:10px; height:48px; width:40px; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px; font-weight:bold;">✓</button>
                     </div>`;
             } else {
-                matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%;"><div>TBD</div><div>TBD</div><small style="color:gray; margin-top:5px;">Pending</small></div>`;
+                const p1Name = match.player1 ? match.player1.name : "TBD";
+                const p2Name = match.player2 ? match.player2.name : "TBD";
+                matchBox.innerHTML = `
+                    <div style="display:flex; flex-direction:column; justify-content:center; height:100%;">
+                        <div title="${p1Name}">${p1Name}</div>
+                        <div title="${p2Name}">${p2Name}</div>
+                        <small style="color:gray; margin-top:5px;">Pending</small>
+                    </div>`;
             }
             board.appendChild(matchBox);
         });
     }
-
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
 
