@@ -163,8 +163,15 @@ export class Tournament {
         const isRoundComplete = currentRound.every(m => m.winner !== null);
         
         if (isRoundComplete) {
-            // SYNCHRONOUS GENERATION (No more import().then!)
+            // SYNCHRONOUS GENERATION
             const formatEngine = getFormat(activeStage.config.type);
+
+            // Merge Global Settings into the Stage Config
+            const combinedConfig = { 
+                ...this.settings,       // Global rules 
+                ...activeStage.config   // Specific stage rules 
+            };
+            
             activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config, this.players);
 
             if (activeStage.data.isComplete) {
