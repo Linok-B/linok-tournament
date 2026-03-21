@@ -25,6 +25,7 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     // Fallback safely in case older save files don't have these toggles yet!
     document.getElementById('setting-randomize').checked = currentTournament.settings.randomizeSeeds || false;
     document.getElementById('setting-third-place').checked = currentTournament.settings.playThirdPlaceMatch || false;
+    document.getElementById('setting-full-bracket').checked = currentTournament.settings.showFullBracket || false;
     
     settingsModal.style.display = 'flex';
 });
@@ -38,8 +39,10 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
     currentTournament.settings.pointsForWin = parseInt(document.getElementById('setting-pts-win').value) || 0;
     currentTournament.settings.pointsForDraw = parseInt(document.getElementById('setting-pts-draw').value) || 0;
     currentTournament.settings.pointsForLoss = parseInt(document.getElementById('setting-pts-loss').value) || 0;
+    
     currentTournament.settings.randomizeSeeds = document.getElementById('setting-randomize').checked;
     currentTournament.settings.playThirdPlaceMatch = document.getElementById('setting-third-place').checked;
+    currentTournament.settings.showFullBracket = document.getElementById('setting-full-bracket').checked;
     
     if (currentTournament.status !== "setup") {
         currentTournament.recalculateAllStats(); 
