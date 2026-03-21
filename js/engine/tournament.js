@@ -136,6 +136,8 @@ export class Tournament {
         });
     }
 
+    // In js/engine/tournament.js - Replace reportMatchScore
+
     reportMatchScore(matchId, score1, score2) {
         if (this.status !== "active") return false;
 
@@ -156,23 +158,23 @@ export class Tournament {
         else if (match.score2 > match.score1) match.winner = match.player2;
         else match.winner = "tie"; 
 
-        // 1. Recalculate stats RIGHT NOW so losers are marked dead instantly!
         this.recalculateAllStats();
 
-        // 2. Check if the round/stage is over
         const isRoundComplete = currentRound.every(m => m.winner !== null);
         
         if (isRoundComplete) {
-            // SYNCHRONOUS GENERATION
             const formatEngine = getFormat(activeStage.config.type);
-
-            // Merge Global Settings into the Stage Config
-            const combinedConfig = { 
-                ...this.settings,       // Global rules 
-                ...activeStage.config   // Specific stage rules 
-            };
             
-            activeStage.data = formatEngine.advanceStage(activeStage.data, activeStage.config, this.players);
+            // LOGGING: Check if the engine sees the 3rd place setting
+            console.log("Global 3rd Place Setting:", this.settings.playThirdPlaceMatch);
+
+            // Create a merged config where Global settings fill in the gaps for Stage settings
+            const combinedConfig = { 
+                ...this.settings, 
+                ...activeStage.config 
+            };
+
+            activeStage.data = formatEngine.advanceStage(activeStage.data, combinedConfig, this.players);
 
             if (activeStage.data.isComplete) {
                 activeStage.status = "completed";
@@ -184,7 +186,7 @@ export class Tournament {
             }
         }
         
-        return true; // We let app.js handle the saving and UI updating!
+        return true; 
     }
 
     
