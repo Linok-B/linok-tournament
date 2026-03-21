@@ -55,24 +55,23 @@ function applyCustomDragAndDrop(container) {
     let scrollInterval = null;
 
     container.addEventListener('mousedown', (e) => {
-        // Only start dragging if they clicked the '⋮⋮' handle!
         if (!e.target.classList.contains('drag-handle')) return;
         
         e.preventDefault();
         const card = e.target.closest('.player-card');
-        
-        // 1. Calculate where they clicked on the card so it doesn't snap to the top-left of the mouse
         const rect = card.getBoundingClientRect();
         offsetY = e.clientY - rect.top;
         
-        // 2. Create the exact-size Placeholder (The Hole)
         placeholder = card.cloneNode(true);
         placeholder.classList.add('is-placeholder');
         container.insertBefore(placeholder, card);
         
-        // 3. Turn the actual card into a "Ghost"
         draggingElement = card;
         draggingElement.classList.add('is-dragging');
+        
+        // Dynamically set the Ghost width to perfectly match the physical card
+        draggingElement.style.width = `${rect.width}px`; 
+        
         draggingElement.style.top = `${e.clientY - offsetY}px`;
         draggingElement.style.left = `${rect.left}px`;
         
