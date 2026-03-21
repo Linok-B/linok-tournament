@@ -249,6 +249,9 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 for (let i = 0; i < numGhosts; i++) {
                     matchesToDraw.push({ id: `ghost-${roundIndex}-${i}`, isGhost: true });
                 }
+                if (numGhosts === 1 && tournament.settings.playThirdPlaceMatch) {
+                    matchesToDraw.push({ id: `ghost-${roundIndex}-bronze`, isGhost: true, isThirdPlaceMatch: true });
+                }
             } else {
                 const numGhosts = stage.data.rounds[0].length;
                 for (let i = 0; i < numGhosts; i++) {
