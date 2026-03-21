@@ -11,51 +11,48 @@ if (savedData) {
     currentTournament = Object.assign(new Tournament(), savedData);
 }
 
-// --- SETTINGS EVENT LISTENERS ---
 
-const nameInput = document.getElementById('setting-name');
-const winInput = document.getElementById('setting-pts-win');
-const drawInput = document.getElementById('setting-pts-draw');
-const lossInput = document.getElementById('setting-pts-loss');
+// --- SETTINGS MODAL LOGIC ---
 
-// Sync inputs to the engine when they type or change a number
-nameInput.addEventListener('input', (e) => {
-    currentTournament.settings.name = e.target.value || "Untitled Tournament";
-    updateTitle();
-    saveTournamentLocally(currentTournament);
+const settingsModal = document.getElementById('settings-modal');
+
+document.getElementById('btn-open-settings').addEventListener('click', () => {
+    document.getElementById('setting-name').value = currentTournament.settings.name;
+    document.getElementById('setting-pts-win').value = currentTournament.settings.pointsForWin;
+    document.getElementById('setting-pts-draw').value = currentTournament.settings.pointsForDraw;
+    document.getElementById('setting-pts-loss').value = currentTournament.settings.pointsForLoss;
+    
+    // Fallback safely in case older save files don't have these toggles yet!
+    document.getElementById('setting-randomize').checked = currentTournament.settings.randomizeSeeds || false;
+    document.getElementById('setting-third-place').checked = currentTournament.settings.playThirdPlaceMatch || false;
+    
+    settingsModal.style.display = 'flex';
 });
 
-winInput.addEventListener('change', (e) => {
-    currentTournament.settings.pointsForWin = parseInt(e.target.value) || 0;
-    if(currentTournament.status !== "setup") currentTournament.recalculateAllStats();
+document.getElementById('btn-close-settings').addEventListener('click', () => {
+    settingsModal.style.display = 'none';
+});
+
+document.getElementById('btn-save-settings').addEventListener('click', () => {
+    currentTournament.settings.name = document.getElementById('setting-name').value || "Untitled Tournament";
+    currentTournament.settings.pointsForWin = parseInt(document.getElementById('setting-pts-win').value) || 0;
+    currentTournament.settings.pointsForDraw = parseInt(document.getElementById('setting-pts-draw').value) || 0;
+    currentTournament.settings.pointsForLoss = parseInt(document.getElementById('setting-pts-loss').value) || 0;
+    currentTournament.settings.randomizeSeeds = document.getElementById('setting-randomize').checked;
+    currentTournament.settings.playThirdPlaceMatch = document.getElementById('setting-third-place').checked;
+    
+    if (currentTournament.status !== "setup") {
+        currentTournament.recalculateAllStats(); 
+    }
+    
+    settingsModal.style.display = 'none';
     saveTournamentLocally(currentTournament);
     updateUI();
 });
 
-drawInput.addEventListener('change', (e) => {
-    currentTournament.settings.pointsForDraw = parseInt(e.target.value) || 0;
-    if(currentTournament.status !== "setup") currentTournament.recalculateAllStats();
-    saveTournamentLocally(currentTournament);
-    updateUI();
-});
-
-lossInput.addEventListener('change', (e) => {
-    currentTournament.settings.pointsForLoss = parseInt(e.target.value) || 0;
-    if(currentTournament.status !== "setup") currentTournament.recalculateAllStats();
-    saveTournamentLocally(currentTournament);
-    updateUI();
-});
-
-// Helper function to update the big title and sync inputs on load
 function updateTitle() {
     const titleEl = document.getElementById('main-tournament-title');
     if (titleEl) titleEl.innerText = currentTournament.settings.name;
-    
-    // Ensure inputs match the loaded data
-    if (nameInput) nameInput.value = currentTournament.settings.name;
-    if (winInput) winInput.value = currentTournament.settings.pointsForWin;
-    if (drawInput) drawInput.value = currentTournament.settings.pointsForDraw;
-    if (lossInput) lossInput.value = currentTournament.settings.pointsForLoss;
 }
 
 function renderBlueprintList() {
