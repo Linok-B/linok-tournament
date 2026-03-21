@@ -490,13 +490,12 @@ document.addEventListener('playerListReordered', (e) => {
     });
     
     // 3. IN-PLACE UI UPDATE (No flicker!)
-    // Instead of calling updateUI() and destroying the list, we just loop through 
-    // the existing physical cards and change the text from "1." to "2." etc.
     const container = document.getElementById('player-list-container');
     Array.from(container.children).forEach((card, index) => {
         const seedSpan = card.querySelector('.seed-number');
         if (seedSpan) {
-            seedSpan.innerText = `${index + 1}.`;
+            // ONLY UPDATE THE NUMBER INSIDE THE SPAN! Do not include the dot or name.
+            seedSpan.innerText = `${index + 1}`; 
         }
     });
     
