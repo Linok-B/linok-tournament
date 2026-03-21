@@ -33,7 +33,8 @@ export function renderPlayerList(players, containerId) {
             <!-- This container GROWS to fill all available space! -->
             <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0;">
                 <strong title="${player.name}" style="color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <span class="seed-number" style="color: gray; margin-right: 5px;">${player.seed}.</span>${player.name}
+                    <!-- ONLY THE NUMBER GOES IN THIS SPAN! -->
+                    <span class="seed-number" style="color: gray; margin-right: 5px;">${player.seed}</span>. ${player.name}
                 </strong>
                 <span style="font-size: 12px; color: gray; flex-shrink: 0;">(ELO: ${player.elo})</span>
             </div>
