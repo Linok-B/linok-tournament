@@ -93,8 +93,6 @@ function renderBlueprintList() {
 updateUI();
 
 // Add Player Event
-// In js/app.js - Update Add Player Listener
-
 document.getElementById('btn-add-player').addEventListener('click', () => {
     const nameInput = document.getElementById('player-name');
     const eloInput = document.getElementById('player-elo');
