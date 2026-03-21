@@ -320,6 +320,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             } else if (match.winner || match.isBye) {
                 const p1Name = match.player1 ? match.player1.name : "TBD";
                 const p2Name = match.player2 ? match.player2.name : "TBD";
+                
                 let p1Disp = (match.winner?.id === match.player1?.id || match.winner === "tie") ? `<strong>${p1Name}</strong>` : p1Name;
                 let p2Disp = (match.winner?.id === match.player2?.id || match.winner === "tie") ? `<strong>${p2Name}</strong>` : p2Name;
 
@@ -327,8 +328,8 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 matchBox.innerHTML = `
                     <div style="display:flex; height:100%; align-items:center;">
                         <div style="flex-grow:1; overflow:hidden; width: 130px;">
-                            <div title="${p1Name}" style="${match.winner?.id === match.player1?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">${pDisp}</div>
-                            <div title="${p2Name}" style="${match.winner?.id === match.player2?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${pDisp}</div>
+                            <div title="${p1Name}" style="${match.winner?.id === match.player1?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">${p1Disp}</div>
+                            <div title="${p2Name}" style="${match.winner?.id === match.player2?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Disp}</div>
                         </div>
                         <div style="min-width: 30px; text-align:right; font-weight:bold; margin-right: 10px;">
                             <div style="margin-bottom:5px;">${match.score1}</div>
@@ -336,7 +337,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                         </div>
                         <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
                             <small style="color:gray; font-size:10px; margin-bottom:5px;">${match.isThirdPlaceMatch ? '3rd' : (match.isBye ? 'Auto' : 'Done')}</small>
-                            ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
+                            ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer; position:relative; z-index:10;">Edit</button>` : ''}
                         </div>
                     </div>`;
             } else if (isActiveStage) {
