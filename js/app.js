@@ -196,31 +196,27 @@ function updateUI() {
     const draftScores = {};
     inputs.forEach(input => { draftScores[input.id] = input.value; });
 
-    // 1. Capture the exact sidebar and its scroll position
     const sidebar = document.querySelector('.controls-panel');
     const savedScrollTop = sidebar ? sidebar.scrollTop : 0;
 
-    // 2. Wipe and Redraw everything
     updateTitle(); 
     renderBlueprintList(); 
     renderBracket(currentTournament, 'player-list-container');
     
+    // CRITICAL FIX: Clear the leaderboard if we are in Setup phase!
+    const standingsDiv = document.getElementById('standings-container');
     if (currentTournament.status !== "setup") {
         renderStandings(currentTournament, 'standings-container');
+    } else if (standingsDiv) {
+        standingsDiv.innerHTML = ''; // Kill the Ghost Leaderboard!
     }
 
-    // 3. Restore draft scores
     for (const [id, value] of Object.entries(draftScores)) {
         const el = document.getElementById(id);
         if (el) el.value = value;
     }
 
-    // 4. CRITICAL FIX: Wait for the browser to physically paint the new HTML, THEN restore the scroll!
-    /*if (sidebar) {
-        setTimeout(() => {
-            sidebar.scrollTop = savedScrollTop;
-        }, 0);
-    } */
+    if (sidebar) sidebar.scrollTop = savedScrollTop;
 }
 
 document.getElementById('player-list-container').addEventListener('click', (e) => {
