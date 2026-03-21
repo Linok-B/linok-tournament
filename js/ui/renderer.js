@@ -202,8 +202,6 @@ export function renderBracket(tournament, containerId) {
 // THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines, that's it)
 // ---------------------------------------------------------
 
-// In js/ui/renderer.js - Replace drawBracketMath
-
 function drawBracketMath(stage, isActiveStage) {
     const board = document.getElementById('bracket-board');
     board.innerHTML = '<svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>';
@@ -392,26 +390,24 @@ export function applyPanAndZoom(viewport, board) {
     }, { passive: false });
 }
 
+// In js/ui/renderer.js - Replace renderStandings
+
 export function renderStandings(tournament, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // 1. WHICH STAGE ARE WE LOOKING AT?
+    const sortFunction = calculateTiebreakers(tournament.players, tournament.stages);
+    
+    // Determine which tiebreaker array to use
     let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
     if (viewIndex < 0) viewIndex = 0;
-    
-    // 2. GET THE TIEBREAKERS FOR THIS SPECIFIC STAGE
     let stageTiebreakers = tournament.settings.tiebreakers; 
-    
     if (tournament.stages.length > 0 && tournament.stages[viewIndex].config.tiebreakers) {
         stageTiebreakers = tournament.stages[viewIndex].config.tiebreakers;
     }
 
-    // 3. SYNCHRONOUS MATH ENGINE
-    const sortFunction = calculateTiebreakers(tournament.players, tournament.stages);
     const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, stageTiebreakers));
 
-    // 4. DRAW THE HTML TABLE
     let html = `
         <h2 style="margin-top: 40px; border-top: 1px solid #45475a; padding-top: 20px;">Current Standings</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
@@ -422,42 +418,32 @@ export function renderStandings(tournament, containerId) {
                     <th style="padding: 10px;">Points</th>
                     <th style="padding: 10px;">W-L-D</th>
                     <th style="padding: 10px;">Games (W-L)</th>
-                    <th style="padding: 10px;" title="Buchholz (Sum of opponents' points)">Buchholz</th>
+                    <th style="padding: 10px;">Buchholz</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
-    let currentRank = 1;
-    let actualIndex = 1;
+    let currentDisplayRank = 1;
 
     sortedPlayers.forEach((player, index) => {
-        // Tie Rank Logic
+        // Shared Rank Logic: If this player is tied with the previous one, keep the same rank
         if (index > 0) {
             const prevPlayer = sortedPlayers[index - 1];
-            // If perfectly tied, don't increment currentRank
-            if (sortFunction(player, prevPlayer, stageTiebreakers) !== 0) {
-                currentRank = actualIndex; 
+            const isTied = sortFunction(player, prevPlayer, stageTiebreakers) === 0;
+            if (!isTied) {
+                currentDisplayRank = index + 1;
             }
         }
-        actualIndex++; // The true physical row number always increments
-
-        const pts = player.stats?.points ?? 0;
-        const mw = player.stats?.matchWins ?? 0;
-        const ml = player.stats?.matchLosses ?? 0;
-        const md = player.stats?.matchDraws ?? 0;
-        const gw = player.stats?.gameWins ?? 0;
-        const gl = player.stats?.gameLosses ?? 0;
-        const buch = player.stats?.buchholz ?? 0; 
 
         html += `
             <tr style="border-bottom: 1px solid #45475a;">
-                <td style="padding: 10px;"><b>${currentRank}</b></td>
+                <td style="padding: 10px;"><b>${currentDisplayRank}</b></td>
                 <td style="padding: 10px;">${player.name}</td>
-                <td style="padding: 10px; font-weight: bold; color: var(--accent);">${pts}</td>
-                <td style="padding: 10px;">${mw} - ${ml} - ${md}</td>
-                <td style="padding: 10px;">${gw} - ${gl}</td>
-                <td style="padding: 10px;">${buch}</td>
+                <td style="padding: 10px; font-weight: bold; color: var(--accent);">${player.stats.points}</td>
+                <td style="padding: 10px;">${player.stats.matchWins}-${player.stats.matchLosses}-${player.stats.matchDraws}</td>
+                <td style="padding: 10px;">${player.stats.gameWins}-${player.stats.gameLosses}</td>
+                <td style="padding: 10px;">${player.stats.buchholz}</td>
             </tr>
         `;
     });
