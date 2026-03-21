@@ -46,7 +46,7 @@ export function calculateTiebreakers(players, stagesConfig) {
         if (ptsB !== ptsA) return ptsB - ptsA;
 
         // 1. Loop through the custom tiebreaker waterfall
-        for (let rule of activeTiebreakers) {
+        /* for (let rule of activeTiebreakers) {
             
             if (rule === "game_differential") {
                 const aDiff = (a.stats?.gameWins ?? 0) - (a.stats?.gameLosses ?? 0);
@@ -97,7 +97,7 @@ export function calculateTiebreakers(players, stagesConfig) {
                 const bSeed = b.seed ?? 999;
                 if (aSeed !== bSeed) return aSeed - bSeed;
             }
-        }
+        } */
 
         return 0; // Exactly tied
     };
