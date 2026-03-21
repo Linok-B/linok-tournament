@@ -216,11 +216,11 @@ function updateUI() {
     }
 
     // 4. CRITICAL FIX: Wait for the browser to physically paint the new HTML, THEN restore the scroll!
-    if (sidebar) {
+    /*if (sidebar) {
         setTimeout(() => {
             sidebar.scrollTop = savedScrollTop;
         }, 0);
-    }
+    } */
 }
 
 document.getElementById('player-list-container').addEventListener('click', (e) => {
@@ -456,19 +456,29 @@ document.addEventListener('playerListReordered', (e) => {
 
     const newOrderIds = e.detail.newOrderIds;
     
-    // 1. Create a brand new array mapping the exact physical order of the DOM
+    // 1. Rebuild the Engine's array based on the physical DOM order
     const reorderedPlayers = newOrderIds.map(id => {
         return currentTournament.players.find(p => p.id === id);
-    }).filter(p => p); // Failsafe: remove undefineds if anything weird happens
+    }).filter(p => p); 
     
-    // 2. Overwrite the engine's array
     currentTournament.players = reorderedPlayers;
     
-    // 3. Recalculate Seeds!
+    // 2. Recalculate Seeds in the Engine!
     currentTournament.players.forEach((p, index) => {
         p.seed = index + 1;
     });
     
+    // 3. IN-PLACE UI UPDATE (No flicker!)
+    // Instead of calling updateUI() and destroying the list, we just loop through 
+    // the existing physical cards and change the text from "1." to "2." etc.
+    const container = document.getElementById('player-list-container');
+    Array.from(container.children).forEach((card, index) => {
+        const seedSpan = card.querySelector('.seed-number');
+        if (seedSpan) {
+            seedSpan.innerText = `${index + 1}.`;
+        }
+    });
+    
+    // do NOT call updateUI()
     saveTournamentLocally(currentTournament);
-    updateUI();
 });
