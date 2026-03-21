@@ -61,8 +61,25 @@ export class Tournament {
         return true;
     }
 
+    // In js/engine/tournament.js - Update startTournament()
+
     startTournament() {
         if (this.players.length < 2 || this.settings.pipeline.length === 0) return false;
+        
+        // Execute Randomize Seeds
+        if (this.settings.randomizeSeeds) {
+            // Fisher-Yates Shuffle Algorithm
+            for (let i = this.players.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [this.players[i], this.players[j]] = [this.players[j], this.players[i]];
+            }
+            
+            // Re-assign the official seed numbers based on the new random physical order
+            this.players.forEach((p, index) => {
+                p.seed = index + 1;
+            });
+        }
+        
         this.status = "active";
         this.transitionToNextStage(this.players);
         return true;
