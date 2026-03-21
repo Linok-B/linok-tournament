@@ -30,17 +30,15 @@ export function initStage(players, config) {
     };
 }
 
-
 export function advanceStage(stageData, config, allPlayers) {
     const currentRound = stageData.rounds[stageData.rounds.length - 1];
     const isRoundComplete = currentRound.every(m => m.winner !== null);
 
     if (!isRoundComplete) return stageData;
 
-    // A stage is finished if:
-    // 1. It was a 1-match round (Grand Finals done)
-    // 2. It was a 2-match round and one was a 3rd place match (Bronze done)
-    if (currentRound.length === 1 || (currentRound.length === 2 && currentRound.some(m => m.isThirdPlaceMatch))) {
+    // Stage is complete if the round that just ended was a Finals round
+    const isFinalsRound = currentRound.length === 1 || (currentRound.length === 2 && currentRound.some(m => m.isThirdPlaceMatch));
+    if (isFinalsRound) {
         stageData.isComplete = true;
         return stageData;
     }
@@ -53,8 +51,10 @@ export function advanceStage(stageData, config, allPlayers) {
     let nextRoundMatches = [];
     const nextRoundNum = stageData.rounds.length + 1;
 
-    // Check if the round that just ended was the Semi-Finals (2 matches)
+    // SEMI-FINALS TRANSITION
     if (currentRound.length === 2) {
+        console.log("Semi-Finals detected. Generating next round...");
+
         // 1. Grand Finals
         nextRoundMatches.push({
             id: crypto.randomUUID(), round: nextRoundNum,
@@ -62,10 +62,13 @@ export function advanceStage(stageData, config, allPlayers) {
             score1: 0, score2: 0, winner: null, isBye: false
         });
 
-        // 2. 3rd Place Match (If enabled in global settings)
-        if (config.playThirdPlaceMatch) {
-            const loser1 = currentRound[0].winner.id === currentRound[0].player1?.id ? currentRound[0].player2 : currentRound[0].player1;
-            const loser2 = currentRound[1].winner.id === currentRound[1].player1?.id ? currentRound[1].player2 : currentRound[1].player1;
+        // 2. 3rd Place Match
+        if (config.playThirdPlaceMatch === true) {
+            console.log("3rd Place setting is ON. Generating Bronze Match.");
+            
+            // Robust Loser Identification
+            const loser1 = (currentRound[0].winner.id === currentRound[0].player1.id) ? currentRound[0].player2 : currentRound[0].player1;
+            const loser2 = (currentRound[1].winner.id === currentRound[1].player1.id) ? currentRound[1].player2 : currentRound[1].player1;
             
             nextRoundMatches.push({
                 id: crypto.randomUUID(), round: nextRoundNum, isThirdPlaceMatch: true,
@@ -74,7 +77,7 @@ export function advanceStage(stageData, config, allPlayers) {
             });
         }
     } else {
-        // Standard progression for Round of 16, 8, etc.
+        // Standard Progression
         for (let i = 0; i < currentRound.length; i += 2) {
             const m1 = currentRound[i];
             const m2 = currentRound[i + 1];
@@ -89,6 +92,7 @@ export function advanceStage(stageData, config, allPlayers) {
         }
     }
     
+    console.log(`Generated ${nextRoundMatches.length} matches for Round ${nextRoundNum}`);
     stageData.rounds.push(nextRoundMatches);
     return stageData;
 }
