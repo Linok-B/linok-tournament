@@ -33,46 +33,58 @@ export function initStage(players, config) {
 }
 
 
+// In js/engine/formats/elimination.js - Replace advanceStage
+
 export function advanceStage(stageData, config) {
     const currentRound = stageData.rounds[stageData.rounds.length - 1];
-    
-    // If the stage was already marked complete, or we just finished a 1-match or 2-match (Finals+3rd) round
-    if (currentRound.length <= 2 && currentRound.every(m => m.winner)) {
-        // Special check: If we just finished a round of 2 matches (Finals + 3rd), we are definitely done
-        if (currentRound.length === 2 || (currentRound.length === 1 && !config.playThirdPlaceMatch)) {
-            stageData.isComplete = true;
-            return stageData;
-        }
+    const isRoundComplete = currentRound.every(m => m.winner !== null);
+
+    if (!isRoundComplete) return stageData;
+
+    // --- LOGIC TO END THE STAGE ---
+    // The stage is only complete if:
+    // 1. It was a 1-match round (The Grand Finals)
+    // 2. It was a 2-match round AND one of them was a 3rd Place Match
+    const wasGrandFinals = currentRound.length === 1;
+    const wasFinalsWithBronze = currentRound.length === 2 && currentRound.some(m => m.isThirdPlaceMatch);
+
+    if (wasGrandFinals || wasFinalsWithBronze) {
+        stageData.isComplete = true;
+        return stageData;
     }
 
+    // --- LOGIC TO STOP EARLY (Max Rounds) ---
     if (config.maxRounds && stageData.rounds.length >= config.maxRounds) {
         stageData.isComplete = true;
         return stageData;
     }
 
+    // --- LOGIC TO GENERATE NEXT ROUND ---
     let nextRoundMatches = [];
     const nextRoundNum = stageData.rounds.length + 1;
 
-    // --- 3RD PLACE MATCH LOGIC ---
-    if (currentRound.length === 2 && config.playThirdPlaceMatch) {
-        // This was the Semi-Finals! 
-        // 1. Generate the Grand Finals (Winners)
+    // Is the next round the Finals? (Current round has 2 matches)
+    if (currentRound.length === 2) {
+        // 1. Generate Grand Finals
         nextRoundMatches.push({
             id: crypto.randomUUID(), round: nextRoundNum,
             player1: currentRound[0].winner, player2: currentRound[1].winner,
             score1: 0, score2: 0, winner: null, isBye: false
         });
-        // 2. Generate the 3rd Place Match (Losers)
-        const loser1 = currentRound[0].winner?.id === currentRound[0].player1?.id ? currentRound[0].player2 : currentRound[0].player1;
-        const loser2 = currentRound[1].winner?.id === currentRound[1].player1?.id ? currentRound[1].player2 : currentRound[1].player1;
-        
-        nextRoundMatches.push({
-            id: crypto.randomUUID(), round: nextRoundNum, isThirdPlaceMatch: true,
-            player1: loser1, player2: loser2,
-            score1: 0, score2: 0, winner: null, isBye: false
-        });
+
+        // 2. Generate 3rd Place Match (If enabled in settings)
+        if (config.playThirdPlaceMatch) {
+            const loser1 = currentRound[0].winner.id === currentRound[0].player1?.id ? currentRound[0].player2 : currentRound[0].player1;
+            const loser2 = currentRound[1].winner.id === currentRound[1].player1?.id ? currentRound[1].player2 : currentRound[1].player1;
+            
+            nextRoundMatches.push({
+                id: crypto.randomUUID(), round: nextRoundNum, isThirdPlaceMatch: true,
+                player1: loser1, player2: loser2,
+                score1: 0, score2: 0, winner: null, isBye: false
+            });
+        }
     } else {
-        // Standard Bracket Progression
+        // Standard progression for earlier rounds (e.g., Round of 16 to Quarter-Finals)
         for (let i = 0; i < currentRound.length; i += 2) {
             const m1 = currentRound[i];
             const m2 = currentRound[i + 1];
