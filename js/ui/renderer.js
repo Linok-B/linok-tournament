@@ -202,11 +202,15 @@ export function renderBracket(tournament, containerId) {
 // THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines, that's it)
 // ---------------------------------------------------------
 
+// js/ui/renderer.js - FULL REPLACEMENT for drawBracketMath
+
 function drawBracketMath(stage, isActiveStage) {
     const board = document.getElementById('bracket-board');
+    // Clear existing SVG and Boxes
     board.innerHTML = '<svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>';
     const svgLayer = document.getElementById('bracket-lines');
     
+    // Config values
     const boxWidth = 280; 
     const boxHeight = 85;
     const gapX = 60;  
@@ -214,11 +218,13 @@ function drawBracketMath(stage, isActiveStage) {
     const startX = 50; 
     const startY = 60; 
 
+    // This stores the RIGHT-CENTER coordinate of every match box
     const matchCoordinates = {}; 
 
     stage.data.rounds.forEach((roundMatches, roundIndex) => {
         const currentX = startX + (roundIndex * (boxWidth + gapX));
 
+        // Draw "Round N" header
         const header = document.createElement('h3');
         header.innerText = `Round ${roundIndex + 1}`;
         header.style.position = 'absolute';
@@ -232,43 +238,55 @@ function drawBracketMath(stage, isActiveStage) {
         roundMatches.forEach((match, matchIndex) => {
             let currentY = 0;
 
+            // --- POSITIONING LOGIC ---
             if (stage.config.type === "single_elimination" && roundIndex > 0) {
-                const prevRound = stage.data.rounds[roundIndex - 1];
-                const parent1 = prevRound[matchIndex * 2];
-                const parent2 = prevRound[(matchIndex * 2) + 1];
                 
-                const p1Y = parent1 ? matchCoordinates[parent1.id]?.y : 0;
-                const p2Y = parent2 ? matchCoordinates[parent2.id]?.y : p1Y; 
-
-                currentY = (p1Y + p2Y) / 2;
-
-                // CORRECT SVG ORTHOGONAL LINES (The "Y" shape)
-                if (parent1 && parent2 && p1Y !== p2Y) {
-                    const lineStartX = currentX - gapX;
-                    const midX = lineStartX + (gapX / 2);
+                if (match.isThirdPlaceMatch) {
+                    // 3RD PLACE MATCH: Position it 140px below the Grand Finals (Match index 0)
+                    const finalsMatch = stage.data.rounds[roundIndex][0];
+                    const finalsY = matchCoordinates[finalsMatch.id]?.y || startY;
+                    currentY = finalsY + 140;
+                } else {
+                    // STANDARD BRACKET: Position between parents
+                    const prevRound = stage.data.rounds[roundIndex - 1];
+                    const parent1 = prevRound[matchIndex * 2];
+                    const parent2 = prevRound[(matchIndex * 2) + 1];
                     
-                    // Top Parent Line
-                    svgLayer.innerHTML += `<path d="M ${lineStartX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
-                    // Bottom Parent Line
-                    svgLayer.innerHTML += `<path d="M ${lineStartX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
-                } else if (parent1) {
-                    // Straight line for byes
-                    const lineStartX = currentX - gapX;
-                    svgLayer.innerHTML += `<path d="M ${lineStartX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                    const p1Y = parent1 ? matchCoordinates[parent1.id]?.y : 0;
+                    const p2Y = parent2 ? matchCoordinates[parent2.id]?.y : p1Y; 
+
+                    currentY = (p1Y + p2Y) / 2;
+
+                    // --- DRAW SVG LINES (Only for non-3rd-place matches) ---
+                    if (parent1 && parent2 && p1Y !== p2Y) {
+                        const lineStartX = currentX - gapX;
+                        const midX = lineStartX + (gapX / 2);
+                        const centerY = currentY + (boxHeight / 2);
+                        
+                        // Path from Top Parent to Child
+                        svgLayer.innerHTML += `<path d="M ${lineStartX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${centerY} L ${currentX} ${centerY}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                        // Path from Bottom Parent to Child
+                        svgLayer.innerHTML += `<path d="M ${lineStartX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${centerY} L ${currentX} ${centerY}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                    } else if (parent1) {
+                        // Straight line for Byes
+                        const lineStartX = currentX - gapX;
+                        svgLayer.innerHTML += `<path d="M ${lineStartX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                    }
                 }
             } else {
-                // FIXED SWISS/ROUND ROBIN SPACING (No massive expanding gaps!)
+                // ROUND 1 or NON-ELIM formats
                 if (stage.config.type === "single_elimination") {
                     const multiplier = Math.pow(2, roundIndex); 
                     currentY = startY + (matchIndex * (boxHeight + gapY) * multiplier);
                 } else {
-                    currentY = startY + (matchIndex * (boxHeight + gapY)); // Tightly packed for Swiss!
+                    currentY = startY + (matchIndex * (boxHeight + gapY));
                 }
             }
 
+            // Save the center-Y coordinate for the next round to reference
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
 
-            // HTML GENERATION WITH STRICT FLEXBOX LAYOUT
+            // --- BUILD THE BOX ---
             const matchBox = document.createElement('div');
             matchBox.className = 'match-box';
             matchBox.style.position = 'absolute';
@@ -301,7 +319,7 @@ function drawBracketMath(stage, isActiveStage) {
                             <div>${match.score2}</div>
                         </div>
                         <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
-                            <small style="color:gray; font-size:10px; margin-bottom:5px;">${match.isBye ? 'Auto' : (match.winner === "tie" ? 'TIE' : 'Done')}</small>
+                            <small style="color:gray; font-size:10px; margin-bottom:5px;">${match.isThirdPlaceMatch ? '3rd Place' : (match.isBye ? 'Auto' : 'Done')}</small>
                             ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
                         </div>
                     </div>
@@ -310,19 +328,19 @@ function drawBracketMath(stage, isActiveStage) {
                 if (isActiveStage) {
                     matchBox.innerHTML = `
                         <div style="display:flex; height:100%; align-items:center;">
-                            <div style="overflow:hidden; padding-right:10px; width: 110px;">
+                            <div style="overflow:hidden; padding-right:10px; width: 140px;">
                                 <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:10px; height: 20px; line-height: 20px; cursor:default;">${p1Name}</div>
                                 <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; height: 20px; line-height: 20px; cursor:default;">${p2Name}</div>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:8px;">
-                                <input type="number" id="s1-${match.id}" style="width:55px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
-                                <input type="number" id="s2-${match.id}" style="width:55px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
+                                <input type="number" id="s1-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
+                                <input type="number" id="s2-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
                             </div>
                             <button class="btn-report" data-matchid="${match.id}" style="margin-left:10px; height:48px; width:40px; font-size:16px; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px; font-weight:bold;">✓</button>
                         </div>
                     `;
                 } else {
-                     matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%;"><div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1Name}</div><div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Name}</div><small style="color:gray; margin-top:5px;">Pending</small></div>`;
+                     matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%;"><div>${p1Name}</div><div>${p2Name}</div><small style="color:gray; margin-top:5px;">Pending</small></div>`;
                 }
             }
             board.appendChild(matchBox);
