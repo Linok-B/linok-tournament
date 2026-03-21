@@ -427,18 +427,31 @@ export function renderStandings(tournament, containerId) {
             <tbody>
     `;
 
+    let currentRank = 1;
+    let actualIndex = 1;
+
     sortedPlayers.forEach((player, index) => {
+        // Tie Rank Logic
+        if (index > 0) {
+            const prevPlayer = sortedPlayers[index - 1];
+            // If perfectly tied, don't increment currentRank
+            if (sortFunction(player, prevPlayer, stageTiebreakers) !== 0) {
+                currentRank = actualIndex; 
+            }
+        }
+        actualIndex++; // The true physical row number always increments
+
         const pts = player.stats?.points ?? 0;
         const mw = player.stats?.matchWins ?? 0;
         const ml = player.stats?.matchLosses ?? 0;
         const md = player.stats?.matchDraws ?? 0;
         const gw = player.stats?.gameWins ?? 0;
         const gl = player.stats?.gameLosses ?? 0;
-        const buch = player.stats?.buchholz ?? 0; // Grab the newly calculated Buchholz score!
+        const buch = player.stats?.buchholz ?? 0; 
 
         html += `
             <tr style="border-bottom: 1px solid #45475a;">
-                <td style="padding: 10px;"><b>${index + 1}</b></td>
+                <td style="padding: 10px;"><b>${currentRank}</b></td>
                 <td style="padding: 10px;">${player.name}</td>
                 <td style="padding: 10px; font-weight: bold; color: var(--accent);">${pts}</td>
                 <td style="padding: 10px;">${mw} - ${ml} - ${md}</td>
