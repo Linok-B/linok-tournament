@@ -14,6 +14,9 @@ export class Tournament {
             pointsForDraw: 1,
             pointsForLoss: 0,
 
+            randomizeSeeds: false,
+            playThirdPlaceMatch: false,
+
             // Default waterfal (Host can change this later)
             tiebreakers: ["game_differential", "head_to_head", "buchholz", "seed"], 
             
