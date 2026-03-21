@@ -195,7 +195,7 @@ export function renderBracket(tournament, containerId) {
     container.innerHTML = html;
     
     // --- THE MATH ENGINE FOR DRAWING THE BRACKET ---
-    drawBracketMath(stageToRender, isActiveStage);
+    drawBracketMath(stageToRender, isActiveStage, tournament);
 }
 
 // ---------------------------------------------------------
