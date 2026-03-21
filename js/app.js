@@ -93,17 +93,36 @@ function renderBlueprintList() {
 updateUI();
 
 // Add Player Event
+// In js/app.js - Update Add Player Listener
+
 document.getElementById('btn-add-player').addEventListener('click', () => {
     const nameInput = document.getElementById('player-name');
     const eloInput = document.getElementById('player-elo');
     if (nameInput.value.trim() === '') return;
 
     const added = currentTournament.addPlayer(nameInput.value, eloInput.value);
-    if (!added) alert("Cannot add players after tournament has started!");
+    if (!added) {
+        alert("Cannot add players after tournament has started!");
+        return;
+    }
     
     nameInput.value = '';
     saveTournamentLocally(currentTournament);
+    
+    // 1. Capture scroll before redraw
+    const sidebar = document.querySelector('.controls-panel');
+    const currentScroll = sidebar.scrollTop;
+    
+    // 2. Redraw
     updateUI();
+    
+    // 3. Instantly restore scroll, then smoothly scroll the NEW player into view!
+    sidebar.scrollTop = currentScroll;
+    
+    const newCard = document.querySelector(`.player-card[data-id="${added.id}"]`);
+    if (newCard) {
+        newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 });
 
 // Start Tournament Event
