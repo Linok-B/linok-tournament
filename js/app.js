@@ -150,7 +150,7 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
     document.getElementById('modal-btn-export').onclick = () => { exportTournamentJSON(currentTournament); };
 
     document.getElementById('modal-btn-confirm').onclick = () => {
-        // NEW LOGIC: Don't create a new Tournament(), just reset the arrays!
+        // Don't create a new Tournament(), just reset the arrays!
         currentTournament.stages = [];
         currentTournament.status = "setup";
         
@@ -160,6 +160,9 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
             p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
         });
 
+        // Reset camera
+        window.bracketCamera = { x: 0, y: 0, scale: 1 };
+        
         window.viewingStageIndex = 0; 
         saveTournamentLocally(currentTournament);
         updateUI();
