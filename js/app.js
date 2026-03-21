@@ -462,6 +462,14 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// GLOBAL MODAL CLOSE (Clicking the dark background)
+document.addEventListener('click', (e) => {
+    // Check if what we clicked has the dark background overlay style
+    // (Our modals all use background: rgba(0,0,0,0.8))
+    if (e.target.style.background === 'rgba(0, 0, 0, 0.8)') {
+        e.target.style.display = 'none';
+    }
+});
 
 // Handle Custom Drag-and-Drop List Reordering
 document.addEventListener('playerListReordered', (e) => {
