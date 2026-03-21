@@ -317,7 +317,7 @@ function drawBracketMath(stage, isActiveStage) {
                             <div>${match.score2}</div>
                         </div>
                         <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
-                            <small style="color:${match.isThirdPlaceMatch ? '#f9e2af' : 'gray'}; font-weight:${match.isThirdPlaceMatch ? 'bold' : 'normal'}; font-size:10px; margin-bottom:5px;">${match.isThirdPlaceMatch ? 'BRONZE MATCH' : (match.isBye ? 'Auto' : 'Done')}</small>
+                            <small style="color: gray; font-size: 10px; margin-bottom: 5px;">${match.isBye ? 'Auto' : 'Done'}</small>
                             ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
                         </div>
                     </div>
