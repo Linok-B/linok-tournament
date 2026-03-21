@@ -22,6 +22,10 @@ export function renderPlayerList(players, containerId) {
         card.style.borderLeft = '4px solid var(--accent)';
         
         card.style.gap = '10px';
+
+        //Force the card to include padding in its width calculation so it CANNOT grow
+        card.style.boxSizing = 'border-box';
+        card.style.width = '100%'; 
         
         card.innerHTML = `
             <div class="drag-handle" style="color: #89b4fa; font-size: 16px; font-weight: bold; cursor: grab; padding: 5px; flex-shrink: 0;">⋮⋮</div>
