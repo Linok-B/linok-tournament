@@ -477,28 +477,26 @@ document.addEventListener('playerListReordered', (e) => {
 
     const newOrderIds = e.detail.newOrderIds;
     
-    // 1. Rebuild the Engine's array based on the physical DOM order
+    // 1. Update the Engine
     const reorderedPlayers = newOrderIds.map(id => {
         return currentTournament.players.find(p => p.id === id);
     }).filter(p => p); 
-    
     currentTournament.players = reorderedPlayers;
     
-    // 2. Recalculate Seeds in the Engine!
     currentTournament.players.forEach((p, index) => {
         p.seed = index + 1;
     });
     
-    // 3. IN-PLACE UI UPDATE (No flicker!)
-    const container = document.getElementById('player-list-container');
-    Array.from(container.children).forEach((card, index) => {
-        const seedSpan = card.querySelector('.seed-number');
-        if (seedSpan) {
-            // ONLY UPDATE THE NUMBER INSIDE THE SPAN! Do not include the dot or name.
-            seedSpan.innerText = `${index + 1}`; 
-        }
-    });
+    // 2. FIXED UI UPDATE: Target the correct sub-list
+    const listContainer = document.getElementById('players-list');
+    if (listContainer) {
+        Array.from(listContainer.children).forEach((card, index) => {
+            const seedSpan = card.querySelector('.seed-number');
+            if (seedSpan) {
+                seedSpan.innerText = `${index + 1}`;
+            }
+        });
+    }
     
-    // do NOT call updateUI()
     saveTournamentLocally(currentTournament);
 });
