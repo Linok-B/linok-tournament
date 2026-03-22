@@ -341,10 +341,11 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                         <div style="min-width: 30px; text-align:right; font-weight:bold; margin-right: 10px;">
                             <div style="margin-bottom:5px;">${match.score1}</div>
                             <div>${match.score2}</div>
+                            ${match.draws ? `<div style="font-size:10px; color:gray; margin-top:2px;">${match.draws} Ties</div>` : ''}
                         </div>
                         <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
                             <small style="color:gray; font-size:10px; margin-bottom:5px;">${match.isThirdPlaceMatch ? '3rd' : (match.isBye ? 'Auto' : 'Done')}</small>
-                            ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer; position:relative; z-index:10;">Edit</button>` : ''}
+                            ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
                         </div>
                     </div>`;
             } else if (isActiveStage) {
@@ -354,14 +355,16 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 matchBox.innerHTML = `
                     <div style="display:flex; height:100%; align-items:center;">
                         <div style="overflow:hidden; padding-right:10px; width: 140px;">
-                            <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:10px;">${p1Name}</div>
-                            <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Name}</div>
+                            <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p1Name}</div>
+                            <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p2Name}</div>
+                            <div style="font-size:10px; color:gray; text-align:right; height: 16px; line-height: 16px;">Ties:</div>
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <input type="number" id="s1-${match.id}" style="width:45px; padding:2px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
-                            <input type="number" id="s2-${match.id}" style="width:45px; padding:2px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
+                        <div style="display:flex; flex-direction:column; gap:3px;">
+                            <input type="number" id="s1-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
+                            <input type="number" id="s2-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
+                            <input type="number" id="t-${match.id}" style="width:45px; height:16px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a;" value="${match.draws || 0}">
                         </div>
-                        <button class="btn-report" data-matchid="${match.id}" style="margin-left:10px; height:48px; width:40px; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px; font-weight:bold; position:relative; z-index:10;">✓</button>
+                        <button class="btn-report" data-matchid="${match.id}" style="margin-left:10px; height:48px; width:40px; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px; font-weight:bold;">✓</button>
                     </div>`;
             } else {
                 const p1Name = match.player1 ? match.player1.name : "TBD";
