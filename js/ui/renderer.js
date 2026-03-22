@@ -362,7 +362,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                         <div style="display:flex; flex-direction:column; gap:3px;">
                             <input type="number" id="s1-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
                             <input type="number" id="s2-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
-                            <input type="number" id="t-${match.id}" style="width:45px; height:16px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a;" value="${match.draws || 0}">
+                            <input type="number" id="d-${match.id}" style="width:45px; height:16px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a;" value="${match.draws || 0}">
                         </div>
                         <button class="btn-report" data-matchid="${match.id}" style="margin-left:10px; height:48px; width:40px; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px; font-weight:bold;">✓</button>
                     </div>`;
