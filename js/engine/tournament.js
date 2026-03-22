@@ -138,7 +138,7 @@ export class Tournament {
         });
     }
 
-    reportMatchScore(matchId, score1, score2) {
+    reportMatchScore(matchId, score1, score2, draws = 0) {
         if (this.status !== "active") return false;
 
         const activeStage = this.stages[this.stages.length - 1];
@@ -148,6 +148,7 @@ export class Tournament {
 
         match.score1 = parseInt(score1) || 0;
         match.score2 = parseInt(score2) || 0;
+        match.draws = parseInt(draws) || 0;
 
         if (activeStage.config.type === "single_elimination" && match.score1 === match.score2) {
             alert("Ties are not allowed in Elimination formats!");
@@ -191,7 +192,7 @@ export class Tournament {
         // Reset everyone to zero AND revive everyone
         this.players.forEach(p => {
             p.isEliminated = false; 
-            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
+            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, gameDraws: 0, points: 0 };
         });
 
         const ptsForWin = this.settings.pointsForWin !== undefined ? this.settings.pointsForWin : 3;
@@ -215,6 +216,9 @@ export class Tournament {
                     if (p1 && p2) {
                         p1.stats.gameWins += match.score1; p1.stats.gameLosses += match.score2;
                         p2.stats.gameWins += match.score2; p2.stats.gameLosses += match.score1;
+
+                        p1.stats.gameDraws += (match.draws || 0);
+                        p2.stats.gameDraws += (match.draws || 0);
 
                         let loserObj = null; // Track who lost this specific match
 
