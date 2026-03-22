@@ -265,8 +265,12 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
             if (stage.config.type === "single_elimination" && roundIndex > 0) {
                 if (match.isThirdPlaceMatch) {
-                    const finalsMatch = stage.data.rounds[roundIndex][0];
-                    const finalsY = matchCoordinates[finalsMatch.id]?.y || startY;
+                    let finalsY = startY;
+                    if (actualRound && actualRound[0]) {
+                        finalsY = matchCoordinates[actualRound[0].id]?.y || startY;
+                    } else {
+                        finalsY = matchCoordinates[`ghost-${roundIndex}-0`]?.y || startY;
+                    }
                     currentY = finalsY + 140;
                 } else {
                     let p1Id, p2Id;
