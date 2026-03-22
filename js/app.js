@@ -67,6 +67,7 @@ function renderBlueprintList() {
         "single_elimination": "Single Elim",
         "round_robin": "Round Robin",
         "swiss": "Swiss"
+        "double_elimination": "Double Elim"
     };
 
     currentTournament.settings.pipeline.forEach((stage, index) => {
