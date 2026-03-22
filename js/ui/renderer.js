@@ -382,7 +382,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
             board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
         });
-    });
+    };
 
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
