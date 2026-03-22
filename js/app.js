@@ -246,8 +246,9 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         const matchId = e.target.getAttribute('data-matchid');
         const score1 = document.getElementById(`s1-${matchId}`).value;
         const score2 = document.getElementById(`s2-${matchId}`).value;
+        const ties = document.getElementById(`t-${matchId}`).value;
 
-        const success = currentTournament.reportMatchScore(matchId, score1, score2);
+        const success = currentTournament.reportMatchScore(matchId, score1, score2, ties);
         if (success) {
             saveTournamentLocally(currentTournament);
             updateUI();
