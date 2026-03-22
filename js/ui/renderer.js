@@ -313,10 +313,18 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
             } else if (prevLosers.length === lMatches.length) {
-                // Minor Round (Winners drop in). Straight line from previous Loser, dashed drop from top!
-                currentY = matchCoordinates[prevLosers[matchIndex].id].y;
+                // Minor Round (Winners drop in)
+                const parent = prevLosers[matchIndex];
+                currentY = matchCoordinates[parent.id]?.y || startY;
+                
+                // Straight line from previous Loser match
                 svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
-                svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                
+                // ONLY draw the pink/red drop-down line if this is NOT a ghost match!
+                if (!match.isGhost) {
+                    svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                }
+
             } else {
                 // Major Round (Y-Shape)
                 const p1Y = matchCoordinates[prevLosers[matchIndex * 2].id]?.y;
