@@ -66,7 +66,7 @@ function renderBlueprintList() {
     const formatNames = {
         "single_elimination": "Single Elim",
         "round_robin": "Round Robin",
-        "swiss": "Swiss"
+        "swiss": "Swiss",
         "double_elimination": "Double Elim"
     };
 
