@@ -344,31 +344,35 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
         // 3. DRAW GRAND FINALS
         gfMatches.forEach((match, matchIndex) => {
-            const wFinals = stage.data.rounds.flat().reverse().find(m => m.bracket === "winners");
-            const lFinals = stage.data.rounds.flat().reverse().find(m => m.bracket === "losers");
-            
-            const wY = wFinals ? matchCoordinates[wFinals.id].y : startY;
-            const lY = lFinals ? matchCoordinates[lFinals.id].y : losersOffsetY;
-            
-            const baseCenterY = (wY + lY) / 2;
-            const currentY = baseCenterY + (matchIndex * (boxHeight + gapY)); 
+            let currentY = 0;
 
-            // If it's the very first GF match, draw the epic converging lines
-            if (matchIndex === 0 && wFinals && lFinals) {
-                const wX = matchCoordinates[wFinals.id].x;
-                const lX = matchCoordinates[lFinals.id].x;
+            if (matchIndex === 0) {
+                // First GF Match: Center it between Winners and Losers brackets
+                const wFinals = stage.data.rounds.flat().reverse().find(m => m.bracket === "winners");
+                const lFinals = stage.data.rounds.flat().reverse().find(m => m.bracket === "losers");
+                
+                const wY = wFinals ? matchCoordinates[wFinals.id]?.y : startY;
+                const lY = lFinals ? matchCoordinates[lFinals.id]?.y : losersOffsetY;
+                
+                currentY = (wY + lY) / 2;
+
+                if (wFinals && lFinals && !match.isGhost) {
+                    const wX = matchCoordinates[wFinals.id].x;
+                    const lX = matchCoordinates[lFinals.id].x;
+                    const midX = currentX - (gapX / 2);
+                    svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" fill="none" />`;
+                    svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" fill="none" />`;
+                }
+            } else {
+                // BRACKET RESET MATCH
+                // Force it to sit exactly 115px below the first Grand Final match!
+                const firstGfId = gfMatches[0].id;
+                currentY = matchCoordinates[firstGfId].y + 115;
+                
+                const prevGfX = matchCoordinates[firstGfId].x;
+                const prevGfY = matchCoordinates[firstGfId].y;
                 const midX = currentX - (gapX / 2);
                 
-                svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" fill="none" />`;
-                svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" fill="none" />`;
-            } else if (matchIndex > 0) {
-                // If it's the Bracket Reset, draw a straight yellow line from the first GF match!
-                const prevGfX = matchCoordinates[gfMatches[0].id].x;
-                const prevGfY = matchCoordinates[gfMatches[0].id].y;
-                
-                const midX = currentX - (gapX / 2);
-                
-                // Draw line from GF 1 to GF Reset!
                 svgLayer.innerHTML += `<path d="M ${prevGfX} ${prevGfY + (boxHeight/2)} L ${midX} ${prevGfY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" fill="none" />`;
             }
 
@@ -430,7 +434,7 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage) {
     } else if (isActiveStage) {
         matchBox.innerHTML = `
             <div style="display:flex; height:100%; align-items:center; position: relative;">
-                <small style="position: absolute; top: -20px; right: 0; font-size: 10px;">${bracketLabel}</small>
+                <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
                 <div style="overflow:hidden; padding-right:10px; width: 140px;">
                     <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p1Name}</div>
                     <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p2Name}</div>
@@ -445,7 +449,7 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage) {
             </div>`;
     } else {
         matchBox.innerHTML = `
-            <div style="position:absolute; top:-20px; right: 0;">${bracketLabel}</div>
+            <div style="position:absolute; top: 5px; right: 5px; font-size: 10px;">${bracketLabel}</div>
             <div style="display:flex; flex-direction:column; justify-content:center; height:100%;">
                 <div title="${p1Name}">${p1Name}</div>
                 <div title="${p2Name}">${p2Name}</div>
