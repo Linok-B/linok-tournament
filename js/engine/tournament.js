@@ -235,10 +235,22 @@ export class Tournament {
                             p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
                         }
 
-                        // NEW: Iron-clad Elimination check!
+                        // Iron-clad Elimination check!
                         // If this stage is single elimination, and someone lost, they are dead forever.
                         if (stage.config.type === "single_elimination" && loserObj) {
                             loserObj.isEliminated = true;
+                        }
+                        
+                        // Double Elimination Death Logic
+                        if (loserObj) {
+                            if (stage.config.type === "single_elimination") {
+                                loserObj.isEliminated = true; // Instantly dead in Single Elim
+                            } else if (stage.config.type === "double_elimination") {
+                                // In Double Elim, you only die if you lose in the Loser's Bracket or Grand Finals
+                                if (match.bracket === "losers" || match.bracket === "grand_finals") {
+                                    loserObj.isEliminated = true; 
+                                }
+                            }
                         }
                     }
                 });
