@@ -75,6 +75,11 @@ export function advanceStage(stageData, config, allPlayers) {
         return stageData;
     }
 
+    if (config.maxRounds && stageData.rounds.length >= config.maxRounds) {
+        stageData.isComplete = true;
+        return stageData;
+    }
+
     // --- 2. SEPARATE COMPLETED MATCHES ---
     const wMatches = currentRound.filter(m => m.bracket === "winners");
     const lMatches = currentRound.filter(m => m.bracket === "losers");
