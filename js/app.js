@@ -368,7 +368,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
 
         // OPTION 2: Force Ties
         document.getElementById('modal-btn-end-tie').onclick = () => {
-            if (activeStage.config.type === "single_elimination") {
+            if (activeStage.config.type === "single_elimination" || activeStage.config.type === "double_elimination") {
                 alert("You cannot force ties in an Elimination bracket. Please Rollback instead.");
                 return;
             }
