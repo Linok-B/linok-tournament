@@ -244,11 +244,19 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
     // 1. Handle "Submit Score" Button
     if (e.target && e.target.classList.contains('btn-report')) {
         const matchId = e.target.getAttribute('data-matchid');
-        const score1 = document.getElementById(`s1-${matchId}`).value;
-        const score2 = document.getElementById(`s2-${matchId}`).value;
-        const ties = document.getElementById(`t-${matchId}`).value;
+        
+        // Safely grab the inputs. If they don't exist in the DOM, default to '0'
+        const s1Input = document.getElementById(`s1-${matchId}`);
+        const s2Input = document.getElementById(`s2-${matchId}`);
+        const dInput = document.getElementById(`d-${matchId}`);
 
-        const success = currentTournament.reportMatchScore(matchId, score1, score2, ties);
+        const score1 = s1Input ? s1Input.value : 0;
+        const score2 = s2Input ? s2Input.value : 0;
+        const draws = dInput ? dInput.value : 0;
+
+        // Send to Engine
+        const success = currentTournament.reportMatchScore(matchId, score1, score2, draws);
+        
         if (success) {
             saveTournamentLocally(currentTournament);
             updateUI();
