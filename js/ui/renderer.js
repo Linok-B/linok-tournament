@@ -440,8 +440,6 @@ export function applyPanAndZoom(viewport, board) {
     }, { passive: false });
 }
 
-// In js/ui/renderer.js - Replace renderStandings
-
 export function renderStandings(tournament, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -467,7 +465,7 @@ export function renderStandings(tournament, containerId) {
                     <th style="padding: 10px;">Name</th>
                     <th style="padding: 10px;">Points</th>
                     <th style="padding: 10px;">W-L-D</th>
-                    <th style="padding: 10px;">Games (W-L)</th>
+                    <th style="padding: 10px;">Games (W-L-D)</th>
                     <th style="padding: 10px;">Buchholz</th>
                 </tr>
             </thead>
