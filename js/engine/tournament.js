@@ -150,7 +150,7 @@ export class Tournament {
         match.score2 = parseInt(score2) || 0;
         match.draws = parseInt(draws) || 0;
 
-        if (activeStage.config.type === "single_elimination" && match.score1 === match.score2) {
+        if ((activeStage.config.type === "single_elimination" || activeStage.config.type === "double_elimination") && match.score1 === match.score2) {
             alert("Ties are not allowed in Elimination formats!");
             return false; 
         }
