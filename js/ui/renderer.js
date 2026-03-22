@@ -202,8 +202,6 @@ export function renderBracket(tournament, containerId) {
 // THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines, that's it)
 // ---------------------------------------------------------
 
-// In js/ui/renderer.js - Replace drawBracketMath entirely!
-
 function drawBracketMath(stage, isActiveStage, tournament) {
     const board = document.getElementById('bracket-board');
     board.innerHTML = '<svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>';
