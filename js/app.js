@@ -338,62 +338,11 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         
         // Are there actually unfinished matches?
         const isRoundUnfinished = currentRound.some(m => m.winner === null && !m.isBye);
-
-        // Did they submit literally zero scores this round?
-        const matchesSubmitted = currentRound.filter(m => m.winner !== null && !m.isBye).length;
+        const matchesSubmitted = currentRound.filter(m => m.winner !== null || m.isBye).length; // FIXED: Count completed matches correctly
         
-        if (!isRoundUnfinished) {
-            // Round is fully complete anyway, just end the stage safely!
-            executeEndStage(); 
-            return;
-        }
-
-        // If the round is totally empty, just delete it
-        if (matchesSubmitted === 0) {
-            activeStage.data.rounds.pop(); 
-            executeEndStage();
-            return;
-        }
-
-        // Round is partial. Show the new Modal!
-        const modal = document.getElementById('end-stage-modal');
-        modal.style.display = 'flex';
-
-        // OPTION 1: Rollback
-        document.getElementById('modal-btn-end-rollback').onclick = () => {
-            activeStage.data.rounds.pop(); // Delete the entire partial round
-            executeEndStage();
-            modal.style.display = 'none';
-        };
-
-        // OPTION 2: Force Ties
-        document.getElementById('modal-btn-end-tie').onclick = () => {
-            if (activeStage.config.type === "single_elimination" || activeStage.config.type === "double_elimination") {
-                alert("You cannot force ties in an Elimination bracket. Please Rollback instead.");
-                return;
-            }
-            
-            // Loop through the round and force ties on pending matches
-            currentRound.forEach(m => {
-                if (m.winner === null && !m.isBye) {
-                    m.score1 = 0;
-                    m.score2 = 0;
-                    m.winner = "tie";
-                }
-            });
-            executeEndStage();
-            modal.style.display = 'none';
-        };
-
-        // CANCEL
-        document.getElementById('modal-btn-end-cancel').onclick = () => {
-            modal.style.display = 'none';
-        };
-        
-        // Helper function to finalize the end stage action
+        // Helper function to finalize
         function executeEndStage() {
-            currentTournament.recalculateAllStats(); // Update leaderboard!
-            
+            currentTournament.recalculateAllStats(); 
             activeStage.status = "completed";
             activeStage.data.isComplete = true; 
             
@@ -402,10 +351,48 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
             } else {
                 currentTournament.transitionToNextStage(currentTournament.players);
             }
-            
             saveTournamentLocally(currentTournament);
             updateUI();
         }
+
+        if (!isRoundUnfinished) {
+            executeEndStage(); 
+            return;
+        }
+
+        if (matchesSubmitted === 0) {
+            activeStage.data.rounds.pop(); // Silent Rollback
+            executeEndStage();
+            return;
+        }
+
+        // Round is partial. Show the Modal!
+        const modal = document.getElementById('end-stage-modal');
+        modal.style.display = 'flex';
+
+        document.getElementById('modal-btn-end-rollback').onclick = () => {
+            activeStage.data.rounds.pop(); 
+            executeEndStage();
+            modal.style.display = 'none';
+        };
+
+        document.getElementById('modal-btn-end-tie').onclick = () => {
+            if (activeStage.config.type === "single_elimination" || activeStage.config.type === "double_elimination") {
+                alert("You cannot force ties in an Elimination bracket. Please Rollback instead.");
+                return;
+            }
+            currentRound.forEach(m => {
+                if (m.winner === null && !m.isBye) {
+                    m.score1 = 0; m.score2 = 0; m.draws = 0; m.winner = "tie";
+                }
+            });
+            executeEndStage();
+            modal.style.display = 'none';
+        };
+
+        document.getElementById('modal-btn-end-cancel').onclick = () => {
+            modal.style.display = 'none';
+        };
     }
     
 });
