@@ -456,6 +456,7 @@ export function renderStandings(tournament, containerId) {
 
     const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, stageTiebreakers));
 
+    // 1. Update the Header HTML
     let html = `
         <h2 style="margin-top: 40px; border-top: 1px solid #45475a; padding-top: 20px;">Current Standings</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
@@ -464,18 +465,18 @@ export function renderStandings(tournament, containerId) {
                     <th style="padding: 10px;">Rank</th>
                     <th style="padding: 10px;">Name</th>
                     <th style="padding: 10px;">Points</th>
-                    <th style="padding: 10px;">W-L-D</th>
-                    <th style="padding: 10px;">Games (W-L-D)</th>
+                    <th style="padding: 10px;">Match (W-L-D)</th>
+                    <th style="padding: 10px;">Games (W-L-D)</th> 
                     <th style="padding: 10px;">Buchholz</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
+    // 2. Update the Player Loop HTML
     let currentDisplayRank = 1;
 
     sortedPlayers.forEach((player, index) => {
-        // Shared Rank Logic: If this player is tied with the previous one, keep the same rank
         if (index > 0) {
             const prevPlayer = sortedPlayers[index - 1];
             const isTied = sortFunction(player, prevPlayer, stageTiebreakers) === 0;
@@ -490,7 +491,8 @@ export function renderStandings(tournament, containerId) {
                 <td style="padding: 10px;">${player.name}</td>
                 <td style="padding: 10px; font-weight: bold; color: var(--accent);">${player.stats.points}</td>
                 <td style="padding: 10px;">${player.stats.matchWins}-${player.stats.matchLosses}-${player.stats.matchDraws}</td>
-                <td style="padding: 10px;">${player.stats.gameWins}-${player.stats.gameLosses}</td>
+                <!-- CHANGED TO INCLUDE gameDraws -->
+                <td style="padding: 10px;">${player.stats.gameWins}-${player.stats.gameLosses}-${player.stats.gameDraws}</td>
                 <td style="padding: 10px;">${player.stats.buchholz}</td>
             </tr>
         `;
