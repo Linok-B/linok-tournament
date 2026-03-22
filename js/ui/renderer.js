@@ -344,7 +344,12 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                             ${match.draws ? `<div style="font-size:10px; color:gray; margin-top:2px;">${match.draws} Ties</div>` : ''}
                         </div>
                         <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
-                            <small style="color:gray; font-size:10px; margin-bottom:5px;">${match.isThirdPlaceMatch ? '3rd' : (match.isBye ? 'Auto' : 'Done')}</small>
+                            <small style="color:gray; font-size:10px; margin-bottom:5px;">
+                                <b style="color:${match.bracket === 'winners' ? '#a6e3a1' : (match.bracket === 'losers' ? '#f38ba8' : '#f9e2af')}">
+                                    [${match.bracket === "winners" ? "W" : (match.bracket === "losers" ? "L" : "GF")}]
+                                </b> 
+                                ${match.isThirdPlaceMatch ? '3rd' : (match.isBye ? 'Auto' : 'Done')}
+                            </small>
                             ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
                         </div>
                     </div>`;
