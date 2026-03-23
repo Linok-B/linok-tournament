@@ -163,3 +163,63 @@ export function advanceStage(stageData, config, allPlayers) {
     stageData.rounds.push([...newWMatches, ...newLMatches]);
     return stageData;
 }
+
+export function generateSkeleton(playerCount) {
+    // 1. Calculate bracket size (Next power of 2)
+    const bracketSize = Math.pow(2, Math.ceil(Math.log2(playerCount)));
+    const winnerRoundsCount = Math.log2(bracketSize);
+    
+    // Loser bracket has 2 rounds for every Winner round (except the first drop)
+    const loserRoundsCount = (winnerRoundsCount * 2) - 1; 
+
+    let skeletonRounds = [];
+    
+    // --- WINNERS BRACKET SKELETON ---
+    // Round 1 has (bracketSize / 2) matches. Each round halves.
+    let currentWinnersMatches = bracketSize / 2;
+    for (let r = 0; r < winnerRoundsCount; r++) {
+        let roundArray = [];
+        for (let m = 0; m < currentWinnersMatches; m++) {
+            roundArray.push({ id: `ghost-w-${r}-${m}`, bracket: "winners", isGhost: true });
+        }
+        skeletonRounds.push(roundArray);
+        currentWinnersMatches /= 2;
+    }
+
+    // --- LOSERS BRACKET SKELETON ---
+    // Losers bracket logic: Minor Round (Drops), Major Round (Halves).
+    let currentLosersMatches = bracketSize / 4; 
+    let isMinorRound = true;
+
+    for (let r = 0; r < loserRoundsCount; r++) {
+        // Losers start in Column 2 (Round Index 1) because W-R1 happens first
+        const targetColumn = r + 1; 
+        
+        // Ensure the skeleton array is long enough
+        if (!skeletonRounds[targetColumn]) skeletonRounds[targetColumn] = [];
+
+        for (let m = 0; m < currentLosersMatches; m++) {
+            skeletonRounds[targetColumn].push({ id: `ghost-l-${r}-${m}`, bracket: "losers", isGhost: true });
+        }
+
+        // Alternate logic: After a Minor Round, the match count stays the same.
+        // After a Major Round, the match count halves.
+        if (!isMinorRound) {
+            currentLosersMatches /= 2;
+        }
+        isMinorRound = !isMinorRound;
+    }
+
+    // --- GRAND FINALS SKELETON ---
+    // GF 1 happens in the column after the Loser's Finals
+    const gf1Column = loserRoundsCount + 1;
+    if (!skeletonRounds[gf1Column]) skeletonRounds[gf1Column] = [];
+    skeletonRounds[gf1Column].push({ id: `ghost-gf1`, bracket: "grand_finals", isGhost: true, bracketReset: false });
+
+    // GF 2 (The Pessimistic Reset Match)
+    const gf2Column = gf1Column + 1;
+    if (!skeletonRounds[gf2Column]) skeletonRounds[gf2Column] = [];
+    skeletonRounds[gf2Column].push({ id: `ghost-gf2`, bracket: "grand_finals", isGhost: true, bracketReset: true });
+
+    return skeletonRounds;
+}
