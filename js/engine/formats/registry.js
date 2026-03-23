@@ -15,3 +15,11 @@ export function getFormat(type) {
     if (!format) throw new Error(`Format ${type} not found in registry!`);
     return format;
 }
+
+export function getSkeleton(type, playerCount) {
+    const format = Formats[type];
+    if (format && format.generateSkeleton) {
+        return format.generateSkeleton(playerCount);
+    }
+    return null; // Formats without a skeleton generator just return null
+}
