@@ -1,4 +1,5 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
+import { getSkeleton } from '../engine/formats/registry.js';
 
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
@@ -217,25 +218,74 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     const matchCoordinates = {}; 
     const showFull = tournament.settings.showFullBracket;
 
-    // 1. SAFE ROUND CALCULATION (Fixes the missing Reset Match!)
-    let totalRoundsToDraw = stage.data.rounds.length;
-    if (showFull) {
-        if (stage.config.type === "single_elimination") {
-            totalRoundsToDraw = Math.log2(stage.data.bracketSize);
-        } else if (stage.config.type !== "double_elimination") {
-            // Swiss/RR
-            totalRoundsToDraw = stage.config.maxRounds || (stage.data.totalRounds || stage.data.rounds.length);
+    // --- 1. BUILD THE VISUAL ROUNDS ARRAY ---
+    let visualRounds = [];
+    
+    if (showFull && stage.config.type === "double_elimination") {
+        // Get the perfect pessimistic mathematical skeleton!
+        const skeleton = getSkeleton("double_elimination", stage.data.bracketSize);
+        
+        // Merge real data ON TOP of the skeleton
+        skeleton.forEach((skelRound, rIndex) => {
+            const realRound = stage.data.rounds[rIndex] || [];
+            
+            const mergedRound = skelRound.map((ghostMatch, mIndex) => {
+                const realMatchesInBracket = realRound.filter(m => m.bracket === ghostMatch.bracket);
+                if (realMatchesInBracket[mIndex]) {
+                    return realMatchesInBracket[mIndex];
+                }
+                return ghostMatch;
+            });
+            visualRounds.push(mergedRound);
+        });
+    } else if (showFull && stage.config.type === "single_elimination") {
+        // Single Elim Ghost Generator
+        const totalRoundsToDraw = Math.log2(stage.data.bracketSize);
+        for (let r = 0; r < totalRoundsToDraw; r++) {
+            const actualRound = stage.data.rounds[r];
+            if (actualRound) {
+                visualRounds.push(actualRound);
+            } else {
+                let ghostRound = [];
+                const numGhosts = stage.data.bracketSize / Math.pow(2, r + 1);
+                for (let i = 0; i < numGhosts; i++) {
+                    ghostRound.push({ id: `ghost-${r}-${i}`, isGhost: true });
+                }
+                if (numGhosts === 1 && tournament.settings.playThirdPlaceMatch) {
+                    ghostRound.push({ id: `ghost-${r}-bronze`, isGhost: true, isThirdPlaceMatch: true });
+                }
+                visualRounds.push(ghostRound);
+            }
         }
-        // Note: Double Elimination skips "Show Full" ghosting because DE routing is too volatile to preview safely.
+    } else if (showFull && stage.config.type !== "double_elimination") {
+        // Swiss/RR Ghost Generator
+        const totalRoundsToDraw = stage.config.maxRounds || (stage.data.totalRounds || stage.data.rounds.length);
+        for (let r = 0; r < totalRoundsToDraw; r++) {
+            const actualRound = stage.data.rounds[r];
+            if (actualRound) {
+                visualRounds.push(actualRound);
+            } else {
+                let ghostRound = [];
+                const numGhosts = stage.data.rounds[0].length;
+                for (let i = 0; i < numGhosts; i++) ghostRound.push({ id: `ghost-${r}-${i}`, isGhost: true });
+                visualRounds.push(ghostRound);
+            }
+        }
+    } else {
+        // No preview, just show actual data
+        visualRounds = stage.data.rounds;
     }
 
-    // DOUBLE ELIMINATION Y-OFFSET
+    const totalRoundsToDraw = visualRounds.length;
+
+    // --- 2. CALCULATE Y-OFFSETS ---
     let losersOffsetY = startY; 
     if (stage.config.type === "double_elimination") {
-        const wR1Count = stage.data.rounds[0].filter(m => m.bracket === "winners").length;
+        const wR1Count = visualRounds[0].filter(m => m.bracket === "winners" || !m.bracket).length;
         losersOffsetY = startY + (wR1Count * (boxHeight + gapY)) + 150; 
     }
 
+    // --- 3. DRAW THE BRACKET ---
     for (let roundIndex = 0; roundIndex < totalRoundsToDraw; roundIndex++) {
         const currentX = startX + (roundIndex * (boxWidth + gapX));
         
@@ -244,58 +294,36 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         header.style.cssText = `position:absolute; left:${currentX}px; top:10px; width:${boxWidth}px; text-align:center; margin:0; color: var(--text-main);`;
         board.appendChild(header);
 
-        let matchesToDraw = stage.data.rounds[roundIndex] || [];
-
-        // GHOST GENERATOR (Single Elim & Swiss Only)
-        if (matchesToDraw.length === 0 && showFull) {
-            if (stage.config.type === "single_elimination") {
-                const numGhosts = stage.data.bracketSize / Math.pow(2, roundIndex + 1);
-                for (let i = 0; i < numGhosts; i++) matchesToDraw.push({ id: `ghost-${roundIndex}-${i}`, isGhost: true });
-                if (numGhosts === 1 && tournament.settings.playThirdPlaceMatch) {
-                    matchesToDraw.push({ id: `ghost-${roundIndex}-bronze`, isGhost: true, isThirdPlaceMatch: true });
-                }
-            } else if (stage.config.type !== "double_elimination") {
-                const numGhosts = stage.data.rounds[0].length;
-                for (let i = 0; i < numGhosts; i++) matchesToDraw.push({ id: `ghost-${roundIndex}-${i}`, isGhost: true });
-            }
-        }
+        let matchesToDraw = visualRounds[roundIndex] || [];
 
         const wMatches = matchesToDraw.filter(m => m.bracket === "winners" || m.bracket === undefined);
         const lMatches = matchesToDraw.filter(m => m.bracket === "losers");
         const gfMatches = matchesToDraw.filter(m => m.bracket === "grand_finals");
 
-        // --- DRAW WINNERS BRACKET ---
+        // DRAW WINNERS
         wMatches.forEach((match, matchIndex) => {
             let currentY = 0;
 
             if ((stage.config.type === "single_elimination" || stage.config.type === "double_elimination") && roundIndex > 0) {
                 if (match.isThirdPlaceMatch) {
                     let finalsY = startY;
-                    const actualRound = stage.data.rounds[roundIndex];
+                    const actualRound = visualRounds[roundIndex];
                     if (actualRound && actualRound[0]) finalsY = matchCoordinates[actualRound[0].id]?.y || startY;
-                    else finalsY = matchCoordinates[`ghost-${roundIndex}-0`]?.y || startY;
                     
                     currentY = finalsY + 140;
                 } else {
-                    let p1Id, p2Id;
-                    const actualRound = stage.data.rounds[roundIndex];
-                    if (actualRound) {
-                        const prevRound = stage.data.rounds[roundIndex - 1].filter(m => m.bracket === match.bracket || !m.bracket);
-                        p1Id = prevRound[matchIndex * 2]?.id;
-                        p2Id = prevRound[(matchIndex * 2) + 1]?.id;
-                    } else {
-                        p1Id = `ghost-${roundIndex - 1}-${matchIndex * 2}`;
-                        p2Id = `ghost-${roundIndex - 1}-${matchIndex * 2 + 1}`;
-                    }
+                    const prevRound = visualRounds[roundIndex - 1] || [];
+                    const parent1 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[matchIndex * 2];
+                    const parent2 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[(matchIndex * 2) + 1];
                     
-                    const p1Y = matchCoordinates[p1Id]?.y;
-                    const p2Y = matchCoordinates[p2Id]?.y ?? p1Y;
+                    const p1Y = parent1 ? matchCoordinates[parent1.id]?.y : undefined;
+                    const p2Y = parent2 ? matchCoordinates[parent2.id]?.y : p1Y;
+
                     currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : startY;
 
                     if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
                         const midX = (currentX - gapX) + (gapX / 2);
-                        const isGhostLine = !actualRound;
-                        const dash = isGhostLine ? 'stroke-dasharray="5,5"' : '';
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                         svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                         svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                     } else if (p1Y !== undefined) {
@@ -315,30 +343,25 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
         });
 
-        // --- DRAW LOSERS BRACKET ---
+        // DRAW LOSERS
         lMatches.forEach((match, matchIndex) => {
             let currentY = 0;
-            const prevRound = stage.data.rounds[roundIndex - 1] || [];
+            const prevRound = visualRounds[roundIndex - 1] || [];
             const prevLosers = prevRound.filter(m => m.bracket === "losers");
 
             if (prevLosers.length === 0) {
                 currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 
-                // FIXED: Only draw pink dashed line if Player 2 (The Winner's Drop) actually exists!
-                if (match.player2 && match.player2.id) {
-                    svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                }
+                const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" ${dash} />`;
 
             } else if (prevLosers.length === lMatches.length) {
                 const parent = prevLosers[matchIndex];
                 currentY = matchCoordinates[parent.id]?.y || startY;
                 
-                svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
-                
-                // FIXED: Only draw pink dashed line if Player 2 (The Winner's Drop) actually exists!
-                if (match.player2 && match.player2.id) {
-                    svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                }
+                const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
+                svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" ${dash} />`;
 
             } else {
                 const parent1 = prevLosers[matchIndex * 2];
@@ -350,8 +373,9 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
                 if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
                     const midX = (currentX - gapX) + (gapX / 2);
-                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
-                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                 }
             }
 
@@ -359,45 +383,42 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
         });
 
-        // --- DRAW GRAND FINALS ---
-        gfMatches.forEach((match) => {
+        // DRAW GRAND FINALS
+        gfMatches.forEach((match, matchIndex) => {
             let currentY = 0;
 
-            // FIXED: Grand Finals Reset placement and line routing!
             if (match.bracketReset) {
-                // If it's the reset, find GF1 from the PREVIOUS round to align horizontally
-                const gf1 = stage.data.rounds[roundIndex - 1].find(m => m.bracket === "grand_finals");
+                const gf1 = visualRounds[roundIndex - 1].find(m => m.bracket === "grand_finals");
                 currentY = gf1 ? matchCoordinates[gf1.id].y : startY;
                 
                 if (gf1) {
                     const prevX = matchCoordinates[gf1.id].x;
-                    // Draw a straight golden line from GF1 to GF Reset!
-                    svgLayer.innerHTML += `<path d="M ${prevX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" fill="none" />`;
+                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                    svgLayer.innerHTML += `<path d="M ${prevX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" fill="none" ${dash} />`;
                 }
-
             } else {
-                // Standard GF1: Center between Winner's Champ and Loser's Champ
-                const wFinals = stage.data.rounds.flat().reverse().find(m => m.bracket === "winners");
-                const lFinals = stage.data.rounds.flat().reverse().find(m => m.bracket === "losers");
+                const wFinals = visualRounds.flat().reverse().find(m => m.bracket === "winners");
+                const lFinals = visualRounds.flat().reverse().find(m => m.bracket === "losers");
                 
                 const wY = wFinals ? matchCoordinates[wFinals.id]?.y : startY;
                 const lY = lFinals ? matchCoordinates[lFinals.id]?.y : losersOffsetY;
                 
                 currentY = (wY + lY) / 2;
 
-                if (wFinals && lFinals && !match.isGhost) {
+                if (wFinals && lFinals && matchIndex === 0) {
                     const wX = matchCoordinates[wFinals.id].x;
                     const lX = matchCoordinates[lFinals.id].x;
                     const midX = currentX - (gapX / 2);
-                    svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" fill="none" />`;
-                    svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" fill="none" />`;
+                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                    svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" fill="none" ${dash} />`;
+                    svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" fill="none" ${dash} />`;
                 }
             }
 
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
             board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
         });
-    };
+    }
 
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
