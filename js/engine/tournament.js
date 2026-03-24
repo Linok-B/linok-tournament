@@ -96,45 +96,60 @@ export class Tournament {
             return;
         }
 
-        // 1. Filter out dead players
-        let playersForNextStage = incomingPlayers.filter(p => !p.isEliminated);
+        // 1. Start with EVERYONE
+        let playersForNextStage = [...incomingPlayers];
 
-        // 2. THE BRIDGE: Top Cut Logic
+        // 2. THE BRIDGE: Top Cut Logic (Happens BEFORE filtering dead players!)
         if (config.cutToTop && config.cutToTop < playersForNextStage.length) {
             
-            // Get the tiebreakers from the stage that just finished
             let pastStageTiebreakers = this.settings.tiebreakers;
             if (this.stages.length > 0 && this.stages[this.stages.length - 1].config.tiebreakers) {
                 pastStageTiebreakers = this.stages[this.stages.length - 1].config.tiebreakers;
             }
 
             // SYNCHRONOUS SORTING
-            const sortFunction = calculateTiebreakers(this.players, this.stages);
-            playersForNextStage.sort((a, b) => sortFunction(a, b, pastStageTiebreakers));
-            
-            // Slice the Top N
-            playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
-            
-            // Re-seed based on their finish
-            playersForNextStage.forEach((p, index) => { p.seed = index + 1; });
+            import('./systems/tiebreakers.js').then(({ calculateTiebreakers }) => {
+                const sortFunction = calculateTiebreakers(this.players, this.stages);
+                playersForNextStage.sort((a, b) => sortFunction(a, b, pastStageTiebreakers));
+                
+                // Slice the Top N! Even if they died in Single Elim, they made the cut!
+                playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
+                
+                // Revive them! If they made the Top Cut, they are allowed to play!
+                playersForNextStage.forEach((p, index) => { 
+                    p.isEliminated = false;
+                    p.seed = index + 1; 
+                });
+                
+                this.executeTransition(playersForNextStage, config, nextStageIndex);
+            });
+            return; // Exit early because the import is async!
         }
 
-        // 3. SYNCHRONOUS GENERATION (Happens whether there is a Top Cut or not!)
-        const formatEngine = getFormat(config.type);
-        const stageData = formatEngine.initStage(playersForNextStage, config);
+        // 3. No Top Cut? Only advance people who are actually ALIVE.
+        playersForNextStage = playersForNextStage.filter(p => !p.isEliminated);
+        
+        this.executeTransition(playersForNextStage, config, nextStageIndex);
+    }
 
-        this.stages.push({
-            id: crypto.randomUUID(),
-            stageNumber: nextStageIndex + 1,
-            config: config,
-            data: stageData,
-            status: "active"
-        });
+    // Helper function to keep the generation synchronous and clean
+    executeTransition(playersForNextStage, config, nextStageIndex) {
+        import('./formats/registry.js').then(({ getFormat }) => {
+            const formatEngine = getFormat(config.type);
+            const stageData = formatEngine.initStage(playersForNextStage, config);
 
-        // 4. Force a UI update
-        import('../store/localData.js').then(({ saveTournamentLocally }) => {
-            saveTournamentLocally(this);
-            document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
+            this.stages.push({
+                id: crypto.randomUUID(),
+                stageNumber: nextStageIndex + 1,
+                config: config,
+                data: stageData,
+                status: "active"
+            });
+
+            import('../store/localData.js').then(({ saveTournamentLocally }) => {
+                saveTournamentLocally(this);
+                document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
+            });
         });
     }
 
