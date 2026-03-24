@@ -1,7 +1,8 @@
 export function initStage(players, config) {
     // Round 1 of Swiss: Just pair them by seed (1v2, 3v4)
     const seededPlayers = [...players].sort((a, b) => a.seed - b.seed);
-    const maxRounds = config.maxRounds || 3; 
+    const defaultRounds = Math.ceil(Math.log2(seededPlayers.length));
+    const maxRounds = config.maxRounds || defaultRounds;
     
     let matches = [];
     for (let i = 0; i < seededPlayers.length; i += 2) {
