@@ -96,60 +96,57 @@ export class Tournament {
             return;
         }
 
-        // 1. Start with EVERYONE
         let playersForNextStage = [...incomingPlayers];
 
-        // 2. THE BRIDGE: Top Cut Logic (Happens BEFORE filtering dead players!)
-        if (config.cutToTop && config.cutToTop < playersForNextStage.length) {
+        // RULE: Only revive if a Top Cut is explicitly defined
+        if (config.cutToTop !== undefined && config.cutToTop !== null && config.cutToTop > 0) {
             
             let pastStageTiebreakers = this.settings.tiebreakers;
             if (this.stages.length > 0 && this.stages[this.stages.length - 1].config.tiebreakers) {
                 pastStageTiebreakers = this.stages[this.stages.length - 1].config.tiebreakers;
             }
 
-            // SYNCHRONOUS SORTING
-            import('./systems/tiebreakers.js').then(({ calculateTiebreakers }) => {
-                const sortFunction = calculateTiebreakers(this.players, this.stages);
-                playersForNextStage.sort((a, b) => sortFunction(a, b, pastStageTiebreakers));
-                
-                // Slice the Top N! Even if they died in Single Elim, they made the cut!
-                playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
-                
-                // Revive them! If they made the Top Cut, they are allowed to play!
-                playersForNextStage.forEach((p, index) => { 
-                    p.isEliminated = false;
-                    p.seed = index + 1; 
-                });
-                
-                this.executeTransition(playersForNextStage, config, nextStageIndex);
+            // Sort EVERYONE by standings (including the dead)
+            const sortFunction = calculateTiebreakers(this.players, this.stages);
+            playersForNextStage.sort((a, b) => sortFunction(a, b, pastStageTiebreakers));
+            
+            // Slice the Top N (if N > length, slice returns everyone)
+            playersForNextStage = playersForNextStage.slice(0, config.cutToTop);
+            
+            // REVIVE: These players made the cut, so they are alive for the next stage
+            playersForNextStage.forEach((p, index) => { 
+                p.isEliminated = false;
+                p.seed = index + 1; 
             });
-            return; // Exit early because the import is async!
+            
+        } else {
+            // No Top Cut? Only people who survived the previous stage (un-eliminated) move on
+            playersForNextStage = playersForNextStage.filter(p => !p.isEliminated);
+            
+            // Re-seed survivors
+            playersForNextStage.forEach((p, index) => { p.seed = index + 1; });
         }
 
-        // 3. No Top Cut? Only advance people who are actually ALIVE.
-        playersForNextStage = playersForNextStage.filter(p => !p.isEliminated);
-        
         this.executeTransition(playersForNextStage, config, nextStageIndex);
     }
 
-    // Helper function to keep the generation synchronous and clean
     executeTransition(playersForNextStage, config, nextStageIndex) {
-        import('./formats/registry.js').then(({ getFormat }) => {
-            const formatEngine = getFormat(config.type);
-            const stageData = formatEngine.initStage(playersForNextStage, config);
+        // Ensure format registry is loaded
+        const formatEngine = getFormat(config.type);
+        const stageData = formatEngine.initStage(playersForNextStage, config);
 
-            this.stages.push({
-                id: crypto.randomUUID(),
-                stageNumber: nextStageIndex + 1,
-                config: config,
-                data: stageData,
-                status: "active"
-            });
+        this.stages.push({
+            id: crypto.randomUUID(),
+            stageNumber: nextStageIndex + 1,
+            config: config,
+            data: stageData,
+            status: "active"
+        });
 
-            import('../store/localData.js').then(({ saveTournamentLocally }) => {
-                saveTournamentLocally(this);
-                document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
-            });
+        // Trigger save and update
+        import('../store/localData.js').then(({ saveTournamentLocally }) => {
+            saveTournamentLocally(this);
+            document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
         });
     }
 
