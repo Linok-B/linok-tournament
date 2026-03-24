@@ -347,12 +347,19 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
                 } else {
+                    // It is First Round
                     currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 }
                 
-                // FIXED: ONLY draw the pink drop line if it's a REAL drop, NOT a Ghost and NOT a Bye!
+                // ONLY draw the pink drop line if it's a REAL drop, NOT a Ghost and NOT a Bye
                 if (!match.isGhost && !match.isBye) {
+                    // Vertical Drop Line
                     svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    
+                    // Horizontal Connecting Line (Specifically for First Round drops)
+                    if (isFirstRound) {
+                        svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    }
                 }
             } else {
                 const parent1 = prevLosers[matchIndex * 2];
