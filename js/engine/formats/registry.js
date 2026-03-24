@@ -18,8 +18,6 @@ export function getFormat(type) {
 
 export function getSkeleton(type, playerCount) {
     const format = Formats[type];
-    if (format && format.generateSkeleton) {
-        return format.generateSkeleton(playerCount);
-    }
-    return null; // Formats without a skeleton generator just return null
+    if (format && format.generateSkeleton) return format.generateSkeleton(playerCount);
+    return null; 
 }
