@@ -310,8 +310,11 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     const parent1 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[matchIndex * 2];
                     const parent2 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[(matchIndex * 2) + 1];
                     
-                    let p1Y = parent1 ? matchCoordinates[parent1.id]?.y : undefined;
-                    let p2Y = parent2 ? matchCoordinates[parent2.id]?.y : p1Y;
+                    // Only draw lines if the parent was NOT a Phantom match!
+                    let p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchCoordinates[parent1.id]?.y : undefined;
+                    let p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchCoordinates[parent2.id]?.y : undefined;
+                    // If no parent 2 but parent 1 exists, align straight!
+                    if (p1Y !== undefined && p2Y === undefined) p2Y = p1Y;
 
                     // FIXED: Force a straight line if this match is a real Bye!
                     if (!match.isGhost && match.isBye) {
@@ -371,10 +374,14 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     }
                 }
             } else {
+                // Major Round (Y-Shape)
                 const parent1 = prevLosers[matchIndex * 2];
                 const parent2 = prevLosers[(matchIndex * 2) + 1];
-                const p1Y = parent1 ? matchCoordinates[parent1.id]?.y : 0;
-                const p2Y = parent2 ? matchCoordinates[parent2.id]?.y : p1Y; 
+                
+                // Only draw lines if the parent was NOT a Phantom match!
+                const p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchCoordinates[parent1.id]?.y : undefined;
+                const p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchCoordinates[parent2.id]?.y : p1Y; 
+
                 currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY;
 
                 if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
@@ -382,6 +389,10 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                } else if (p1Y !== undefined) {
+                    // Draw a straight line if only one real parent exists!
+                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                 }
             }
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
@@ -428,6 +439,12 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 // HTML GENERATOR
 function createMatchBoxHTML(match, x, y, width, height, isActiveStage) {
     const matchBox = document.createElement('div');
+    
+    if (match.winner && match.winner.isPhantom) {
+        matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; visibility:hidden;`;
+        return matchBox;
+    }
+    
     matchBox.className = 'match-box';
     matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; padding:8px; box-sizing:border-box;`;
     
