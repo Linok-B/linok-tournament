@@ -277,6 +277,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
     // --- 2. DRAWING LOOP ---
     for (let roundIndex = 0; roundIndex < totalRoundsToDraw; roundIndex++) {
+
         const currentX = startX + (roundIndex * (boxWidth + gapX));
         const header = document.createElement('h3');
         header.innerText = `Round ${roundIndex + 1}`;
@@ -284,13 +285,17 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         board.appendChild(header);
 
         let matchesToDraw = visualRounds[roundIndex] || [];
+
+        // If this round already physically exists in the data, strip out any ghosts we merged into it.
+        if (roundIndex < stage.data.rounds.length) {
+            matchesToDraw = matchesToDraw.filter(m => !m.isGhost);
+        }
+
         const wMatches = matchesToDraw.filter(m => m.bracket === "winners" || m.bracket === undefined);
         const lMatches = matchesToDraw.filter(m => m.bracket === "losers");
         const gfMatches = matchesToDraw.filter(m => m.bracket === "grand_finals");
 
-        if (stage.data.isComplete && !visualRounds[roundIndex]) {
-            break; 
-        }
+        if (stage.data.isComplete && !visualRounds[roundIndex]) break; 
         
         // WINNERS
         wMatches.forEach((match, matchIndex) => {
