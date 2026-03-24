@@ -288,6 +288,10 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         const lMatches = matchesToDraw.filter(m => m.bracket === "losers");
         const gfMatches = matchesToDraw.filter(m => m.bracket === "grand_finals");
 
+        if (stage.data.isComplete && !visualRounds[roundIndex]) {
+            break; 
+        }
+        
         // WINNERS
         wMatches.forEach((match, matchIndex) => {
             let currentY = 0;
