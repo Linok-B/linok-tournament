@@ -49,26 +49,17 @@ function getStandardSeeding(size) {
     return matches;
 }
 
-// In js/engine/formats/doubleElimination.js - Replace advanceStage
-
 export function advanceStage(stageData, config, allPlayers) {
     const currentRound = stageData.rounds[stageData.rounds.length - 1];
     const isRoundComplete = currentRound.every(m => m.winner !== null);
 
     if (!isRoundComplete) return stageData;
 
-    // --- 1. GRAND FINALS LOGIC ---
     const isGrandFinals = currentRound[0] && currentRound[0].bracket === "grand_finals";
     if (isGrandFinals) {
         const gfMatch = currentRound[0];
-        // Did the Loser's Bracket winner (player2) beat the Undefeated winner (player1)?
-        if (!gfMatch.bracketReset && gfMatch.winner.id === gfMatch.player2.id) {
-            stageData.rounds.push([{
-                id: crypto.randomUUID(), round: stageData.rounds.length + 1, bracket: "grand_finals",
-                player1: gfMatch.player1, player2: gfMatch.player2,
-                score1: 0, score2: 0, draws: 0, winner: null, isBye: false,
-                bracketReset: true
-            }]);
+        if (!gfMatch.bracketReset && gfMatch.winner.id === gfMatch.player2?.id) {
+            stageData.rounds.push([createMatch(gfMatch.player1, gfMatch.player2, stageData.rounds.length + 1, "grand_finals", true)]);
             return stageData;
         }
         stageData.isComplete = true;
@@ -80,88 +71,86 @@ export function advanceStage(stageData, config, allPlayers) {
         return stageData;
     }
 
-    // --- 2. SEPARATE COMPLETED MATCHES ---
+    const nextRoundNum = stageData.rounds.length + 1;
     const wMatches = currentRound.filter(m => m.bracket === "winners");
     const lMatches = currentRound.filter(m => m.bracket === "losers");
 
-    const nextRoundNum = stageData.rounds.length + 1;
     let newWMatches = [];
     let newLMatches = [];
 
-    // --- 3. ADVANCE WINNERS BRACKET ---
-    // If there is only 1 Winner match left, they are the Undefeated Champ. They wait!
+    // --- 1. ADVANCE WINNERS ---
     if (wMatches.length > 1) {
         for (let i = 0; i < wMatches.length; i += 2) {
-            const p1 = wMatches[i].winner;
-            const p2 = wMatches[i + 1] ? wMatches[i + 1].winner : null;
-            newWMatches.push({
-                id: crypto.randomUUID(), round: nextRoundNum, bracket: "winners",
-                player1: p1, player2: p2,
-                score1: 0, score2: 0, draws: 0, winner: p2 === null ? p1 : null, isBye: p2 === null
-            });
+            newWMatches.push(createMatch(wMatches[i].winner, wMatches[i + 1]?.winner, nextRoundNum, "winners"));
         }
     }
 
-    // --- 4. ADVANCE LOSERS BRACKET ---
-    // Who just lost in the Winner's Bracket?
-    const newDrops = wMatches.map(m => m.winner.id === m.player1?.id ? m.player2 : m.player1).filter(p => p !== null);
-    // Who survived the previous Loser's Bracket round?
-    const survivingLosers = lMatches.map(m => m.winner).filter(p => p !== null);
+    // --- 2. ADVANCE LOSERS ---
+    // CRITICAL FIX: Do NOT filter out nulls! We must keep the exact array length to preserve the bracket shape!
+    const newDrops = wMatches.map(m => {
+        if (m.winner?.isPhantom) return null;
+        if (m.winner?.id === m.player1?.id) return m.player2 || null;
+        return m.player1 || null;
+    });
+    newDrops.reverse(); // Standard crossover rule
+
+    const survivingLosers = lMatches.map(m => m.winner?.isPhantom ? null : (m.winner || null));
 
     if (wMatches.length > 0 && lMatches.length === 0) {
-        // Phase 1: The very first drop (Losers Round 1)
+        // Phase 1: First drops
         for (let i = 0; i < newDrops.length; i += 2) {
-            const p1 = newDrops[i];
-            const p2 = newDrops[i + 1] || null;
-            newLMatches.push({
-                id: crypto.randomUUID(), round: nextRoundNum, bracket: "losers",
-                player1: p1, player2: p2,
-                score1: 0, score2: 0, draws: 0, winner: p2 === null ? p1 : null, isBye: p2 === null
-            });
+            newLMatches.push(createMatch(newDrops[i], newDrops[i + 1], nextRoundNum, "losers"));
         }
     } else if (newDrops.length > 0) {
-        // Phase 2: Minor Round (New drops fight the surviving losers)
-        // Standard Crossover: We reverse the drops so you don't instantly rematch the person who beat you!
-        newDrops.reverse();
+        // Phase 2: Minor Round (Drops vs Survivors) - PERFECT 1:1 MATCH NOW!
         for (let i = 0; i < survivingLosers.length; i++) {
-            const p1 = survivingLosers[i];
-            const p2 = newDrops[i] || null;
-            newLMatches.push({
-                id: crypto.randomUUID(), round: nextRoundNum, bracket: "losers",
-                player1: p1, player2: p2,
-                score1: 0, score2: 0, draws: 0, winner: p2 === null ? p1 : null, isBye: p2 === null
-            });
+            newLMatches.push(createMatch(survivingLosers[i], newDrops[i], nextRoundNum, "losers"));
         }
     } else if (survivingLosers.length > 1) {
-        // Phase 3: Major Round (Surviving losers fight each other)
+        // Phase 3: Major Round (Survivors vs Survivors)
         for (let i = 0; i < survivingLosers.length; i += 2) {
-            const p1 = survivingLosers[i];
-            const p2 = survivingLosers[i + 1] || null;
-            newLMatches.push({
-                id: crypto.randomUUID(), round: nextRoundNum, bracket: "losers",
-                player1: p1, player2: p2,
-                score1: 0, score2: 0, draws: 0, winner: p2 === null ? p1 : null, isBye: p2 === null
-            });
+            newLMatches.push(createMatch(survivingLosers[i], survivingLosers[i + 1], nextRoundNum, "losers"));
         }
     }
 
-    // --- 5. GENERATE GRAND FINALS ---
-    // If Winners has finished (0 new matches) AND Losers is down to 1 survivor!
+    // --- 3. GENERATE GRAND FINALS ---
     if (newWMatches.length === 0 && newLMatches.length === 0 && survivingLosers.length === 1) {
-        // Find the Undefeated Champion from the last Winner's match!
-        let champMatch = stageData.rounds.flat().reverse().find(m => m.bracket === "winners");
-        
-        stageData.rounds.push([{
-            id: crypto.randomUUID(), round: nextRoundNum, bracket: "grand_finals",
-            player1: champMatch.winner, player2: survivingLosers[0],
-            score1: 0, score2: 0, draws: 0, winner: null, isBye: false,
-            bracketReset: false
-        }]);
+        const champMatch = stageData.rounds.flat().reverse().find(m => m.bracket === "winners");
+        const wChamp = champMatch.winner?.isPhantom ? null : champMatch.winner;
+        stageData.rounds.push([createMatch(wChamp, survivingLosers[0], nextRoundNum, "grand_finals", false, true)]);
         return stageData;
     }
 
     stageData.rounds.push([...newWMatches, ...newLMatches]);
     return stageData;
+}
+
+// HELPER: Generates matches and safely handles "null vs null" Phantom Byes!
+function createMatch(p1, p2, roundNum, bracket, isBracketReset = false, isGF = false) {
+    p1 = p1 || null; 
+    p2 = p2 || null;
+    const isPhantom = p1 === null && p2 === null;
+    
+    let winner = null;
+    let isBye = false;
+    
+    if (isPhantom) {
+        winner = { id: "phantom", isPhantom: true }; // Auto-completes the match to prevent softlocks!
+        isBye = true;
+    } else if (p2 === null) {
+        winner = p1;
+        isBye = true;
+    } else if (p1 === null) {
+        winner = p2;
+        isBye = true;
+    }
+    
+    return {
+        id: crypto.randomUUID(), round: roundNum, bracket: bracket,
+        player1: p1, player2: p2,
+        score1: 0, score2: 0, draws: 0, winner: winner, isBye: isBye,
+        isGrandFinals: isGF, bracketReset: isBracketReset
+    };
 }
 
 export function generateSkeleton(playerCount) {
