@@ -375,7 +375,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         // GRAND FINALS
         gfMatches.forEach((match) => {
             // If tournament over, don't draw ghost reset
-            if (stage.isComplete && match.isGhost) return;
+            if (stage.data.isComplete && match.isGhost) return;
             let currentY = 0;
             if (match.bracketReset) {
                 const gf1 = visualRounds[roundIndex - 1]?.find(m => m.bracket === "grand_finals");
