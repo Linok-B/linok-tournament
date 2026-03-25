@@ -355,36 +355,30 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             if (isFirstRound || isMinorRound) {
                 if (isMinorRound) {
                     const parent = prevLosers[matchIndex];
-                    currentY = matchCoordinates[parent.id]?.y || startY;
-                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
-                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
-                } else if (prevLosers.length === lMatches.length) {
-                // Minor Round (Winners drop in to fight Survivors)
-                const parent = prevLosers[matchIndex];
-                
-                // Only connect the horizontal grey line if the parent wasn't a Phantom!
-                const isParentPhantom = parent && parent.winner?.isPhantom;
-                
-                if (!isParentPhantom) {
-                    currentY = matchCoordinates[parent.id]?.y || startY;
-                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
-                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
+                    const isParentPhantom = parent && parent.winner?.isPhantom;
+                    
+                    if (!isParentPhantom && parent) {
+                        currentY = matchCoordinates[parent.id]?.y || startY;
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
+                    } else {
+                        currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
+                    }
                 } else {
-                    // Parent was a Phantom! We just place this match based on math, no horizontal line.
                     currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 }
                 
-                // NEW FIX: ALWAYS draw the pink drop line if a real player (or ghost) fell!
+                // ONLY draw the pink drop line if it's a REAL drop, NOT a Ghost and NOT a Bye!
                 if (!match.isGhost && match.player2 && !match.player2.isPhantom) {
                     svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    if (isFirstRound) {
+                        svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    }
                 }
-
             } else {
-                // Major Round (Y-Shape)
                 const parent1 = prevLosers[matchIndex * 2];
                 const parent2 = prevLosers[(matchIndex * 2) + 1];
                 
-                // Only draw lines if the parent was NOT a Phantom match!
                 const p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchCoordinates[parent1.id]?.y : undefined;
                 const p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchCoordinates[parent2.id]?.y : p1Y; 
 
@@ -396,11 +390,11 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                 } else if (p1Y !== undefined) {
-                    // Draw a straight line if only one real parent exists!
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                 }
             }
+
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
             board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
         });
