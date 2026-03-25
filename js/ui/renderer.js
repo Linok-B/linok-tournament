@@ -352,6 +352,8 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             const isMinorRound = prevLosers.length === lMatches.length;
             const isFirstRound = prevLosers.length === 0;
 
+            const isHiddenBye = tournament.settings.hideByes && !match.isGhost && match.isBye;
+
             if (isFirstRound || isMinorRound) {
                 let isParentPhantom = false;
 
@@ -369,10 +371,9 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 } else {
                     currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 }
-                
-                // Check if EITHER player dropped from the sky, and isn't a Phantom
-                // In Minor rounds, player2 is always the drop. In First Round, either could be
-                const isRealDrop = !match.isGhost && (
+
+                // ONLY draw the pink drop line if it's a REAL drop, NOT a Ghost, NOT a Phantom, AND NOT A HIDDEN BYE!
+                let isRealDrop = !match.isGhost && !isHiddenBye && (
                     (match.player2 && !match.player2.isPhantom) || 
                     (isFirstRound && match.player1 && !match.player1.isPhantom)
                 );
@@ -387,21 +388,6 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     }
                 }
 
-                const isHiddenBye = tournament.settings.hideByes && !match.isGhost && match.isBye;
-                
-                // ONLY draw the pink drop line if it's a REAL drop, NOT a Ghost, NOT a Phantom, AND NOT A HIDDEN BYE!
-                // REMOVED 'const' TO FIX THE ERROR!
-                let isRealDrop = !match.isGhost && !isHiddenBye && (
-                    (match.player2 && !match.player2.isPhantom) || 
-                    (isFirstRound && match.player1 && !match.player1.isPhantom)
-                );
-
-                if (isRealDrop) {
-                    svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    if (isFirstRound || isParentPhantom) {
-                        svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    }
-                }
             } else {
                 // Major Round (Y-Shape)
                 const parent1 = prevLosers[matchIndex * 2];
@@ -410,10 +396,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 const p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchCoordinates[parent1.id]?.y : undefined;
                 const p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchCoordinates[parent2.id]?.y : p1Y; 
 
-                // If one of the parents is a Hidden Bye, we must force this box's Y-coordinate to perfectly align with the surviving parent!
-                // This prevents the weird jagged diagonal lines!
-                const isHiddenBye = tournament.settings.hideByes && !match.isGhost && match.isBye;
-                
+                // If one of the parents is a Hidden Bye, force this box's Y-coordinate to perfectly align with the surviving parent!
                 if (isHiddenBye) {
                     currentY = p1Y !== undefined ? p1Y : (p2Y !== undefined ? p2Y : losersOffsetY);
                 } else {
