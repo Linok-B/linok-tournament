@@ -364,21 +364,24 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                         const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                         svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
                     } else {
-                        // Math fallback if parent was phantom
                         currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                     }
                 } else {
-                    // First Round
                     currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 }
                 
-                // --- THE DROP-DOWN LINE LOGIC ---
-                if (!match.isGhost && match.player2 && !match.player2.isPhantom) {
-                    // 1. Draw the vertical drop from the sky
+                // Check if EITHER player dropped from the sky, and isn't a Phantom
+                // In Minor rounds, player2 is always the drop. In First Round, either could be
+                const isRealDrop = !match.isGhost && (
+                    (match.player2 && !match.player2.isPhantom) || 
+                    (isFirstRound && match.player1 && !match.player1.isPhantom)
+                );
+
+                if (isRealDrop) {
+                    // Vertical Drop
                     svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                     
-                    // 2. Draw the horizontal connector
-                    // It must be drawn if it's the First Round OR if the horizontal parent line was missing due to a Phantom!
+                    // Horizontal L-Connector (For First Round or if the horizontal parent was a Phantom)
                     if (isFirstRound || isParentPhantom) {
                         svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                     }
