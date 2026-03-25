@@ -17,6 +17,7 @@ export class Tournament {
             randomizeSeeds: false,
             playThirdPlaceMatch: false,
             showFullBracket: false,
+            hideByes: false,
 
             // Default waterfal (Host can change this later)
             tiebreakers: ["game_differential", "head_to_head", "buchholz", "seed"], 
