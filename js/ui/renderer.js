@@ -386,7 +386,23 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                         svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                     }
                 }
+
+                const isHiddenBye = tournament.settings.hideByes && !match.isGhost && match.isBye;
+                
+                // ONLY draw the pink drop line if it's a REAL drop, NOT a Ghost, NOT a Phantom, AND NOT A HIDDEN BYE!
+                const isRealDrop = !match.isGhost && !isHiddenBye && (
+                    (match.player2 && !match.player2.isPhantom) || 
+                    (isFirstRound && match.player1 && !match.player1.isPhantom)
+                );
+
+                if (isRealDrop) {
+                    svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    if (isFirstRound || isParentPhantom) {
+                        svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    }
+                }
             } else {
+                // Major Round (Y-Shape)
                 const parent1 = prevLosers[matchIndex * 2];
                 const parent2 = prevLosers[(matchIndex * 2) + 1];
                 
@@ -395,12 +411,20 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
                 currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY;
 
-                if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
+                const isHiddenBye = tournament.settings.hideByes && !match.isGhost && match.isBye;
+
+                // If it's a hidden bye, we DO NOT draw the Y-shape. We just draw a straight line from the surviving parent!
+                if (isHiddenBye && (p1Y !== undefined || p2Y !== undefined)) {
+                    const parentY = p1Y !== undefined ? p1Y : p2Y;
+                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${parentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
+                } else if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
+                    // Standard Y-Shape Line
                     const midX = (currentX - gapX) + (gapX / 2);
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                 } else if (p1Y !== undefined) {
+                    // Straight line fallback
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                 }
