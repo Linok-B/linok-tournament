@@ -340,7 +340,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 }
             }
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
-            board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
+            board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage, tournament));
         });
 
         // LOSERS
@@ -407,7 +407,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             }
 
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
-            board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
+            board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage, tournament));
         });
 
         // GRAND FINALS
@@ -440,7 +440,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 }
             }
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
-            board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
+            board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage, tournament));
         });
     }
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
@@ -448,10 +448,16 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
 
 // HTML GENERATOR
-function createMatchBoxHTML(match, x, y, width, height, isActiveStage) {
+function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournament) {
     const matchBox = document.createElement('div');
     
     if (match.winner && match.winner.isPhantom) {
+        matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; visibility:hidden;`;
+        return matchBox;
+    }
+
+    // HIDE BYES. We do NOT hide ghosts, because people want to see the empty structure!
+    if (tournament.settings.hideByes && !match.isGhost && match.isBye) {
         matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; visibility:hidden;`;
         return matchBox;
     }
