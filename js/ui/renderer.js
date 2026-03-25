@@ -390,7 +390,8 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 const isHiddenBye = tournament.settings.hideByes && !match.isGhost && match.isBye;
                 
                 // ONLY draw the pink drop line if it's a REAL drop, NOT a Ghost, NOT a Phantom, AND NOT A HIDDEN BYE!
-                const isRealDrop = !match.isGhost && !isHiddenBye && (
+                // REMOVED 'const' TO FIX THE ERROR!
+                let isRealDrop = !match.isGhost && !isHiddenBye && (
                     (match.player2 && !match.player2.isPhantom) || 
                     (isFirstRound && match.player1 && !match.player1.isPhantom)
                 );
@@ -409,15 +410,17 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 const p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchCoordinates[parent1.id]?.y : undefined;
                 const p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchCoordinates[parent2.id]?.y : p1Y; 
 
-                currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY;
-
+                // If one of the parents is a Hidden Bye, we must force this box's Y-coordinate to perfectly align with the surviving parent!
+                // This prevents the weird jagged diagonal lines!
                 const isHiddenBye = tournament.settings.hideByes && !match.isGhost && match.isBye;
+                
+                if (isHiddenBye) {
+                    currentY = p1Y !== undefined ? p1Y : (p2Y !== undefined ? p2Y : losersOffsetY);
+                } else {
+                    currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY;
+                }
 
-                // If it's a hidden bye, we DO NOT draw the Y-shape. We just draw a straight line from the surviving parent!
-                if (isHiddenBye && (p1Y !== undefined || p2Y !== undefined)) {
-                    const parentY = p1Y !== undefined ? p1Y : p2Y;
-                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${parentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" />`;
-                } else if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
+                if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
                     // Standard Y-Shape Line
                     const midX = (currentX - gapX) + (gapX / 2);
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
@@ -427,6 +430,10 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     // Straight line fallback
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                } else if (p2Y !== undefined) {
+                    // Secondary Straight line fallback
+                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                    svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                 }
             }
 
