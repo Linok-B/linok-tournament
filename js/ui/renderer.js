@@ -353,25 +353,33 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             const isFirstRound = prevLosers.length === 0;
 
             if (isFirstRound || isMinorRound) {
+                let isParentPhantom = false;
+
                 if (isMinorRound) {
                     const parent = prevLosers[matchIndex];
-                    const isParentPhantom = parent && parent.winner?.isPhantom;
+                    isParentPhantom = parent && parent.winner?.isPhantom;
                     
                     if (!isParentPhantom && parent) {
                         currentY = matchCoordinates[parent.id]?.y || startY;
                         const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                         svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
                     } else {
+                        // Math fallback if parent was phantom
                         currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                     }
                 } else {
+                    // First Round
                     currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 }
                 
-                // ONLY draw the pink drop line if it's a REAL drop, NOT a Ghost and NOT a Bye!
+                // --- THE DROP-DOWN LINE LOGIC ---
                 if (!match.isGhost && match.player2 && !match.player2.isPhantom) {
+                    // 1. Draw the vertical drop from the sky
                     svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    if (isFirstRound) {
+                    
+                    // 2. Draw the horizontal connector
+                    // It must be drawn if it's the First Round OR if the horizontal parent line was missing due to a Phantom!
+                    if (isFirstRound || isParentPhantom) {
                         svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                     }
                 }
