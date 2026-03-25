@@ -403,7 +403,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             }
             matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
             board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage));
-        });
+        }
 
         // GRAND FINALS
         gfMatches.forEach((match) => {
