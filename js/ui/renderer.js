@@ -420,10 +420,13 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     }
 
     // Draws the perfect orthogonal line (Right -> Down/Up -> Right) between two boxes, no matter how far apart!
-    function drawSmartLine(parentData, childData, isDropLine = false) {
+    function drawSmartLine(parentData, childData) {
         
-        // 1. Do NOT draw lines connecting Winners to Losers. They overlap, cut through boxes, and make the UI unreadable.
-        if (isDropLine) return; 
+        // Block all lines crossing between Winners and Losers brackets
+        // The pink dashed "sky drops" we draw earlier in lMatches handles this visually.
+        if (parentData.match.bracket === "winners" && childData.match.bracket === "losers") {
+            return; // Kill the spaghetti lines
+        }
 
         const startX = parentData.x + boxWidth;
         const startY = parentData.y + (boxHeight / 2);
@@ -441,7 +444,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
         let path = "";
         if (startY === endY) {
-            // Perfect straight horizontal line (No overlapping Y-shapes!)
+            // Perfect straight horizontal line
             path = `M ${startX} ${startY} L ${endX} ${endY}`;
         } else {
             // Standard Elbow
