@@ -421,30 +421,30 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
     // Draws the perfect orthogonal line (Right -> Down/Up -> Right) between two boxes, no matter how far apart!
     function drawSmartLine(parentData, childData, isDropLine = false) {
-        // Line starts at the right edge of the Parent
+        
+        // 1. Do NOT draw lines connecting Winners to Losers. They overlap, cut through boxes, and make the UI unreadable.
+        if (isDropLine) return; 
+
         const startX = parentData.x + boxWidth;
         const startY = parentData.y + (boxHeight / 2);
         
-        // Line ends at the left edge of the Child
         const endX = childData.x;
         const endY = childData.y + (boxHeight / 2);
 
-        // The "Elbow" column right before the Child
         const midX = endX - (gapX / 2);
         
         const dash = (parentData.match.isGhost || childData.match.isGhost) ? 'stroke-dasharray="5,5"' : '';
-        let color = "#45475a"; // Standard Grey
+        let color = "#45475a"; 
         
-        if (isDropLine) color = "#f38ba8"; // Drops are Pink!
-        else if (childData.match.bracketReset) color = "#f9e2af"; // Bracket reset is Yellow!
-        else if (childData.match.bracket === "grand_finals" && parentData.match.bracket === "winners") color = "#a6e3a1"; // GF Winners line is Green
+        if (childData.match.bracketReset) color = "#f9e2af"; 
+        else if (childData.match.bracket === "grand_finals" && parentData.match.bracket === "winners") color = "#a6e3a1"; 
 
         let path = "";
         if (startY === endY) {
-            // Straight line
+            // Perfect straight horizontal line (No overlapping Y-shapes!)
             path = `M ${startX} ${startY} L ${endX} ${endY}`;
         } else {
-            // Zig-Zag (Square Y-shape)
+            // Standard Elbow
             path = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
         }
 
