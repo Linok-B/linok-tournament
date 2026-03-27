@@ -321,24 +321,79 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             const prevRound = visualRounds[roundIndex - 1] || [];
             const prevLosers = prevRound.filter(m => m.bracket === "losers");
 
-            if (prevLosers.length === 0) {
-                currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
-            } else if (prevLosers.length === lMatches.length) {
-                const parent = prevLosers[matchIndex];
-                // Align with parent if it wasn't a phantom
-                if (parent && (!parent.winner || !parent.winner.isPhantom)) {
-                    currentY = matchDataMap[parent.id]?.y || startY;
+            const isMinorRound = prevLosers.length === lMatches.length;
+            const isFirstRound = prevLosers.length === 0;
+
+            const isHiddenBye = tournament.settings.hideByes && !match.isGhost && match.isBye;
+
+            if (isFirstRound || isMinorRound) {
+                let isParentPhantom = false;
+
+                if (isMinorRound) {
+                    const parent = prevLosers[matchIndex];
+                    isParentPhantom = parent && parent.winner?.isPhantom;
+                    
+                    if (!isParentPhantom && parent) {
+                        currentY = matchCoordinates[parent.id]?.y || startY;
+                        // ONLY draw horizontal line if we are NOT a hidden bye!
+                        if (!isHiddenBye) {
+                            const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                            svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash} />`;
+                        }
+                    } else {
+                        currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
+                    }
                 } else {
                     currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 }
+
+                // THE PINK DROP LINE LOGIC
+                // Check if either player is a REAL drop from the Winner's Bracket!
+                const p1IsRealDrop = isFirstRound && match.player1 && !match.player1.isPhantom;
+                const p2IsRealDrop = match.player2 && !match.player2.isPhantom;
+                const isRealDrop = !match.isGhost && !isHiddenBye && (p1IsRealDrop || p2IsRealDrop);
+
+                if (isRealDrop) {
+                    // Vertical Drop from the sky
+                    svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    
+                    // Horizontal L-Connector into the box
+                    if (isFirstRound || isParentPhantom) {
+                        svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    }
+                }
             } else {
+                // Major Round (Y-Shape)
                 const parent1 = prevLosers[matchIndex * 2];
                 const parent2 = prevLosers[(matchIndex * 2) + 1];
-                const p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchDataMap[parent1.id]?.y : undefined;
-                const p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchDataMap[parent2.id]?.y : p1Y; 
-                currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY;
+                
+                const p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchCoordinates[parent1.id]?.y : undefined;
+                const p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchCoordinates[parent2.id]?.y : p1Y; 
+
+                if (isHiddenBye) {
+                    currentY = p1Y !== undefined ? p1Y : (p2Y !== undefined ? p2Y : losersOffsetY);
+                } else {
+                    currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY;
+                }
+
+                if (!isHiddenBye) {
+                    if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
+                        const midX = (currentX - gapX) + (gapX / 2);
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                    } else if (p1Y !== undefined) {
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                    } else if (p2Y !== undefined) {
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                    }
+                }
             }
-            saveMatchDataAndDraw(match, currentX, currentY);
+
+            matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
+            board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage, tournament));
         });
 
         // GRAND FINALS
@@ -381,13 +436,11 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             const p1Parent = findVisualParent(childData.match, childData.match.player1.id);
             if (p1Parent) drawSmartLine(p1Parent, childData);
         }
-        
+
         // Find where Player 2 came from
         if (childData.match.player2 && !childData.match.player2.isPhantom) {
             const p2Parent = findVisualParent(childData.match, childData.match.player2.id);
-            if (p2Parent) {
-                drawSmartLine(p2Parent, childData, childData.match.bracket === "losers" && p2Parent.match.bracket === "winners");
-            }
+            if (p2Parent) drawSmartLine(p2Parent, childData); // NO THIRD PARAMETER HERE!
         }
     });
 
@@ -419,21 +472,18 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         }
     }
 
-    // Draws the perfect orthogonal line (Right -> Down/Up -> Right) between two boxes, no matter how far apart!
     function drawSmartLine(parentData, childData) {
         
-        // Block all lines crossing between Winners and Losers brackets
-        // The pink dashed "sky drops" we draw earlier in lMatches handles this visually.
+        // KILL SPAGHETTI LINES: Never draw a grey line from Winners to Losers!
+        // The pink drop lines we drew in lMatches.forEach perfectly handle this visually.
         if (parentData.match.bracket === "winners" && childData.match.bracket === "losers") {
-            return; // Kill the spaghetti lines
+            return; 
         }
 
         const startX = parentData.x + boxWidth;
         const startY = parentData.y + (boxHeight / 2);
-        
         const endX = childData.x;
         const endY = childData.y + (boxHeight / 2);
-
         const midX = endX - (gapX / 2);
         
         const dash = (parentData.match.isGhost || childData.match.isGhost) ? 'stroke-dasharray="5,5"' : '';
@@ -444,11 +494,9 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
         let path = "";
         if (startY === endY) {
-            // Perfect straight horizontal line
-            path = `M ${startX} ${startY} L ${endX} ${endY}`;
+            path = `M ${startX} ${startY} L ${endX} ${endY}`; // Straight
         } else {
-            // Standard Elbow
-            path = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+            path = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`; // Elbow
         }
 
         svgLayer.innerHTML += `<path d="${path}" stroke="${color}" stroke-width="2" fill="none" ${dash} />`;
