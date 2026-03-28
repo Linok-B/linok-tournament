@@ -1,5 +1,5 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
-import { getSkeleton } from '../engine/formats/registry.js';
+import { simulatePreview } from '../engine/formats/registry.js';
 
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
@@ -199,70 +199,33 @@ export function renderBracket(tournament, containerId) {
     drawBracketMath(stageToRender, isActiveStage, tournament);
 }
 
-// ---------------------------------------------------------
-// THE ABSOLUTE POSITIONING MATH ENGINE (Draws Boxes & SVG Lines, that's it)
-// ---------------------------------------------------------
+
 function drawBracketMath(stage, isActiveStage, tournament) {
     const board = document.getElementById('bracket-board');
     board.innerHTML = '<svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>';
     const svgLayer = document.getElementById('bracket-lines');
     
-    const boxWidth = 280; 
-    const boxHeight = 95;
-    const gapX = 60;  
-    const gapY = 20;  
-    const startX = 50; 
-    const startY = 60; 
+    const boxWidth = 280; const boxHeight = 95;
+    const gapX = 60; const gapY = 20;  
+    const startX = 50; const startY = 60; 
 
     const matchDataMap = {}; 
     const showFull = tournament.settings.showFullBracket;
     const hideByes = tournament.settings.hideByes;
 
-    // --- 1. SKELETON MERGER ---
-    let visualRounds = [];
-    if (showFull && stage.config.type === "double_elimination") {
-        const skeleton = getSkeleton("double_elimination", stage.data.bracketSize);
-        skeleton.forEach((skelRound, rIndex) => {
-            const realRound = stage.data.rounds[rIndex] || [];
-            const mergedRound = [];
-            ["winners", "losers", "grand_finals"].forEach(bracket => {
-                const realM = realRound.filter(m => m.bracket === bracket);
-                const ghostM = skelRound.filter(m => m.bracket === bracket);
-                const maxLen = Math.max(realM.length, ghostM.length);
-                for (let i = 0; i < maxLen; i++) mergedRound.push(realM[i] || ghostM[i]);
-            });
-            mergedRound.push(...realRound.filter(m => !["winners", "losers", "grand_finals"].includes(m.bracket)));
-            visualRounds.push(mergedRound);
-        });
-    } else if (showFull && stage.config.type === "single_elimination") {
-        const totalRoundsToDraw = Math.log2(stage.data.bracketSize);
-        for (let r = 0; r < totalRoundsToDraw; r++) {
-            if (stage.data.rounds[r]) {
-                visualRounds.push(stage.data.rounds[r]);
-            } else {
-                let ghostRound = [];
-                const numGhosts = stage.data.bracketSize / Math.pow(2, r + 1);
-                for (let i = 0; i < numGhosts; i++) ghostRound.push({ id: `ghost-${r}-${i}`, isGhost: true });
-                if (numGhosts === 1 && tournament.settings.playThirdPlaceMatch) {
-                    ghostRound.push({ id: `ghost-${r}-bronze`, isGhost: true, isThirdPlaceMatch: true });
-                }
-                visualRounds.push(ghostRound);
-            }
-        }
+    // --- 1. THE SIMULATOR ---
+    let visualRounds = stage.data.rounds;
+    
+    // If Preview is ON, and it's an Elimination format, replace the visual array with the Simulated Future!
+    if (showFull && (stage.config.type === "single_elimination" || stage.config.type === "double_elimination")) {
+        visualRounds = simulatePreview(stage.data, stage.config);
     } else if (showFull) {
-        const totalRoundsToDraw = stage.config.maxRounds || (stage.data.totalRounds || stage.data.rounds.length);
-        for (let r = 0; r < totalRoundsToDraw; r++) {
-            if (stage.data.rounds[r]) {
-                visualRounds.push(stage.data.rounds[r]);
-            } else {
-                let ghostRound = [];
-                const numGhosts = stage.data.rounds[0].length;
-                for (let i = 0; i < numGhosts; i++) ghostRound.push({ id: `ghost-${r}-${i}`, isGhost: true });
-                visualRounds.push(ghostRound);
-            }
+        // Simple mock for Swiss/RR empty columns
+        visualRounds = [...stage.data.rounds];
+        const max = stage.config.maxRounds || stage.data.totalRounds || stage.data.rounds.length;
+        while (visualRounds.length < max) {
+            visualRounds.push(stage.data.rounds[0].map((m, i) => ({ id: `ghost-${visualRounds.length}-${i}`, isSimulated: true, isGhost: true })));
         }
-    } else {
-        visualRounds = stage.data.rounds;
     }
 
     const totalRoundsToDraw = visualRounds.length;
@@ -272,10 +235,8 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         losersOffsetY = startY + (wR1Count * (boxHeight + gapY)) + 150; 
     }
 
-    // --- 2. CALCULATE COORDINATES & DRAW BOXES ---
+    // --- 2. DRAW BOXES ---
     for (let roundIndex = 0; roundIndex < totalRoundsToDraw; roundIndex++) {
-        if (stage.data.isComplete && !visualRounds[roundIndex]) break; 
-
         const currentX = startX + (roundIndex * (boxWidth + gapX));
         const header = document.createElement('h3');
         header.innerText = `Round ${roundIndex + 1}`;
@@ -283,8 +244,6 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         board.appendChild(header);
 
         let matchesToDraw = visualRounds[roundIndex] || [];
-        if (roundIndex < stage.data.rounds.length) matchesToDraw = matchesToDraw.filter(m => !m.isGhost);
-
         const wMatches = matchesToDraw.filter(m => m.bracket === "winners" || m.bracket === undefined);
         const lMatches = matchesToDraw.filter(m => m.bracket === "losers");
         const gfMatches = matchesToDraw.filter(m => m.bracket === "grand_finals");
@@ -294,8 +253,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             let currentY = 0;
             if ((stage.config.type === "single_elimination" || stage.config.type === "double_elimination") && roundIndex > 0) {
                 if (match.isThirdPlaceMatch) {
-                    const actualRound = visualRounds[roundIndex];
-                    let finalsY = (actualRound && actualRound[0]) ? matchDataMap[actualRound[0].id]?.y : startY;
+                    let finalsY = (visualRounds[roundIndex] && visualRounds[roundIndex][0]) ? matchDataMap[visualRounds[roundIndex][0].id]?.y : startY;
                     currentY = (finalsY || startY) + 140;
                 } else {
                     const prevRound = visualRounds[roundIndex - 1] || [];
@@ -305,8 +263,8 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     const p2Y = parent2 ? matchDataMap[parent2.id]?.y : p1Y;
                     currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : startY;
 
-                    // Draw Dashed Ghost Lines Here (Real lines handled by Smart Lines below!)
-                    if (match.isGhost && p1Y !== undefined) {
+                    // Draw Dashed Lines for Simulated Matches
+                    if (match.isSimulated && p1Y !== undefined) {
                         const midX = (currentX - gapX) + (gapX / 2);
                         if (p2Y !== undefined && p1Y !== p2Y) {
                             svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
@@ -331,58 +289,51 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
             const isMinorRound = prevLosers.length === lMatches.length;
             const isFirstRound = prevLosers.length === 0;
-            const isHiddenBye = hideByes && !match.isGhost && match.isBye;
+            const isHiddenBye = hideByes && !match.isSimulated && match.isBye;
 
             if (isFirstRound || isMinorRound) {
                 let isParentPhantom = false;
                 if (isMinorRound) {
                     const parent = prevLosers[matchIndex];
                     isParentPhantom = parent && parent.winner?.isPhantom;
-                    currentY = matchDataMap[parent?.id]?.y || losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
-                    
-                    // Draw Ghost Minor Line
-                    if (match.isGhost && parent) {
-                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    if (!isParentPhantom && parent) {
+                        currentY = matchDataMap[parent.id]?.y || startY;
+                        if (!isHiddenBye && match.isSimulated) {
+                            svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                        }
+                    } else {
+                        currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                     }
                 } else {
                     currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 }
 
-                // DRAW THE PINK DROP LINES (Only for real players)
-                const p1IsRealDrop = isFirstRound && match.player1 && !match.player1.isPhantom;
-                const p2IsRealDrop = match.player2 && !match.player2.isPhantom;
-                const isRealDrop = !match.isGhost && !isHiddenBye && (p1IsRealDrop || p2IsRealDrop);
-
-                if (isRealDrop) {
-                    // Vertical Drop
+                // Drop Lines (Simulated or Real)
+                const p1IsDrop = isFirstRound && match.player1 && !match.player1.isPhantom;
+                const p2IsDrop = match.player2 && !match.player2.isPhantom;
+                if (!isHiddenBye && (p1IsDrop || p2IsDrop)) {
                     svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    
-                    // Draw horizontal connector if First Round, Parent is Phantom, OR Parent is a Hidden Bye
-                    if (isFirstRound || isParentPhantom || isHiddenBye) {
+                    if (isFirstRound || isParentPhantom) {
                         svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                     }
                 }
             } else {
-                // Major Round (Y-Shape)
                 const parent1 = prevLosers[matchIndex * 2];
                 const parent2 = prevLosers[(matchIndex * 2) + 1];
                 const p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchDataMap[parent1.id]?.y : undefined;
                 const p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchDataMap[parent2.id]?.y : p1Y; 
 
-                if (isHiddenBye) {
-                    currentY = p1Y !== undefined ? p1Y : (p2Y !== undefined ? p2Y : losersOffsetY);
-                } else {
-                    currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY;
-                }
+                currentY = isHiddenBye ? (p1Y !== undefined ? p1Y : (p2Y !== undefined ? p2Y : losersOffsetY)) : (p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY);
 
-                // Draw Ghost Y-Shape Lines
-                if (match.isGhost && p1Y !== undefined) {
-                    const midX = (currentX - gapX) + (gapX / 2);
-                    if (p2Y !== undefined && p1Y !== p2Y) {
+                if (match.isSimulated && !isHiddenBye) {
+                    if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
+                        const midX = (currentX - gapX) + (gapX / 2);
                         svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                         svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    } else {
+                    } else if (p1Y !== undefined) {
                         svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                    } else if (p2Y !== undefined) {
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                     }
                 }
             }
@@ -391,34 +342,27 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
         // GRAND FINALS
         gfMatches.forEach((match) => {
-            if (stage.data.isComplete && match.isGhost) return;
             let currentY = 0;
-
             if (match.bracketReset) {
                 const gf1 = visualRounds[roundIndex - 1]?.find(m => m.bracket === "grand_finals");
                 currentY = gf1 ? matchDataMap[gf1.id]?.y : startY;
-                if (gf1) {
-                    // Ensure we are pulling the right-edge X coordinate!
-                    const prevX = matchDataMap[gf1.id]?.x || startX;
-                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
-                    svgLayer.innerHTML += `<path d="M ${prevX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" fill="none" ${dash} />`;
+                if (gf1 && match.isSimulated) {
+                    const prevX = matchDataMap[gf1.id].x;
+                    svgLayer.innerHTML += `<path d="M ${prevX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" stroke-dasharray="5,5" fill="none" />`;
                 }
             } else {
                 const wFinals = visualRounds.flat().reverse().find(m => m.bracket === "winners");
                 const lFinals = visualRounds.flat().reverse().find(m => m.bracket === "losers");
-                
                 const wY = wFinals ? matchDataMap[wFinals.id]?.y : startY;
                 const lY = lFinals ? matchDataMap[lFinals.id]?.y : losersOffsetY;
                 currentY = (wY + lY) / 2;
 
-                if (wFinals && lFinals) {
-                    // Pull the right-edge X coordinate
-                    const wX = matchDataMap[wFinals.id]?.x || startX;
-                    const lX = matchDataMap[lFinals.id]?.x || startX;
+                if (wFinals && lFinals && match.isSimulated) {
+                    const wX = matchDataMap[wFinals.id].x;
+                    const lX = matchDataMap[lFinals.id].x;
                     const midX = currentX - (gapX / 2);
-                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
-                    svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" fill="none" ${dash} />`;
-                    svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" fill="none" ${dash} />`;
+                    svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" stroke-dasharray="5,5" fill="none" />`;
+                    svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" stroke-dasharray="5,5" fill="none" />`;
                 }
             }
             saveAndDrawBox(match, currentX, currentY);
@@ -427,28 +371,23 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
     function saveAndDrawBox(match, x, y) {
         const isPhantom = match.winner && match.winner.isPhantom;
-        const isHiddenBye = hideByes && !match.isGhost && match.isBye;
+        const isHiddenBye = hideByes && !match.isSimulated && match.isBye;
         const isVisible = !isPhantom && !isHiddenBye;
         matchDataMap[match.id] = { match, x, y, isVisible };
         board.appendChild(createMatchBoxHTML(match, x, y, boxWidth, boxHeight, isActiveStage, tournament));
     }
 
     // --- 3. SMART LINES (REAL MATCHES ONLY) ---
-    // Traces backwards through invisible Byes to draw long horizontal solid lines!
     Object.values(matchDataMap).forEach(childData => {
-        if (!childData.isVisible || childData.match.isGhost || childData.match.bracket === "grand_finals") return;
+        if (!childData.isVisible || childData.match.isSimulated || childData.match.bracket === "grand_finals") return;
         
         if (childData.match.player1 && !childData.match.player1.isPhantom) {
             const p1Parent = findVisualParent(childData.match, childData.match.player1.id);
-            if (p1Parent && p1Parent.match.bracket === childData.match.bracket) {
-                drawSmartLine(p1Parent, childData);
-            }
+            if (p1Parent && p1Parent.match.bracket === childData.match.bracket) drawSmartLine(p1Parent, childData);
         }
         if (childData.match.player2 && !childData.match.player2.isPhantom) {
             const p2Parent = findVisualParent(childData.match, childData.match.player2.id);
-            if (p2Parent && p2Parent.match.bracket === childData.match.bracket) {
-                drawSmartLine(p2Parent, childData);
-            }
+            if (p2Parent && p2Parent.match.bracket === childData.match.bracket) drawSmartLine(p2Parent, childData);
         }
     });
 
@@ -463,7 +402,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         
         if (!parentData) return null;
         if (parentData.isVisible) return parentData;
-        return findVisualParent(immediateParent, playerId); // Recursively skip hidden byes!
+        return findVisualParent(immediateParent, playerId); 
     }
 
     function drawSmartLine(parentData, childData) {
@@ -488,21 +427,23 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournament) {
     const matchBox = document.createElement('div');
     
+    // Hide Phantoms
     if (match.winner && match.winner.isPhantom) {
         matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; visibility:hidden;`;
         return matchBox;
     }
 
-    // HIDE BYES. We do NOT hide ghosts, because people want to see the empty structure!
-    if (tournament.settings.hideByes && !match.isGhost && match.isBye) {
+    // Hide Byes
+    if (tournament.settings.hideByes && !match.isSimulated && match.isBye) {
         matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; visibility:hidden;`;
         return matchBox;
     }
-    
+
     matchBox.className = 'match-box';
     matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; padding:8px; box-sizing:border-box;`;
     
-    if (match.isGhost) {
+    // NEW: Handle Simulated Matches!
+    if (match.isSimulated || match.isGhost) {
         matchBox.style.opacity = "0.3";
         matchBox.style.border = "1px dashed #45475a";
         matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%; color:gray; font-style:italic;"><div>TBD</div><div style="margin-top:10px;">TBD</div></div>`;
