@@ -351,11 +351,14 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 // DRAW THE PINK DROP LINES (Only for real players)
                 const p1IsRealDrop = isFirstRound && match.player1 && !match.player1.isPhantom;
                 const p2IsRealDrop = match.player2 && !match.player2.isPhantom;
-                if (!match.isGhost && !isHiddenBye && (p1IsRealDrop || p2IsRealDrop)) {
+                const isRealDrop = !match.isGhost && !isHiddenBye && (p1IsRealDrop || p2IsRealDrop);
+
+                if (isRealDrop) {
                     // Vertical Drop
                     svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    // Horizontal Connector
-                    if (isFirstRound || isParentPhantom) {
+                    
+                    // Draw horizontal connector if First Round, Parent is Phantom, OR Parent is a Hidden Bye
+                    if (isFirstRound || isParentPhantom || isHiddenBye) {
                         svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                     }
                 }
@@ -395,20 +398,23 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 const gf1 = visualRounds[roundIndex - 1]?.find(m => m.bracket === "grand_finals");
                 currentY = gf1 ? matchDataMap[gf1.id]?.y : startY;
                 if (gf1) {
-                    const prevX = matchDataMap[gf1.id].x;
+                    // Ensure we are pulling the right-edge X coordinate!
+                    const prevX = matchDataMap[gf1.id]?.x || startX;
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${prevX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" fill="none" ${dash} />`;
                 }
             } else {
                 const wFinals = visualRounds.flat().reverse().find(m => m.bracket === "winners");
                 const lFinals = visualRounds.flat().reverse().find(m => m.bracket === "losers");
+                
                 const wY = wFinals ? matchDataMap[wFinals.id]?.y : startY;
                 const lY = lFinals ? matchDataMap[lFinals.id]?.y : losersOffsetY;
                 currentY = (wY + lY) / 2;
 
                 if (wFinals && lFinals) {
-                    const wX = matchDataMap[wFinals.id].x;
-                    const lX = matchDataMap[lFinals.id].x;
+                    // Pull the right-edge X coordinate
+                    const wX = matchDataMap[wFinals.id]?.x || startX;
+                    const lX = matchDataMap[lFinals.id]?.x || startX;
                     const midX = currentX - (gapX / 2);
                     const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" fill="none" ${dash} />`;
