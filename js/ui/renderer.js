@@ -343,7 +343,6 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     }
                 }
             } else {
-                } else {
                 // Major Round (Y-Shape)
                 const parent1 = prevLosers[matchIndex * 2];
                 const parent2 = prevLosers[(matchIndex * 2) + 1];
