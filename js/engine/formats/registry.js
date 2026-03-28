@@ -22,47 +22,34 @@ export function simulatePreview(stageData, config) {
     const formatEngine = Formats[config.type];
     let safeguard = 0; 
     
-    // Track the actual current round length so we don't accidentally simulate the present!
     const realRoundsCount = stageData.rounds.length;
 
     while (!simData.isComplete && safeguard < 20) {
         safeguard++;
         const currentRound = simData.rounds[simData.rounds.length - 1];
 
-        // 1. Mark future rounds as simulated
-        if (simData.rounds.length > realRoundsCount) {
-            currentRound.forEach(m => m.isSimulated = true);
-        }
+        // Only tag as a ghost if this round is literally in the future
+        const isFutureRound = simData.rounds.length > realRoundsCount;
 
-        // 2. Artificially finish the round
         currentRound.forEach(m => {
-            // CRITICAL FIX: Only force a winner if we are IN THE FUTURE!
-            // Leave current active matches alone so their HTML draws correctly!
-            if (!m.winner && simData.rounds.length > realRoundsCount) {
+            if (isFutureRound) m.isGhost = true; 
+
+            if (!m.winner) {
                 if (m.player1 === null && m.player2 === null) {
                     m.winner = { id: "phantom", isPhantom: true };
                 } else {
                     if (!m.player1) m.player1 = { id: `ghost-p1-${m.id}`, name: "TBD", isGhost: true };
                     if (!m.player2) m.player2 = { id: `ghost-p2-${m.id}`, name: "TBD", isGhost: true };
                     
-                    // NEW: Force the Reset match to appear by making Player 2 win GF1!
-                    if (m.bracket === "grand_finals" && !m.bracketReset) {
-                        m.winner = m.player2;
-                    } else {
-                        m.winner = m.player1;
-                    }
+                    // Force Player 2 to win GF1 so the Reset Match always previews
+                    if (m.bracket === "grand_finals" && !m.bracketReset) m.winner = m.player2; 
+                    else m.winner = m.player1;
                 }
             }
         });
 
-        // 3. Advance to the next round using REAL math
-        // But we ONLY advance if the current round is actually complete (or simulated complete)
-        const isRoundReady = currentRound.every(m => m.winner !== null);
-        if (isRoundReady) {
-            simData = formatEngine.advanceStage(simData, config, []);
-        } else {
-            break; // If the current active round isn't done, the simulator can't guess the future yet!
-        }
+        // Always advance. The simulated round is fully populated
+        simData = formatEngine.advanceStage(simData, config, []);
     }
 
     return simData.rounds;
