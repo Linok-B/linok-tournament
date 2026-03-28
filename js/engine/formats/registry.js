@@ -16,7 +16,6 @@ export function getFormat(type) {
     return format;
 }
 
-// In js/engine/formats/registry.js - Replace simulatePreview
 
 export function simulatePreview(stageData, config) {
     let simData = JSON.parse(JSON.stringify(stageData));
