@@ -214,18 +214,29 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     const hideByes = tournament.settings.hideByes;
 
     // --- 1. THE SIMULATOR ---
-    let visualRounds = stage.data.rounds;
+    let visualRounds = [];
     
-    // If Preview is ON, and it's an Elimination format, replace the visual array with the Simulated Future!
     if (showFull && (stage.config.type === "single_elimination" || stage.config.type === "double_elimination")) {
-        visualRounds = simulatePreview(stage.data, stage.config);
+        const simulatedRounds = simulatePreview(stage.data, stage.config);
+        
+        simulatedRounds.forEach((simRound, rIndex) => {
+            // If a real round exists, use it exactly as is! No 0-0 overwrites
+            if (stage.data.rounds[rIndex]) {
+                visualRounds.push(stage.data.rounds[rIndex]);
+            } else {
+                // If it's a future round, use the simulated ghosts!
+                visualRounds.push(simRound);
+            }
+        });
     } else if (showFull) {
-        // Simple mock for Swiss/RR empty columns
+        // ... (Swiss/RR mock stays the same)
         visualRounds = [...stage.data.rounds];
         const max = stage.config.maxRounds || stage.data.totalRounds || stage.data.rounds.length;
         while (visualRounds.length < max) {
-            visualRounds.push(stage.data.rounds[0].map((m, i) => ({ id: `ghost-${visualRounds.length}-${i}`, isSimulated: true, isGhost: true })));
+            visualRounds.push(stage.data.rounds[0].map((m, i) => ({ id: `ghost-${visualRounds.length}-${i}`, isGhost: true })));
         }
+    } else {
+        visualRounds = stage.data.rounds;
     }
 
     const totalRoundsToDraw = visualRounds.length;
@@ -259,8 +270,14 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     const prevRound = visualRounds[roundIndex - 1] || [];
                     const parent1 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[matchIndex * 2];
                     const parent2 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[(matchIndex * 2) + 1];
-                    const p1Y = parent1 ? matchDataMap[parent1.id]?.y : undefined;
-                    const p2Y = parent2 ? matchDataMap[parent2.id]?.y : p1Y;
+                    
+                    // Check if parents are hidden byes
+                    const isP1HiddenBye = hideByes && parent1 && !parent1.isGhost && parent1.isBye;
+                    const isP2HiddenBye = hideByes && parent2 && !parent2.isGhost && parent2.isBye;
+
+                    const p1Y = (parent1 && !parent1.winner?.isPhantom && !isP1HiddenBye) ? matchDataMap[parent1.id]?.y : undefined;
+                    const p2Y = (parent2 && !parent2.winner?.isPhantom && !isP2HiddenBye) ? matchDataMap[parent2.id]?.y : p1Y;
+
                     currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : startY;
 
                     // Draw Dashed Lines for Simulated Matches
@@ -326,10 +343,17 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     }
                 }
             } else {
+                } else {
+                // Major Round (Y-Shape)
                 const parent1 = prevLosers[matchIndex * 2];
                 const parent2 = prevLosers[(matchIndex * 2) + 1];
-                const p1Y = (parent1 && !parent1.winner?.isPhantom) ? matchDataMap[parent1.id]?.y : undefined;
-                const p2Y = (parent2 && !parent2.winner?.isPhantom) ? matchDataMap[parent2.id]?.y : p1Y; 
+                
+                // Check if parents are hidden byes
+                const isP1HiddenBye = hideByes && parent1 && !parent1.isGhost && parent1.isBye;
+                const isP2HiddenBye = hideByes && parent2 && !parent2.isGhost && parent2.isBye;
+
+                const p1Y = (parent1 && !parent1.winner?.isPhantom && !isP1HiddenBye) ? matchDataMap[parent1.id]?.y : undefined;
+                const p2Y = (parent2 && !parent2.winner?.isPhantom && !isP2HiddenBye) ? matchDataMap[parent2.id]?.y : p1Y; 
 
                 currentY = isHiddenBye ? (p1Y !== undefined ? p1Y : (p2Y !== undefined ? p2Y : losersOffsetY)) : (p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY);
 
