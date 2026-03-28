@@ -308,12 +308,20 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     currentY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2);
                 }
 
-                // Drop Lines (Simulated or Real)
+                /// Drop Lines (Simulated or Real)
                 const p1IsDrop = isFirstRound && match.player1 && !match.player1.isPhantom;
                 const p2IsDrop = match.player2 && !match.player2.isPhantom;
+                
                 if (!isHiddenBye && (p1IsDrop || p2IsDrop)) {
+                    // Vertical Drop
                     svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY - 100} L ${currentX - (gapX/2)} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    if (isFirstRound || isParentPhantom) {
+                    
+                    // Always draw the horizontal connector if it's the First Round, OR if the parent was a Phantom, OR if the parent was a Hidden Bye
+                    const parent = prevLosers[matchIndex];
+                    const isParentPhantom = parent && parent.winner?.isPhantom;
+                    const isParentHiddenBye = hideByes && parent && !parent.isSimulated && parent.isBye;
+
+                    if (isFirstRound || isParentPhantom || isParentHiddenBye) {
                         svgLayer.innerHTML += `<path d="M ${currentX - (gapX/2)} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
                     }
                 }
@@ -342,13 +350,17 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
         // GRAND FINALS
         gfMatches.forEach((match) => {
+            if (stage.data.isComplete && match.isSimulated) return;
             let currentY = 0;
+
             if (match.bracketReset) {
                 const gf1 = visualRounds[roundIndex - 1]?.find(m => m.bracket === "grand_finals");
                 currentY = gf1 ? matchDataMap[gf1.id]?.y : startY;
-                if (gf1 && match.isSimulated) {
+                
+                if (gf1) {
                     const prevX = matchDataMap[gf1.id].x;
-                    svgLayer.innerHTML += `<path d="M ${prevX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" stroke-dasharray="5,5" fill="none" />`;
+                    const dash = match.isSimulated ? 'stroke-dasharray="5,5"' : '';
+                    svgLayer.innerHTML += `<path d="M ${prevX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" fill="none" ${dash} />`;
                 }
             } else {
                 const wFinals = visualRounds.flat().reverse().find(m => m.bracket === "winners");
@@ -357,12 +369,14 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 const lY = lFinals ? matchDataMap[lFinals.id]?.y : losersOffsetY;
                 currentY = (wY + lY) / 2;
 
-                if (wFinals && lFinals && match.isSimulated) {
+                if (wFinals && lFinals) {
                     const wX = matchDataMap[wFinals.id].x;
                     const lX = matchDataMap[lFinals.id].x;
                     const midX = currentX - (gapX / 2);
-                    svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" stroke-dasharray="5,5" fill="none" />`;
-                    svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" stroke-dasharray="5,5" fill="none" />`;
+                    const dash = match.isSimulated ? 'stroke-dasharray="5,5"' : '';
+                    
+                    svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" fill="none" ${dash} />`;
+                    svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" fill="none" ${dash} />`;
                 }
             }
             saveAndDrawBox(match, currentX, currentY);
