@@ -16,40 +16,54 @@ export function getFormat(type) {
     return format;
 }
 
+// In js/engine/formats/registry.js - Replace simulatePreview
+
 export function simulatePreview(stageData, config) {
-    // Deep clone the data so we don't accidentally save the simulation to the real tournament!
     let simData = JSON.parse(JSON.stringify(stageData));
     const formatEngine = Formats[config.type];
-
-    // Safety limit to prevent infinite loops
     let safeguard = 0; 
     
+    // Track the actual current round length so we don't accidentally simulate the present!
+    const realRoundsCount = stageData.rounds.length;
+
     while (!simData.isComplete && safeguard < 20) {
         safeguard++;
         const currentRound = simData.rounds[simData.rounds.length - 1];
 
-        // 1. Mark any newly generated future rounds as "simulated" so the UI knows to draw them as ghosts!
-        if (simData.rounds.length > stageData.rounds.length) {
+        // 1. Mark future rounds as simulated
+        if (simData.rounds.length > realRoundsCount) {
             currentRound.forEach(m => m.isSimulated = true);
         }
 
         // 2. Artificially finish the round
         currentRound.forEach(m => {
-            if (!m.winner) {
-                // If it's a pure Phantom match, let it complete as a Phantom
+            // CRITICAL FIX: Only force a winner if we are IN THE FUTURE!
+            // Leave current active matches alone so their HTML draws correctly!
+            if (!m.winner && simData.rounds.length > realRoundsCount) {
                 if (m.player1 === null && m.player2 === null) {
                     m.winner = { id: "phantom", isPhantom: true };
                 } else {
-                    // Otherwise, fill empty slots with TBD Ghosts and force Player 1 to win
                     if (!m.player1) m.player1 = { id: `ghost-p1-${m.id}`, name: "TBD", isGhost: true };
                     if (!m.player2) m.player2 = { id: `ghost-p2-${m.id}`, name: "TBD", isGhost: true };
-                    m.winner = m.player1;
+                    
+                    // NEW: Force the Reset match to appear by making Player 2 win GF1!
+                    if (m.bracket === "grand_finals" && !m.bracketReset) {
+                        m.winner = m.player2;
+                    } else {
+                        m.winner = m.player1;
+                    }
                 }
             }
         });
 
-        // 3. Advance to the next round using the REAL tournament math!
-        simData = formatEngine.advanceStage(simData, config, []);
+        // 3. Advance to the next round using REAL math
+        // But we ONLY advance if the current round is actually complete (or simulated complete)
+        const isRoundReady = currentRound.every(m => m.winner !== null);
+        if (isRoundReady) {
+            simData = formatEngine.advanceStage(simData, config, []);
+        } else {
+            break; // If the current active round isn't done, the simulator can't guess the future yet!
+        }
     }
 
     return simData.rounds;
