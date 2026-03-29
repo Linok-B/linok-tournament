@@ -371,19 +371,28 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         return prevLosers.length === currLosers.length || prevLosers.length === 0;
     }
 
-    // Recursive Time-Travel: Finds the last VISIBLE match a player was in!
+    // Recursive back-track: Finds the last VISIBLE match a player was in!
     function findVisualParent(currentMatch, playerId) {
+        // Find all past matches for this player
         const pastMatches = visualRounds.flat().filter(m => 
             m.round < currentMatch.round && (m.player1?.id === playerId || m.player2?.id === playerId)
         );
+        
+        // BASE CASE: No past matches exist! They spawned in this round.
         if (pastMatches.length === 0) return null;
 
+        // Get the very last match they played before this one
         const immediateParent = pastMatches[pastMatches.length - 1];
         const pData = matchDataMap[immediateParent.id];
         
         if (!pData) return null;
-        if (pData.isVisible) return pData; // Found it!
-        return findVisualParent(immediateParent.match, playerId); // Parent was hidden bye? Keep searching back!
+        
+        // SUCCESS: The parent is visible on the screen! Connect to it!
+        if (pData.isVisible) return pData; 
+        
+        // RECURSION: The parent is invisible (Hidden Bye). Keep searching backwards!
+        // FIXED: Pass `immediateParent` directly, NOT `immediateParent.match`!
+        return findVisualParent(immediateParent, playerId); 
     }
 
     // Draws the perfect path based on brackets
@@ -464,8 +473,8 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
     if (match.winner || match.isBye) {
         matchBox.innerHTML = `
             <div style="display:flex; height:100%; align-items:center; position: relative;">
-                <small style="position: absolute; top: -20px; right: 0; font-size: 10px;">${bracketLabel}</small>
-                <div style="flex-grow:1; overflow:hidden; width: 130px;">
+                <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
+                <div style="flex-grow:1; overflow:hidden; width: 140px;">
                     <div title="${p1Name}" style="${match.winner?.id === match.player1?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">${p1Disp}</div>
                     <div title="${p2Name}" style="${match.winner?.id === match.player2?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Disp}</div>
                 </div>
@@ -497,7 +506,7 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
             </div>`;
     } else {
         matchBox.innerHTML = `
-            <div style="position:absolute; top:-20px; right: 0;">${bracketLabel}</div>
+            <div style="position:absolute; top:5px; right: 5px;">${bracketLabel}</div>
             <div style="display:flex; flex-direction:column; justify-content:center; height:100%;">
                 <div title="${p1Name}">${p1Name}</div>
                 <div title="${p2Name}">${p2Name}</div>
