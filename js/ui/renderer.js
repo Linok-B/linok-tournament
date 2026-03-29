@@ -271,24 +271,27 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     const parent1 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[matchIndex * 2];
                     const parent2 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[(matchIndex * 2) + 1];
                     
-                    // Check if parents are hidden byes
                     const isP1HiddenBye = hideByes && parent1 && !parent1.isGhost && parent1.isBye;
                     const isP2HiddenBye = hideByes && parent2 && !parent2.isGhost && parent2.isBye;
 
-                    const p1Y = (parent1 && !parent1.winner?.isPhantom && !isP1HiddenBye) ? matchDataMap[parent1.id]?.y : undefined;
-                    const p2Y = (parent2 && !parent2.winner?.isPhantom && !isP2HiddenBye) ? matchDataMap[parent2.id]?.y : p1Y;
+                    let p1Y = parent1 ? matchDataMap[parent1.id]?.y : undefined;
+                    let p2Y = parent2 ? matchDataMap[parent2.id]?.y : p1Y;
 
                     currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : startY;
 
-                    // Draw Dashed Lines for Simulated Matches
-                    if (match.isSimulated && p1Y !== undefined) {
+                    // draw SVG lines if parent is NOT Phantom and NOT Hidden Bye)
+                    const drawP1Line = parent1 && !parent1.winner?.isPhantom && !isP1HiddenBye;
+                    const drawP2Line = parent2 && !parent2.winner?.isPhantom && !isP2HiddenBye;
+
+                    if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
                         const midX = (currentX - gapX) + (gapX / 2);
-                        if (p2Y !== undefined && p1Y !== p2Y) {
-                            svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                            svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                        } else {
-                            svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                        }
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        
+                        if (drawP1Line) svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                        if (drawP2Line) svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                    } else if (p1Y !== undefined && drawP1Line) {
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                     }
                 }
             } else {
@@ -347,24 +350,35 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 const parent1 = prevLosers[matchIndex * 2];
                 const parent2 = prevLosers[(matchIndex * 2) + 1];
                 
-                // Check if parents are hidden byes
                 const isP1HiddenBye = hideByes && parent1 && !parent1.isGhost && parent1.isBye;
                 const isP2HiddenBye = hideByes && parent2 && !parent2.isGhost && parent2.isBye;
 
-                const p1Y = (parent1 && !parent1.winner?.isPhantom && !isP1HiddenBye) ? matchDataMap[parent1.id]?.y : undefined;
-                const p2Y = (parent2 && !parent2.winner?.isPhantom && !isP2HiddenBye) ? matchDataMap[parent2.id]?.y : p1Y; 
+                // ALWAYS GET Y COORDINATES SO THE MATH DOESNT STACK BOXES
+                let p1Y = parent1 ? matchDataMap[parent1.id]?.y : undefined;
+                let p2Y = parent2 ? matchDataMap[parent2.id]?.y : p1Y; 
 
-                currentY = isHiddenBye ? (p1Y !== undefined ? p1Y : (p2Y !== undefined ? p2Y : losersOffsetY)) : (p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY);
+                if (isHiddenBye) {
+                    currentY = p1Y !== undefined ? p1Y : (p2Y !== undefined ? p2Y : losersOffsetY);
+                } else {
+                    currentY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : losersOffsetY;
+                }
 
-                if (match.isSimulated && !isHiddenBye) {
+                // ONLY DRAW THE LINES IF REAL!
+                const drawP1Line = parent1 && !parent1.winner?.isPhantom && !isP1HiddenBye;
+                const drawP2Line = parent2 && !parent2.winner?.isPhantom && !isP2HiddenBye;
+
+                if (!isHiddenBye) {
                     if (p1Y !== undefined && p2Y !== undefined && p1Y !== p2Y) {
                         const midX = (currentX - gapX) + (gapX / 2);
-                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    } else if (p1Y !== undefined) {
-                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
-                    } else if (p2Y !== undefined) {
-                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" stroke-dasharray="5,5" fill="none" />`;
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        if (drawP1Line) svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${midX} ${p1Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                        if (drawP2Line) svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${midX} ${p2Y + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                    } else if (p1Y !== undefined && drawP1Line) {
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p1Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
+                    } else if (p2Y !== undefined && drawP2Line) {
+                        const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
+                        svgLayer.innerHTML += `<path d="M ${currentX - gapX} ${p2Y + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#45475a" stroke-width="2" fill="none" ${dash}/>`;
                     }
                 }
             }
@@ -373,36 +387,47 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
         // GRAND FINALS
         gfMatches.forEach((match) => {
-            if (stage.data.isComplete && match.isSimulated) return;
+            if (stage.data.isComplete && match.isGhost) return;
             let currentY = 0;
 
             if (match.bracketReset) {
-                const gf1 = visualRounds[roundIndex - 1]?.find(m => m.bracket === "grand_finals");
-                currentY = gf1 ? matchDataMap[gf1.id]?.y : startY;
+                // FIXED: Just grab the very last GF match drawn!
+                const prevGfArray = Object.values(matchDataMap).filter(m => m.match.bracket === "grand_finals");
+                const gf1Data = prevGfArray[prevGfArray.length - 1]; 
                 
-                if (gf1) {
-                    const prevX = matchDataMap[gf1.id].x;
-                    const dash = match.isSimulated ? 'stroke-dasharray="5,5"' : '';
+                currentY = gf1Data ? gf1Data.y : startY;
+
+                if (gf1Data) {
+                    const prevX = gf1Data.x; // Safely grabs the RIGHT edge!
+                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     svgLayer.innerHTML += `<path d="M ${prevX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f9e2af" stroke-width="3" fill="none" ${dash} />`;
                 }
             } else {
-                const wFinals = visualRounds.flat().reverse().find(m => m.bracket === "winners");
-                const lFinals = visualRounds.flat().reverse().find(m => m.bracket === "losers");
-                const wY = wFinals ? matchDataMap[wFinals.id]?.y : startY;
-                const lY = lFinals ? matchDataMap[lFinals.id]?.y : losersOffsetY;
+                // Find the W and L Finals dynamically from the map
+                const wFinalsArray = Object.values(matchDataMap).filter(m => m.match.bracket === "winners" || m.match.bracket === undefined);
+                const lFinalsArray = Object.values(matchDataMap).filter(m => m.match.bracket === "losers");
+                
+                const wFinalsData = wFinalsArray[wFinalsArray.length - 1];
+                const lFinalsData = lFinalsArray[lFinalsArray.length - 1];
+                
+                const wY = wFinalsData ? wFinalsData.y : startY;
+                const lY = lFinalsData ? lFinalsData.y : losersOffsetY;
+                
                 currentY = (wY + lY) / 2;
 
-                if (wFinals && lFinals) {
-                    const wX = matchDataMap[wFinals.id].x;
-                    const lX = matchDataMap[lFinals.id].x;
+                if (wFinalsData && lFinalsData) {
+                    const wX = wFinalsData.x; // Right edge!
+                    const lX = lFinalsData.x; // Right edge!
                     const midX = currentX - (gapX / 2);
-                    const dash = match.isSimulated ? 'stroke-dasharray="5,5"' : '';
+                    const dash = match.isGhost ? 'stroke-dasharray="5,5"' : '';
                     
                     svgLayer.innerHTML += `<path d="M ${wX} ${wY + (boxHeight/2)} L ${midX} ${wY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#a6e3a1" stroke-width="3" fill="none" ${dash} />`;
                     svgLayer.innerHTML += `<path d="M ${lX} ${lY + (boxHeight/2)} L ${midX} ${lY + (boxHeight/2)} L ${midX} ${currentY + (boxHeight/2)} L ${currentX} ${currentY + (boxHeight/2)}" stroke="#f38ba8" stroke-width="3" fill="none" ${dash} />`;
                 }
             }
-            saveAndDrawBox(match, currentX, currentY);
+
+            matchCoordinates[match.id] = { x: currentX + boxWidth, y: currentY };
+            board.appendChild(createMatchBoxHTML(match, currentX, currentY, boxWidth, boxHeight, isActiveStage, tournament));
         });
     }
 
