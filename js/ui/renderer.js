@@ -216,7 +216,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     const showFull = tournament.settings.showFullBracket;
     const hideByes = tournament.settings.hideByes;
 
-    // --- 1. THE SIMULATOR MERGER ---
+    // --- 1. SIMULATOR MERGER ---
     let visualRounds = [];
     if (showFull && (stage.config.type === "single_elimination" || stage.config.type === "double_elimination")) {
         const simulatedRounds = simulatePreview(stage.data, stage.config);
@@ -235,16 +235,15 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     }
 
     const totalRoundsToDraw = visualRounds.length;
-
-    // CALCULATE LOSERS BRACKET OFFSET
     let losersOffsetY = startY; 
     if (stage.config.type === "double_elimination") {
         const wR1Count = visualRounds[0].filter(m => m.bracket === "winners" || !m.bracket).length;
         losersOffsetY = startY + (wR1Count * (boxHeight + gapY)) + 150; 
     }
 
-    // --- 2. PASS ONE: CALCULATE COORDINATES & DRAW BOXES ---
+    // --- 2. DRAW BOXES ---
     for (let roundIndex = 0; roundIndex < totalRoundsToDraw; roundIndex++) {
+        // Stop drawing if stage ended early
         if (stage.data.isComplete && !visualRounds[roundIndex]) break; 
 
         const currentX = startX + (roundIndex * (boxWidth + gapX));
@@ -254,23 +253,22 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         board.appendChild(header);
 
         let matchesToDraw = visualRounds[roundIndex] || [];
-        // Ensure real rounds don't accidentally contain ghosts
         if (roundIndex < stage.data.rounds.length) matchesToDraw = matchesToDraw.filter(m => !m.isGhost);
 
-        // This guarantees that 'hideByes: true' never leaves an ugly gap at the top of the screen
+        // Force Byes to the bottom for Swiss/RR
         if (stage.config.type !== "single_elimination" && stage.config.type !== "double_elimination") {
             matchesToDraw.sort((a, b) => {
-                if (a.isBye && !b.isBye) return 1;  // Push 'a' down
-                if (!a.isBye && b.isBye) return -1; // Push 'b' down
-                return 0; // Keep original order if both are byes or neither are byes
+                if (a.isBye && !b.isBye) return 1;  
+                if (!a.isBye && b.isBye) return -1; 
+                return 0; 
             });
         }
-        
+
         const wMatches = matchesToDraw.filter(m => m.bracket === "winners" || m.bracket === undefined);
         const lMatches = matchesToDraw.filter(m => m.bracket === "losers");
         const gfMatches = matchesToDraw.filter(m => m.bracket === "grand_finals");
 
-        // WINNERS
+        // WINNERS BRACKET
         wMatches.forEach((match, matchIndex) => {
             let centerY = 0;
             if ((stage.config.type === "single_elimination" || stage.config.type === "double_elimination") && roundIndex > 0) {
@@ -278,10 +276,9 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     const actualRound = visualRounds[roundIndex];
                     let finalsY = startY;
                     if (actualRound && actualRound[0]) {
-                        finalsY = matchDataMap[actualRound[0].id]?.y || startY;
+                        finalsY = matchDataMap[actualRound[0].id]?.centerY || startY;
                     }
-                    currentY = finalsY + 140;
-
+                    centerY = finalsY + 140; // FIXED: Changed currentY to centerY to prevent crash!
                 } else {
                     const prevRound = visualRounds[roundIndex - 1] || [];
                     const parent1 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[matchIndex * 2];
@@ -297,7 +294,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             saveBox(match, currentX, centerY);
         });
 
-        // LOSERS
+        // LOSERS BRACKET
         lMatches.forEach((match, matchIndex) => {
             let centerY = 0;
             const prevRound = visualRounds[roundIndex - 1] || [];
@@ -347,78 +344,58 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     }
 
 
-    // --- 3. PASS TWO: SVG SMART ROUTING ---
+    // --- 3. SMART SVG ROUTING ---
     if (stage.config.type === "single_elimination" || stage.config.type === "double_elimination") {
         Object.values(matchDataMap).forEach(childData => {
             if (!childData.isVisible) return;
-    
             if (childData.match.isThirdPlaceMatch) return;
     
-            // Player 1 Routing
+            // Route Player 1
             if (childData.match.player1 && !childData.match.player1.isPhantom) {
                 const p1Parent = findVisualParent(childData.match, childData.match.player1.id);
-                if (p1Parent) {
-                    drawRoute(p1Parent, childData);
-                } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
-                    // Failsafe: If no parent found but it's a drop round (like L-R1 ghosts), draw pink drop!
-                    drawDropLine(childData);
-                }
+                if (p1Parent) drawRoute(p1Parent, childData);
+                else if (childData.match.bracket === "losers" && isDropRound(childData.match)) drawDropLine(childData);
             }
             
-            // Player 2 Routing
+            // Route Player 2
             if (childData.match.player2 && !childData.match.player2.isPhantom) {
                 const p2Parent = findVisualParent(childData.match, childData.match.player2.id);
-                if (p2Parent) {
-                    drawRoute(p2Parent, childData);
-                } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
-                    drawDropLine(childData);
-                }
+                if (p2Parent) drawRoute(p2Parent, childData);
+                else if (childData.match.bracket === "losers" && isDropRound(childData.match)) drawDropLine(childData);
             }
         });
     }
 
-    // Helper to determine if a Losers match accepts drops from the sky
     function isDropRound(match) {
         if (match.bracket !== "losers") return false;
         const roundIndex = match.round - 1;
         const prevRound = visualRounds[roundIndex - 1];
-        if (!prevRound) return true; // L-R1
+        if (!prevRound) return true; 
         const prevLosers = prevRound.filter(m => m.bracket === "losers");
         const currLosers = visualRounds[roundIndex].filter(m => m.bracket === "losers");
         return prevLosers.length === currLosers.length || prevLosers.length === 0;
     }
 
-    // Recursive back-track: Finds the last VISIBLE match a player was in!
     function findVisualParent(currentMatch, playerId) {
-        // Find all past matches for this player
         const pastMatches = visualRounds.flat().filter(m => 
             m.round < currentMatch.round && (m.player1?.id === playerId || m.player2?.id === playerId)
         );
-        
-        // BASE CASE: No past matches exist! They spawned in this round.
         if (pastMatches.length === 0) return null;
 
-        // Get the very last match they played before this one
         const immediateParent = pastMatches[pastMatches.length - 1];
         const pData = matchDataMap[immediateParent.id];
         
         if (!pData) return null;
-        
-        // SUCCESS: The parent is visible on the screen! Connect to it!
         if (pData.isVisible) return pData; 
         
-        // RECURSION: The parent is invisible (Hidden Bye). Keep searching backwards!
-        // FIXED: Pass `immediateParent` directly, NOT `immediateParent.match`!
         return findVisualParent(immediateParent, playerId); 
     }
 
-    // Draws the perfect path based on brackets
     function drawRoute(parentData, childData) {
         const isDrop = parentData.match.bracket === "winners" && childData.match.bracket === "losers";
-        
         if (isDrop) {
             drawDropLine(childData);
-            return; // Never draw a grey spaghetti line crossing brackets!
+            return; 
         }
 
         const px = parentData.rightX;
@@ -441,7 +418,6 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         }
     }
 
-    // Draws the Pink Drop Line
     function drawDropLine(childData) {
         const cx = childData.leftX;
         const cy = childData.centerY;
@@ -450,6 +426,85 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     }
 
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
+}
+
+function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournament) {
+    const matchBox = document.createElement('div');
+    
+    // Hide Phantoms and Hidden Byes
+    if ((match.winner && match.winner.isPhantom) || (tournament.settings.hideByes && !match.isSimulated && !match.isGhost && match.isBye)) {
+        matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; visibility:hidden;`;
+        return matchBox;
+    }
+
+    matchBox.className = 'match-box';
+    matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; padding:8px; box-sizing:border-box;`;
+    
+    if (match.isSimulated || match.isGhost) {
+        matchBox.style.opacity = "0.3";
+        matchBox.style.border = "1px dashed #45475a";
+        matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%; color:gray; font-style:italic;"><div>TBD</div><div style="margin-top:10px;">TBD</div></div>`;
+        return matchBox;
+    }
+
+    let borderColor = match.winner ? '#a6e3a1' : (!isActiveStage ? '#f38ba8' : '#45475a'); 
+    matchBox.style.borderLeft = `4px solid ${borderColor}`; 
+
+    const p1Name = match.player1 ? match.player1.name : "TBD";
+    const p2Name = match.player2 ? match.player2.name : "TBD";
+    let p1Disp = (match.winner?.id === match.player1?.id || match.winner === "tie") ? `<strong>${p1Name}</strong>` : p1Name;
+    let p2Disp = (match.winner?.id === match.player2?.id || match.winner === "tie") ? `<strong>${p2Name}</strong>` : p2Name;
+
+    let bracketLabel = "";
+    let statusText = match.isThirdPlaceMatch ? '3rd' : (match.isBye ? 'Auto' : (match.winner ? 'Done' : ''));
+    if (match.bracket === "winners") bracketLabel = `<span style="color:#a6e3a1;">[W]</span>`;
+    if (match.bracket === "losers") bracketLabel = `<span style="color:#f38ba8;">[L]</span>`;
+    if (match.bracket === "grand_finals") bracketLabel = `<span style="color:#f9e2af;">${match.bracketReset ? '[RESET]' : '[GF]'}</span>`;
+
+    if (match.winner || match.isBye) {
+        matchBox.innerHTML = `
+            <div style="display:flex; height:100%; align-items:center; position: relative;">
+                <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
+                <div style="flex-grow:1; overflow:hidden; width: 130px;">
+                    <div title="${p1Name}" style="${match.winner?.id === match.player1?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">${p1Disp}</div>
+                    <div title="${p2Name}" style="${match.winner?.id === match.player2?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Disp}</div>
+                </div>
+                <div style="min-width: 30px; text-align:right; font-weight:bold; margin-right: 10px;">
+                    <div style="margin-bottom:5px;">${match.score1}</div>
+                    <div>${match.score2}</div>
+                    ${match.draws ? `<div style="font-size:10px; color:gray; margin-top:2px;">${match.draws} Ties</div>` : ''}
+                </div>
+                <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
+                    <small style="color:gray; font-size:10px; margin-bottom:5px;">${statusText}</small>
+                    ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
+                </div>
+            </div>`;
+    } else if (isActiveStage) {
+        matchBox.innerHTML = `
+            <div style="display:flex; height:100%; align-items:center; position: relative;">
+                <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
+                <div style="overflow:hidden; padding-right:10px; width: 140px;">
+                    <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p1Name}</div>
+                    <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p2Name}</div>
+                    <div style="font-size:10px; color:gray; text-align:right; height: 16px; line-height: 16px;">Ties:</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <input type="number" id="s1-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
+                    <input type="number" id="s2-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
+                    <input type="number" id="d-${match.id}" style="width:45px; height:16px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a;" value="${match.draws || 0}">
+                </div>
+                <button class="btn-report" data-matchid="${match.id}" style="margin-left:10px; height:48px; width:40px; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px; font-weight:bold;">✓</button>
+            </div>`;
+    } else {
+        matchBox.innerHTML = `
+            <div style="position:absolute; top: 5px; right: 5px; font-size: 10px;">${bracketLabel}</div>
+            <div style="display:flex; flex-direction:column; justify-content:center; height:100%;">
+                <div title="${p1Name}">${p1Name}</div>
+                <div title="${p2Name}">${p2Name}</div>
+                <small style="color:gray; margin-top:5px;">Pending</small>
+            </div>`;
+    }
+    return matchBox;
 }
 
 // --- HTML BOX GENERATOR ---
