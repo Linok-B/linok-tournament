@@ -22,14 +22,14 @@ body, html {
 
 .controls-panel {
     width: 300px;
-    min-width: 300px; /* NEW: Prevents shrinking when screen gets small */
+    min-width: 300px;
     background-color: var(--bg-panel);
     padding: 20px;
     box-shadow: 2px 0 10px rgba(0,0,0,0.5);
     display: flex;
     flex-direction: column;
     gap: 20px;
-    overflow-y: auto; /* NEW: Allows the sidebar to scroll independently! */
+    overflow-y: auto; 
 }
 
 .display-panel {
@@ -96,7 +96,7 @@ button.danger {
     font-size: 24px;
     cursor: pointer;
     padding: 10px;
-    position: absolute; /* So it floats above the bracket */
+    position: absolute;
     top: 10px;
     left: 10px;
     z-index: 1000;
@@ -105,7 +105,7 @@ button.danger {
 /* Sidebar Hidden Mode (Hamburger) */
 body.sidebar-hidden .controls-panel { display: none !important; }
 
-/* True Streamer Mode (Eye Icon) */
+/* Streamer Mode (Eye Icon) */
 body.streamer-mode .controls-panel,
 body.streamer-mode #tournament-header,
 body.streamer-mode #btn-hamburger,
@@ -131,15 +131,15 @@ body.streamer-mode #bracket-viewport {
     flex-direction: column;
     justify-content: space-around; 
     min-width: 250px;
-    height: 100%; /* Force it to stretch! */
-    padding-top: 40px; /* Make room for the Round Header so it doesn't overlap! */
+    height: 100%;
+    padding-top: 40px;
     position: relative;
 }
 
 /* Fix the Round Header */
 .bracket-column h3 {
     position: absolute;
-    top: 0; /* Sit inside the 40px padding we just created */
+    top: 0;
     left: 0;
     width: 100%;
     text-align: center;
@@ -147,7 +147,7 @@ body.streamer-mode #bracket-viewport {
     color: var(--text-main);
 }
 
-/* Force boxes to be exactly the same height so they never jump! */
+/* Force boxes to be exactly the same height so they never jump */
 .match-box {
     background: var(--bg-panel);
     padding: 10px;
@@ -155,15 +155,14 @@ body.streamer-mode #bracket-viewport {
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     position: relative;
     border: 1px solid #45475a;
-    user-select: none; 
-    height: 80px; /* FIXED HEIGHT */
+    user-select: none;
+    height: 80px;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Center the contents vertically */
+    justify-content: center;
 }
 
 
-/* 1. Remove the hardcoded width from the ghost! */
 .player-card.is-dragging {
     position: fixed; 
     z-index: 9999;
@@ -174,7 +173,6 @@ body.streamer-mode #bracket-viewport {
     
 }
 
-/* 2. Remove the hardcoded width from the name! */
 .player-card strong {
     white-space: nowrap;
     overflow: hidden;
