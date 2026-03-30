@@ -59,6 +59,7 @@ function applyCustomDragAndDrop(container) {
     // Auto-scroll variables
     const scrollParent = document.querySelector('.controls-panel'); 
     let scrollInterval = null;
+    let lastHoverCheck = 0;
 
     container.addEventListener('mousedown', (e) => {
         if (!e.target.classList.contains('drag-handle')) return;
@@ -89,6 +90,22 @@ function applyCustomDragAndDrop(container) {
         
         // 1. Move the Ghost
         draggingElement.style.top = `${e.clientY - offsetY}px`;
+
+        // 1.5 Cap the collision detection to ~60fps
+        if (e.timeStamp - lastHoverCheck > 16) {
+            lastHoverCheck = e.timeStamp;
+            
+            const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
+            const hoveredCard = elementsUnderMouse.find(el => el.classList.contains('player-card') && !el.classList.contains('is-dragging'));
+            
+            if (hoveredCard && hoveredCard !== placeholder) {
+                const hoverRect = hoveredCard.getBoundingClientRect();
+                const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
+                
+                if (e.clientY < hoverMiddleY) container.insertBefore(placeholder, hoveredCard);
+                else container.insertBefore(placeholder, hoveredCard.nextSibling);
+            }
+        }
         
         // 2. Find what card we are hovering over (excluding the ghost itself)
         // We use elementsFromPoint to see what's directly underneath the mouse!
