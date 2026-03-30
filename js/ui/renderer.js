@@ -418,8 +418,10 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         const isDrop = parentData.match.bracket === "winners" && childData.match.bracket === "losers";
         
         if (isDrop) {
-            drawDropLine(childData);
-            return; // Never draw a grey spaghetti line crossing brackets!
+            if (parentData.match.round === childData.match.round - 1) {
+                drawDropLine(childData);
+            }
+            return;
         }
 
         const px = parentData.rightX;
