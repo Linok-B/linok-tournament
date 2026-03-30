@@ -267,8 +267,12 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             if ((stage.config.type === "single_elimination" || stage.config.type === "double_elimination") && roundIndex > 0) {
                 if (match.isThirdPlaceMatch) {
                     const actualRound = visualRounds[roundIndex];
-                    let finalsY = (actualRound && actualRound[0]) ? matchDataMap[actualRound[0].id]?.centerY : startY;
-                    centerY = (finalsY || startY) + 140;
+                    let finalsY = startY;
+                    if (actualRound && actualRound[0]) {
+                        finalsY = matchDataMap[actualRound[0].id]?.y || startY;
+                    }
+                    currentY = finalsY + 140;
+
                 } else {
                     const prevRound = visualRounds[roundIndex - 1] || [];
                     const parent1 = prevRound.filter(m => m.bracket === match.bracket || !m.bracket)[matchIndex * 2];
@@ -335,30 +339,34 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 
 
     // --- 3. PASS TWO: SVG SMART ROUTING ---
-    Object.values(matchDataMap).forEach(childData => {
-        if (!childData.isVisible) return;
-
-        // Player 1 Routing
-        if (childData.match.player1 && !childData.match.player1.isPhantom) {
-            const p1Parent = findVisualParent(childData.match, childData.match.player1.id);
-            if (p1Parent) {
-                drawRoute(p1Parent, childData);
-            } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
-                // Failsafe: If no parent found but it's a drop round (like L-R1 ghosts), draw pink drop!
-                drawDropLine(childData);
+    if (stage.config.type === "single_elimination" || stage.config.type === "double_elimination") {
+        Object.values(matchDataMap).forEach(childData => {
+            if (!childData.isVisible) return;
+    
+            if (childData.match.isThirdPlaceMatch) return;
+    
+            // Player 1 Routing
+            if (childData.match.player1 && !childData.match.player1.isPhantom) {
+                const p1Parent = findVisualParent(childData.match, childData.match.player1.id);
+                if (p1Parent) {
+                    drawRoute(p1Parent, childData);
+                } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
+                    // Failsafe: If no parent found but it's a drop round (like L-R1 ghosts), draw pink drop!
+                    drawDropLine(childData);
+                }
             }
-        }
-        
-        // Player 2 Routing
-        if (childData.match.player2 && !childData.match.player2.isPhantom) {
-            const p2Parent = findVisualParent(childData.match, childData.match.player2.id);
-            if (p2Parent) {
-                drawRoute(p2Parent, childData);
-            } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
-                drawDropLine(childData);
+            
+            // Player 2 Routing
+            if (childData.match.player2 && !childData.match.player2.isPhantom) {
+                const p2Parent = findVisualParent(childData.match, childData.match.player2.id);
+                if (p2Parent) {
+                    drawRoute(p2Parent, childData);
+                } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
+                    drawDropLine(childData);
+                }
             }
-        }
-    });
+        });
+    }
 
     // Helper to determine if a Losers match accepts drops from the sky
     function isDropRound(match) {
