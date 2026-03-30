@@ -163,8 +163,6 @@ body.streamer-mode #bracket-viewport {
 }
 
 
-/* In style.css */
-
 /* 1. Remove the hardcoded width from the ghost! */
 .player-card.is-dragging {
     position: fixed; 
@@ -191,4 +189,17 @@ body.streamer-mode #bracket-viewport {
 }
 .player-card.is-placeholder * {
     visibility: hidden; /* Hide the text inside the hole */
+}
+
+
+#bracket-board {
+    /* Tells the browser this element's children won't affect the rest of the page */
+    contain: layout style; 
+    /* Pre-allocates GPU memory for panning and zooming */
+    will-change: transform; 
+}
+
+#bracket-lines {
+    /* Optimizes SVG anti-aliasing for large maps */
+    shape-rendering: geometricPrecision;
 }
