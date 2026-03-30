@@ -187,7 +187,7 @@ export function renderBracket(tournament, containerId) {
             <button id="btn-streamer-mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 1px solid #45475a; padding: 5px 10px; border-radius: 4px; cursor: pointer;">👁️ Stream Mode</button>
             
             <!-- We will draw the boxes and lines inside this board -->
-            <div id="bracket-board" style="position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; transform-origin: 0 0;">
+            <div id="bracket-board" style="position: absolute; top: 0; left: 0; transform-origin: 0 0;">
                 <svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
             </div>
         </div>
@@ -215,6 +215,11 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     const matchDataMap = {}; 
     const showFull = tournament.settings.showFullBracket;
     const hideByes = tournament.settings.hideByes;
+
+    // Performance Variables
+    let svgPaths = [];
+    let maxX = 0;
+    let maxY = 0;
 
     // --- 1. THE SIMULATOR MERGER ---
     let visualRounds = [];
@@ -342,6 +347,9 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         const isSimOrGhost = match.isSimulated || match.isGhost;
         const isHiddenBye = hideByes && !isSimOrGhost && match.isBye;
         const isVisible = !isPhantom && !isHiddenBye;
+
+        maxX = Math.max(maxX, leftX + boxWidth);
+        maxY = Math.max(maxY, centerY + (boxHeight / 2));
         
         matchDataMap[match.id] = { match, leftX, rightX: leftX + boxWidth, centerY, isVisible, isSimOrGhost };
         board.appendChild(createMatchBoxHTML(match, leftX, centerY - (boxHeight/2), boxWidth, boxHeight, isActiveStage, tournament));
@@ -437,10 +445,10 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         else if (childData.match.bracket === "grand_finals" && parentData.match.bracket === "losers") color = "#f38ba8"; 
 
         if (py === cy) {
-            svgLayer.innerHTML += `<path d="M ${px} ${py} L ${cx} ${cy}" stroke="${color}" stroke-width="2" fill="none" ${dash} />`;
+            svgPaths.push(`<path d="M ${px} ${py} L ${cx} ${cy}" stroke="${color}" stroke-width="2" fill="none" ${dash} />`);
         } else {
             const midX = cx - (gapX / 2);
-            svgLayer.innerHTML += `<path d="M ${px} ${py} L ${midX} ${py} L ${midX} ${cy} L ${cx} ${cy}" stroke="${color}" stroke-width="2" fill="none" ${dash} />`;
+            svgPaths.push(`<path d="M ${px} ${py} L ${midX} ${py} L ${midX} ${cy} L ${cx} ${cy}" stroke="${color}" stroke-width="2" fill="none" ${dash} />`);
         }
     }
 
@@ -449,8 +457,15 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         const cx = childData.leftX;
         const cy = childData.centerY;
         const dash = childData.isSimOrGhost ? 'stroke-dasharray="5,5"' : '';
-        svgLayer.innerHTML += `<path d="M ${cx - (gapX/2)} ${cy - 80} L ${cx - (gapX/2)} ${cy} L ${cx} ${cy}" stroke="#f38ba8" stroke-width="2" fill="none" ${dash} />`;
+        svgPaths.push(`<path d="M ${cx - (gapX/2)} ${cy - 80} L ${cx - (gapX/2)} ${cy} L ${cx} ${cy}" stroke="#f38ba8" stroke-width="2" fill="none" ${dash} />`);
     }
+
+    svgLayer.innerHTML = svgPaths.join('');
+
+    board.style.width = `${maxX + 200}px`;
+    board.style.height = `${maxY + 200}px`;
+    svgLayer.style.width = `${maxX + 200}px`;
+    svgLayer.style.height = `${maxY + 200}px`;
 
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
