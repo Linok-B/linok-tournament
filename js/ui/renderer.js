@@ -257,6 +257,15 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         // Ensure real rounds don't accidentally contain ghosts
         if (roundIndex < stage.data.rounds.length) matchesToDraw = matchesToDraw.filter(m => !m.isGhost);
 
+        // This guarantees that 'hideByes: true' never leaves an ugly gap at the top of the screen
+        if (stage.config.type !== "single_elimination" && stage.config.type !== "double_elimination") {
+            matchesToDraw.sort((a, b) => {
+                if (a.isBye && !b.isBye) return 1;  // Push 'a' down
+                if (!a.isBye && b.isBye) return -1; // Push 'b' down
+                return 0; // Keep original order if both are byes or neither are byes
+            });
+        }
+        
         const wMatches = matchesToDraw.filter(m => m.bracket === "winners" || m.bracket === undefined);
         const lMatches = matchesToDraw.filter(m => m.bracket === "losers");
         const gfMatches = matchesToDraw.filter(m => m.bracket === "grand_finals");
