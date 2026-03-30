@@ -219,7 +219,8 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     // --- 1. THE SIMULATOR MERGER ---
     let visualRounds = [];
     if (showFull && (stage.config.type === "single_elimination" || stage.config.type === "double_elimination")) {
-        const simulatedRounds = simulatePreview(stage.data, stage.config);
+        const combinedConfig = { ...tournament.settings, ...stage.config };
+        const simulatedRounds = simulatePreview(stage.data, combinedConfig);
         simulatedRounds.forEach((simRound, rIndex) => {
             if (stage.data.rounds[rIndex]) visualRounds.push(stage.data.rounds[rIndex]);
             else visualRounds.push(simRound);
