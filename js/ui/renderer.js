@@ -279,9 +279,9 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     const actualRound = visualRounds[roundIndex];
                     let finalsY = startY;
                     if (actualRound && actualRound[0]) {
-                        finalsY = matchDataMap[actualRound[0].id]?.y || startY;
+                        finalsY = matchDataMap[actualRound[0].id]?.centerY || startY;
                     }
-                    currentY = finalsY + 140;
+                    centerY = finalsY + 140;
 
                 } else {
                     const prevRound = visualRounds[roundIndex - 1] || [];
