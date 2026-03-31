@@ -250,41 +250,40 @@ export class Tournament {
 
                         // --- DPW SWISS RATING MATH ---
                         if (stage.config.type === "dpw_swiss") {
-                            const p1TS = p1.metadata?.dpwTS || 0;
-                            const p2TS = p2.metadata?.dpwTS || 0;
+                            const p1TS = p1.metadata?.dpwTS ?? 0;
+                            const p2TS = p2.metadata?.dpwTS ?? 0;
                             
-                            // Calc S for Player 1 (1 = Win, 0.5 = Draw, 0 = Loss)
                             let S = 0.5;
                             if (match.winner === "tie") S = 0.5;
-                            else if (match.winner.id === p1.id) S = 1;
+                            else if (match.winner?.id === p1.id) S = 1;
                             else S = 0;
                             
-                            // Load constants
-                            const C_TS = Math.max(stage.config.C_TS, 1);
+                            // Safety: Protects against undefined resulting in NaN
+                            const C_TS = Math.max(stage.config.C_TS ?? 1, 1);  
                             const C_R = 400;
                             const beta = stage.config.beta ?? 0.7;
-                            const roundsCount = stage.config.maxRounds || 3;
-                            const target_spread = stage.config.target_spread || 200;
+                            const roundsCount = stage.config.maxRounds ?? 3;
+                            const target_spread = stage.config.target_spread ?? 200;
                             
-                            const K_base = target_spread / roundsCount;
-                            const r_ramp = stage.config.r_ramp || Math.max(1, Math.floor(roundsCount / 3));
-                            const K_r = K_base * Math.min(1, match.round / r_ramp);
+                            const K_base = stage.config.K_base ?? (target_spread / roundsCount); 
+                            const r_ramp = stage.config.r_ramp ?? Math.max(1, Math.floor(roundsCount / 3));
+                            const K_r = K_base * Math.min(1, match.round / r_ramp);  
                             
-                            // Calculate Expected Score & Delta
                             const D = beta * ((p1TS - p2TS) / C_TS) + (1 - beta) * ((p1.stats.dpwRating - p2.stats.dpwRating) / C_R);
                             const E_A = 1 / (1 + Math.pow(10, -D));
                             
-                            // raw_change preserves the directional sign!
                             const raw_change = K_r * (S - E_A);
-                            const delta = Math.abs(raw_change) >= 0.5 ? Math.max(1, Math.round(Math.abs(raw_change))) : 0;
+                            const raw_magnitude = Math.abs(raw_change);
+                            const delta = raw_magnitude >= 0.5 ? Math.max(1, Math.round(raw_magnitude)) : 0;
                             
-                            // Apply zero-sum exchange
-                            if (raw_change > 0) {
-                                p1.stats.dpwRating += delta;
-                                p2.stats.dpwRating -= delta;
-                            } else if (raw_change < 0) {
-                                p1.stats.dpwRating -= delta;
-                                p2.stats.dpwRating += delta;
+                            if (delta > 0) {
+                                if (raw_change > 0) {
+                                    p1.stats.dpwRating += delta;
+                                    p2.stats.dpwRating -= delta;
+                                } else if (raw_change < 0) {
+                                    p1.stats.dpwRating -= delta;
+                                    p2.stats.dpwRating += delta;
+                                }
                             }
                         }
 
