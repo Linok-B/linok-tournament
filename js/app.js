@@ -2,6 +2,7 @@ import { Tournament } from './engine/tournament.js';
 import { saveTournamentLocally, loadTournamentLocally, clearLocalData } from './store/localData.js';
 import { renderBracket, renderStandings } from './ui/renderer.js';
 import { exportTournamentJSON, importTournamentJSON } from './store/export.js';
+import { openDPWSetupModal } from './ui/dpwSetup.js';
 
 let currentTournament = new Tournament();
 
