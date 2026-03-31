@@ -637,6 +637,11 @@ export function renderStandings(tournament, containerId) {
     // Determine which tiebreaker array to use
     let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
     if (viewIndex < 0) viewIndex = 0;
+    
+    // NEW: Check if we are viewing a DPW Swiss stage
+    const isDPW = tournament.stages.length > 0 && tournament.stages[viewIndex].config.type === "dpw_swiss";
+    const pointsLabel = isDPW ? "Rating" : "Points";
+
     let stageTiebreakers = tournament.settings.tiebreakers; 
     if (tournament.stages.length > 0 && tournament.stages[viewIndex].config.tiebreakers) {
         stageTiebreakers = tournament.stages[viewIndex].config.tiebreakers;
@@ -644,7 +649,6 @@ export function renderStandings(tournament, containerId) {
 
     const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, stageTiebreakers));
 
-    // 1. Update the Header HTML
     let html = `
         <h2 style="margin-top: 40px; border-top: 1px solid #45475a; padding-top: 20px;">Current Standings</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
@@ -652,7 +656,7 @@ export function renderStandings(tournament, containerId) {
                 <tr style="border-bottom: 2px solid var(--accent);">
                     <th style="padding: 10px;">Rank</th>
                     <th style="padding: 10px;">Name</th>
-                    <th style="padding: 10px;">Points</th>
+                    <th style="padding: 10px;">${pointsLabel}</th>
                     <th style="padding: 10px;">Match (W-L-D)</th>
                     <th style="padding: 10px;">Games (W-L-D)</th> 
                     <th style="padding: 10px;">Buchholz</th>
@@ -673,13 +677,14 @@ export function renderStandings(tournament, containerId) {
             }
         }
 
+        const displayPoints = isDPW ? (player.stats.dpwRating ?? 1000) : player.stats.points;
+
         html += `
             <tr style="border-bottom: 1px solid #45475a;">
                 <td style="padding: 10px;"><b>${currentDisplayRank}</b></td>
                 <td style="padding: 10px;">${player.name}</td>
-                <td style="padding: 10px; font-weight: bold; color: var(--accent);">${player.stats.points}</td>
+                <td style="padding: 10px; font-weight: bold; color: var(--accent);">${displayPoints}</td>
                 <td style="padding: 10px;">${player.stats.matchWins}-${player.stats.matchLosses}-${player.stats.matchDraws}</td>
-                <!-- CHANGED TO INCLUDE gameDraws -->
                 <td style="padding: 10px;">${player.stats.gameWins}-${player.stats.gameLosses}-${player.stats.gameDraws}</td>
                 <td style="padding: 10px;">${player.stats.buchholz}</td>
             </tr>
