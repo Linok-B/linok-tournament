@@ -1,12 +1,14 @@
 import * as SingleElimination from './elimination.js';
 import * as RoundRobin from './roundRobin.js';
 import * as Swiss from './swiss.js';
-import * as DoubleElimination from './doubleElimination.js'; 
+import * as DoubleElimination from './doubleElimination.js';
+import * as DPWSwiss from './dpwSwiss.js';
 
 export const Formats = {
     "single_elimination": SingleElimination,
     "round_robin": RoundRobin,
     "swiss": Swiss,
+    "dpw_swiss": DPWSwiss,
     "double_elimination": DoubleElimination
 };
 
