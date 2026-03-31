@@ -54,7 +54,7 @@ export function calculateTiebreakers(players, stagesConfig) {
                 if (bDiff !== aDiff) return bDiff - aDiff;
             }
             
-            if (rule === "median_buchholz") { // NEW
+            if (rule === "median_buchholz") {
                 const aMed = a.stats?.median_buchholz ?? 0;
                 const bMed = b.stats?.median_buchholz ?? 0;
                 if (bMed !== aMed) return bMed - aMed;
@@ -96,6 +96,12 @@ export function calculateTiebreakers(players, stagesConfig) {
                 const aSeed = a.seed ?? 999;
                 const bSeed = b.seed ?? 999;
                 if (aSeed !== bSeed) return aSeed - bSeed;
+            }
+            
+            if (rule === "dpw_rating") {
+                const aRat = a.stats?.dpwRating ?? 1000;
+                const bRat = b.stats?.dpwRating ?? 1000;
+                if (bRat !== aRat) return bRat - aRat;
             }
         } 
 
