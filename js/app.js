@@ -70,14 +70,13 @@ function renderBlueprintList() {
         "single_elimination": "Single Elim",
         "round_robin": "Round Robin",
         "swiss": "Swiss", 
+        "dpw_swiss": "DPW Swiss",
         "double_elimination": "Double Elim" 
     };
 
     currentTournament.settings.pipeline.forEach((stage, index) => {
-        // Check if this stage has already been started/completed
         const isLocked = index < currentTournament.stages.length;
         
-        // Format the extra options for display
         let details = [];
         if (stage.maxRounds) details.push(`${stage.maxRounds} Rnds`);
         if (stage.cutToTop) details.push(`Top ${stage.cutToTop}`);
@@ -86,9 +85,12 @@ function renderBlueprintList() {
         list.innerHTML += `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isLocked ? '#a6e3a1' : 'var(--accent)'};">
                 <span style="font-size: 13px;"><b>${index + 1}.</b> ${formatNames[stage.type]}${detailStr}</span>
-                ${!isLocked 
-                    ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0 5px;">X</button>` 
-                    : '<span style="font-size:10px; color:gray;">Locked</span>'}
+                <div>
+                    ${stage.type === 'dpw_swiss' && !isLocked ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: #f9e2af; border: none; cursor: pointer; font-weight: bold; padding: 0 5px;" title="Edit Teams">⚙️</button>` : ''}
+                    ${!isLocked 
+                        ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0 5px;">X</button>` 
+                        : '<span style="font-size:10px; color:gray;">Locked</span>'}
+                </div>
             </div>
         `;
     });
@@ -132,6 +134,21 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
     if (currentTournament.status !== "setup") {
         alert("Tournament is already active!");
         return;
+    }
+
+    if (currentTournament.settings.pipeline.length === 0) {
+        alert("Please add at least one stage to the Tournament Stages blueprint before starting!");
+        return;
+    }
+
+    // DPW Failsafe
+    const hasDPW = currentTournament.settings.pipeline.some(s => s.type === "dpw_swiss");
+    if (hasDPW) {
+        const missingTS = currentTournament.players.find(p => p.metadata?.dpwTS === undefined);
+        if (missingTS) {
+            alert(`Wait! Player '${missingTS.name}' does not have a team weight (TS) assigned for DPW Swiss. Please click the ⚙️ icon in the Blueprint to assign their team.`);
+            return;
+        }
     }
 
     if (currentTournament.startTournament()) {
@@ -407,21 +424,38 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
     const type = document.getElementById('blueprint-type').value;
     const rounds = parseInt(document.getElementById('blueprint-rounds').value);
     const cut = parseInt(document.getElementById('blueprint-cut').value);
-    
-    // NEW: Get the selected tiebreaker profile
     const tbProfile = document.getElementById('blueprint-tiebreakers').value;
     
-    // Translate the profile string into the actual math array!
-    let tbArray = ["game_differential", "head_to_head", "seed"]; // default "standard"
+    // DPW SWISS INTERCEPT
+    if (type === "dpw_swiss") {
+        if (currentTournament.players.length < 2) {
+            alert("Add some players first before setting up DPW Swiss!");
+            return;
+        }
+        
+        openDPWSetupModal(currentTournament.players, rounds, cut, (dpwConfig, playerTSMap) => {
+            currentTournament.players.forEach(p => {
+                if (!p.metadata) p.metadata = {};
+                p.metadata.dpwTS = playerTSMap[p.id] || 0;
+            });
+            currentTournament.settings.pipeline.push(dpwConfig);
+            document.getElementById('blueprint-rounds').value = '';
+            document.getElementById('blueprint-cut').value = '';
+            saveTournamentLocally(currentTournament);
+            updateUI();
+        });
+        return; // Halt normal execution
+    }
+
+    let tbArray = ["game_differential", "head_to_head", "seed"]; 
     if (tbProfile === "chess") tbArray = ["median_buchholz", "buchholz", "head_to_head", "seed"];
     if (tbProfile === "elo") tbArray = ["elo", "head_to_head", "seed"];
 
-    const newStage = { type: type, tiebreakers: tbArray }; // Add it to the config!
+    const newStage = { type: type, tiebreakers: tbArray };
     if (!isNaN(rounds) && rounds > 0) newStage.maxRounds = rounds;
     if (!isNaN(cut) && cut > 0) newStage.cutToTop = cut;
     
     currentTournament.settings.pipeline.push(newStage);
-    
     document.getElementById('blueprint-rounds').value = '';
     document.getElementById('blueprint-cut').value = '';
     
@@ -431,14 +465,20 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
 
 // Remove an un-started stage from the pipeline
 document.getElementById('setup-blueprint-group').addEventListener('click', (e) => {
-    if (e.target && e.target.classList.contains('btn-remove-stage')) {
-        const indexToRemove = parseInt(e.target.getAttribute('data-index'));
+    // Check for Edit button
+    if (e.target && e.target.classList.contains('btn-edit-dpw')) {
+        const index = parseInt(e.target.getAttribute('data-index'));
+        const stageConfig = currentTournament.settings.pipeline[index];
         
-        // Remove it from the array
-        currentTournament.settings.pipeline.splice(indexToRemove, 1);
-        
-        saveTournamentLocally(currentTournament);
-        updateUI();
+        openDPWSetupModal(currentTournament.players, stageConfig.maxRounds, stageConfig.cutToTop, (newConfig, newPlayerTSMap) => {
+            currentTournament.settings.pipeline[index] = newConfig;
+            currentTournament.players.forEach(p => {
+                if (!p.metadata) p.metadata = {};
+                p.metadata.dpwTS = newPlayerTSMap[p.id] || 0;
+            });
+            saveTournamentLocally(currentTournament);
+            updateUI();
+        }, stageConfig);
     }
 });
 
