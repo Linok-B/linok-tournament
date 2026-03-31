@@ -1,0 +1,199 @@
+export function openDPWSetupModal(players, rounds, cut, onComplete, existingConfig = null) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center;";
+
+    const modal = document.createElement('div');
+    modal.style.cssText = "background:var(--bg-panel); border:2px solid var(--accent); border-radius:8px; width:700px; max-width:90vw; padding:20px; display:flex; flex-direction:column; max-height:90vh;";
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // State Memory
+    const cache = existingConfig?.dpwData || { playerJsons: {}, rawTS: {}, unitSVs: {} };
+
+    // --- RENDER PAGE 1: JSON INPUT ---
+    function renderPage1() {
+        let html = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #45475a; padding-bottom:10px; margin-bottom:15px;">
+                <h2 style="margin:0; color:var(--accent);">DPW Swiss Setup (1/2)</h2>
+                <button id="dpw-close" style="background:transparent; color:gray; border:none; cursor:pointer; font-weight:bold; font-size:18px;">X</button>
+            </div>
+            <p style="font-size:14px; margin-top:0;">Paste the Team JSON for each player, OR manually input their Team Score (TS) to bypass.</p>
+            <div style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:10px; padding-right:10px; margin-bottom:15px;">
+        `;
+
+        players.forEach(p => {
+            const savedJson = cache.playerJsons[p.id] || "";
+            const savedRaw = cache.rawTS[p.id] !== undefined ? cache.rawTS[p.id] : "";
+            
+            html += `
+                <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:4px; display:flex; gap:10px; align-items:center;">
+                    <strong style="width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.name}</strong>
+                    <textarea id="json-${p.id}" placeholder="Paste JSON here..." style="flex-grow:1; height:40px; resize:none; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px; font-family:monospace; font-size:11px;">${savedJson}</textarea>
+                    <input type="number" id="raw-${p.id}" placeholder="Raw TS" value="${savedRaw}" style="width:70px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
+                </div>
+            `;
+        });
+
+        html += `
+            </div>
+            <button id="dpw-next" style="background:var(--accent); color:var(--bg-dark); font-weight:bold; padding:10px; border:none; border-radius:4px; cursor:pointer;">Next ➔</button>
+        `;
+        
+        modal.innerHTML = html;
+
+        document.getElementById('dpw-close').onclick = () => overlay.remove();
+
+        document.getElementById('dpw-next').onclick = () => {
+            let uniqueUnits = new Set();
+            let parsedPlayerTeams = {}; // playerId -> array of unit base names
+            
+            players.forEach(p => {
+                const jsonStr = document.getElementById(`json-${p.id}`).value.trim();
+                const rawStr = document.getElementById(`raw-${p.id}`).value.trim();
+                
+                cache.playerJsons[p.id] = jsonStr;
+                
+                if (rawStr !== "") {
+                    cache.rawTS[p.id] = parseFloat(rawStr);
+                    parsedPlayerTeams[p.id] = []; 
+                } else if (jsonStr) {
+                    delete cache.rawTS[p.id]; 
+                    try {
+                        const parsed = JSON.parse(jsonStr);
+                        let teamUnits = [];
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                if (item.m && item.m.typ) {
+                                    // Strip trailing numbers via regex!
+                                    const baseName = item.m.typ.replace(/\d+$/, '');
+                                    teamUnits.push(baseName);
+                                    uniqueUnits.add(baseName);
+                                }
+                            });
+                        }
+                        parsedPlayerTeams[p.id] = teamUnits;
+                    } catch (e) {
+                        alert(`Invalid JSON for player: ${p.name}`);
+                        throw e; // Stop execution
+                    }
+                } else {
+                    delete cache.rawTS[p.id];
+                    parsedPlayerTeams[p.id] = [];
+                }
+            });
+
+            renderPage2(Array.from(uniqueUnits).sort(), parsedPlayerTeams);
+        };
+    }
+
+    // --- RENDER PAGE 2: UNIT VALUES ---
+    function renderPage2(uniqueUnits, parsedPlayerTeams) {
+        let html = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #45475a; padding-bottom:10px; margin-bottom:15px;">
+                <h2 style="margin:0; color:var(--accent);">Assign Unit Strength Values</h2>
+                <button id="dpw-back" style="background:transparent; color:gray; border:none; cursor:pointer; font-weight:bold; font-size:14px;">⬅ Back</button>
+            </div>
+            
+            <!-- Global Setter -->
+            <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
+                <label style="font-size:12px; color:gray;">Set all unset units to:</label>
+                <input type="number" id="global-sv" style="width:80px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
+                <button id="btn-apply-global" style="background:#a6e3a1; color:#1e1e2e; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
+            </div>
+
+            <div style="overflow-y:auto; flex-grow:1; margin-bottom:15px; border:1px solid #45475a; border-radius:4px; padding:10px;">
+        `;
+
+        if (uniqueUnits.length === 0) {
+            html += `<p style="text-align:center; color:gray;">No units detected. Using Raw TS values.</p>`;
+        } else {
+            uniqueUnits.forEach(unit => {
+                const val = cache.unitSVs[unit] !== undefined ? cache.unitSVs[unit] : "";
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px dashed #45475a; padding-bottom:5px;">
+                        <span style="font-size:14px;">${unit}</span>
+                        <input type="number" step="0.1" class="sv-input" data-unit="${unit}" value="${val}" style="width:80px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
+                    </div>
+                `;
+            });
+        }
+
+        html += `
+            </div>
+            
+            <!-- Advanced Config -->
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div style="flex:1;">
+                    <label style="font-size:11px; color:gray;">Target Spread (Default 200)</label>
+                    <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid #45475a;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:11px; color:gray;">Beta Weight (Default 0.7)</label>
+                    <input type="number" step="0.1" id="dpw-beta" value="${existingConfig?.beta || 0.7}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid #45475a;">
+                </div>
+            </div>
+
+            <button id="dpw-save" style="background:var(--accent); color:var(--bg-dark); font-weight:bold; padding:10px; border:none; border-radius:4px; cursor:pointer;">💾 Save Stage Settings</button>
+        `;
+
+        modal.innerHTML = html;
+
+        document.getElementById('dpw-back').onclick = renderPage1;
+
+        document.getElementById('btn-apply-global').onclick = () => {
+            const val = document.getElementById('global-sv').value;
+            if (val === "") return;
+            document.querySelectorAll('.sv-input').forEach(input => {
+                if (input.value === "") input.value = val;
+            });
+        };
+
+        document.getElementById('dpw-save').onclick = () => {
+            // Save SVs
+            document.querySelectorAll('.sv-input').forEach(input => {
+                cache.unitSVs[input.getAttribute('data-unit')] = parseFloat(input.value) || 0;
+            });
+
+            // Calculate Team Scores (TS)
+            let playerTSMap = {};
+            players.forEach(p => {
+                if (cache.rawTS[p.id] !== undefined) {
+                    playerTSMap[p.id] = cache.rawTS[p.id];
+                } else {
+                    let total = 0;
+                    const team = parsedPlayerTeams[p.id] || [];
+                    team.forEach(unit => total += (cache.unitSVs[unit] || 0)); // Duplicates are correctly counted multiple times
+                    playerTSMap[p.id] = total;
+                }
+            });
+
+            // Calculate pairwise C_TS
+            const tsValues = Object.values(playerTSMap);
+            let sumDiff = 0, pairs = 0;
+            for(let i=0; i<tsValues.length; i++) {
+                for(let j=i+1; j<tsValues.length; j++) {
+                    sumDiff += Math.abs(tsValues[i] - tsValues[j]);
+                    pairs++;
+                }
+            }
+            const avgDiff = pairs > 0 ? (sumDiff / pairs) : 0;
+            const computed_C_TS = Math.max(4 * avgDiff, 1);
+
+            const finalConfig = {
+                type: "dpw_swiss",
+                maxRounds: rounds || undefined,
+                cutToTop: cut || undefined,
+                target_spread: parseFloat(document.getElementById('dpw-spread').value) || 200,
+                beta: parseFloat(document.getElementById('dpw-beta').value) || 0.7,
+                C_TS: computed_C_TS,
+                tiebreakers: ["dpw_rating", "head_to_head", "buchholz"], // Force Rating as primary
+                dpwData: cache // Save memory
+            };
+
+            overlay.remove();
+            onComplete(finalConfig, playerTSMap);
+        };
+    }
+
+    renderPage1();
+}
