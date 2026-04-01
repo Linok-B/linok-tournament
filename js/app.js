@@ -478,8 +478,17 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
 });
 
 // Remove an un-started stage from the pipeline
+// Unified Blueprint Button Handler (Removes and Edits Stages)
 document.getElementById('setup-blueprint-group').addEventListener('click', (e) => {
-    // Check for Edit button
+    // Handle "X" (Remove)
+    if (e.target && e.target.classList.contains('btn-remove-stage')) {
+        const indexToRemove = parseInt(e.target.getAttribute('data-index'));
+        currentTournament.settings.pipeline.splice(indexToRemove, 1);
+        saveTournamentLocally(currentTournament);
+        updateUI();
+    }
+    
+    // Handle Edit DPW
     if (e.target && e.target.classList.contains('btn-edit-dpw')) {
         const index = parseInt(e.target.getAttribute('data-index'));
         const stageConfig = currentTournament.settings.pipeline[index];
