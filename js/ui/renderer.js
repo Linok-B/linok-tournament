@@ -541,13 +541,23 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                 </div>
             </div>`;
     } else if (isActiveStage) {
+        // --- DPW Visual Additions ---
+        const p1WinStr = match.dpwDeltas ? `<span style="color:#a6e3a1; font-size:10px; margin-left:5px;" title="Rating gained if they win">(+${match.dpwDeltas.p1Win})</span>` : '';
+        const p2WinStr = match.dpwDeltas ? `<span style="color:#a6e3a1; font-size:10px; margin-left:5px;" title="Rating gained if they win">(+${match.dpwDeltas.p2Win})</span>` : '';
+        
+        let tieDisplay = "Ties:";
+        if (match.dpwDeltas) {
+            const tieSign = match.dpwDeltas.tieRaw > 0 ? '+' : (match.dpwDeltas.tieRaw < 0 ? '-' : '±');
+            tieDisplay = `Tie (Top Plym): <span style="color:${match.dpwDeltas.tieRaw > 0 ? '#a6e3a1' : '#f38ba8'};">${tieSign}${match.dpwDeltas.tieMag}</span>`;
+        }
+
         matchBox.innerHTML = `
             <div style="display:flex; height:100%; align-items:center; position: relative;">
                 <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
                 <div style="overflow:hidden; padding-right:10px; width: 140px;">
-                    <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p1Name}</div>
-                    <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p2Name}</div>
-                    <div style="font-size:10px; color:gray; text-align:right; height: 16px; line-height: 16px;">Ties:</div>
+                    <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p1Name}${p1WinStr}</div>
+                    <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p2Name}${p2WinStr}</div>
+                    <div style="font-size:10px; color:gray; text-align:right; height: 16px; line-height: 16px;">${tieDisplay}</div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:3px;">
                     <input type="number" id="s1-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
