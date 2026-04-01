@@ -1,11 +1,17 @@
 export function openDPWSetupModal(players, rounds, cut, onComplete, existingConfig = null) {
     const overlay = document.createElement('div');
-    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center;";
+    // Change background slightly (0.81) so the global app.js listener ignores it!
+    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.81); z-index:9999; display:flex; justify-content:center; align-items:center;";
 
     const modal = document.createElement('div');
     modal.style.cssText = "background:var(--bg-panel); border:2px solid var(--accent); border-radius:8px; width:700px; max-width:90vw; padding:20px; display:flex; flex-direction:column; max-height:90vh;";
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+
+    // FIX: Safely destroy the modal if user clicks the dark background
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
 
     // State Memory
     const cache = existingConfig?.dpwData || { playerJsons: {}, rawTS: {}, unitSVs: {} };
@@ -17,8 +23,8 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 <h2 style="margin:0; color:var(--accent);">DPW Swiss Setup (1/2)</h2>
                 <button id="dpw-close" style="background:transparent; color:gray; border:none; cursor:pointer; font-weight:bold; font-size:18px;">X</button>
             </div>
-            <p style="font-size:14px; margin-top:0;">Paste the Team JSON for each player, OR manually input their Team Score (TS) to bypass.</p>
-            <div style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:10px; padding-right:10px; margin-bottom:15px;">
+            <p style="font-size:14px; margin-top:0; color:var(--text-main);">Upload/Paste the Team JSON, OR manually input their Team Score (TS).</p>
+            <div style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:10px; padding-right:10px; margin-bottom:15px;" id="dpw-player-list">
         `;
 
         players.forEach(p => {
@@ -27,9 +33,21 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             
             html += `
                 <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:4px; display:flex; gap:10px; align-items:center;">
-                    <strong style="width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.name}</strong>
-                    <textarea id="json-${p.id}" placeholder="Paste JSON here..." style="flex-grow:1; height:40px; resize:none; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px; font-family:monospace; font-size:11px;">${savedJson}</textarea>
-                    <input type="number" id="raw-${p.id}" placeholder="Raw TS" value="${savedRaw}" style="width:70px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
+                    <strong style="width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.name}">${p.name}</strong>
+                    
+                    <div style="display:flex; flex-direction:column; flex-grow:1; gap:5px;">
+                        <textarea id="json-${p.id}" placeholder="Paste JSON here..." style="height:35px; resize:none; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px; font-family:monospace; font-size:11px;">${savedJson}</textarea>
+                        
+                        <div style="display:flex; gap:5px;">
+                            <input type="file" id="file-${p.id}" accept=".json" style="display:none;">
+                            <button class="btn-browse-file" data-id="${p.id}" style="background:#45475a; color:white; border:none; padding:4px 8px; border-radius:3px; font-size:10px; cursor:pointer;">📂 Browse File</button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <label style="font-size:10px; color:gray; margin-bottom:2px;">Raw TS</label>
+                        <input type="number" id="raw-${p.id}" placeholder="Auto" value="${savedRaw}" style="width:60px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
+                    </div>
                 </div>
             `;
         });
@@ -43,11 +61,35 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
 
         document.getElementById('dpw-close').onclick = () => overlay.remove();
 
+        // Handle File Browsing
+        document.getElementById('dpw-player-list').addEventListener('click', (e) => {
+            if (e.target && e.target.classList.contains('btn-browse-file')) {
+                const pId = e.target.getAttribute('data-id');
+                document.getElementById(`file-${pId}`).click();
+            }
+        });
+
+        // Handle File Reading
+        document.getElementById('dpw-player-list').addEventListener('change', (e) => {
+            if (e.target && e.target.type === 'file') {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const pId = e.target.id.replace('file-', '');
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById(`json-${pId}`).value = event.target.result;
+                };
+                reader.readAsText(file);
+                e.target.value = ''; // Reset input
+            }
+        });
+
         document.getElementById('dpw-next').onclick = () => {
             let uniqueUnits = new Set();
-            let parsedPlayerTeams = {}; // playerId -> array of unit base names
+            let parsedPlayerTeams = {}; 
             
-            players.forEach(p => {
+            for (const p of players) {
                 const jsonStr = document.getElementById(`json-${p.id}`).value.trim();
                 const rawStr = document.getElementById(`raw-${p.id}`).value.trim();
                 
@@ -64,7 +106,6 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                         if (Array.isArray(parsed)) {
                             parsed.forEach(item => {
                                 if (item.m && item.m.typ) {
-                                    // Strip trailing numbers via regex!
                                     const baseName = item.m.typ.replace(/\d+$/, '');
                                     teamUnits.push(baseName);
                                     uniqueUnits.add(baseName);
@@ -73,14 +114,14 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                         }
                         parsedPlayerTeams[p.id] = teamUnits;
                     } catch (e) {
-                        alert(`Invalid JSON for player: ${p.name}`);
-                        throw e; // Stop execution
+                        alert(`Invalid JSON for player: ${p.name}. Please check the formatting.`);
+                        return; // Halt execution
                     }
                 } else {
                     delete cache.rawTS[p.id];
                     parsedPlayerTeams[p.id] = [];
                 }
-            });
+            }
 
             renderPage2(Array.from(uniqueUnits).sort(), parsedPlayerTeams);
         };
@@ -94,7 +135,6 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 <button id="dpw-back" style="background:transparent; color:gray; border:none; cursor:pointer; font-weight:bold; font-size:14px;">⬅ Back</button>
             </div>
             
-            <!-- Global Setter -->
             <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
                 <label style="font-size:12px; color:gray;">Set all unset units to:</label>
                 <input type="number" id="global-sv" style="width:80px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
@@ -111,7 +151,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 const val = cache.unitSVs[unit] !== undefined ? cache.unitSVs[unit] : "";
                 html += `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px dashed #45475a; padding-bottom:5px;">
-                        <span style="font-size:14px;">${unit}</span>
+                        <span style="font-size:14px; color:var(--text-main);">${unit}</span>
                         <input type="number" step="0.1" class="sv-input" data-unit="${unit}" value="${val}" style="width:80px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
                     </div>
                 `;
@@ -121,14 +161,13 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         html += `
             </div>
             
-            <!-- Advanced Config -->
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <div style="flex:1;">
-                    <label style="font-size:11px; color:gray;">Target Spread (Default 200)</label>
+                    <label style="font-size:11px; color:gray;" title="Desired rating gap between 1st and last place at the end of the tournament">Target Spread (Default 200)</label>
                     <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid #45475a;">
                 </div>
                 <div style="flex:1;">
-                    <label style="font-size:11px; color:gray;">Beta Weight (Default 0.7)</label>
+                    <label style="font-size:11px; color:gray;" title="0 = Pure Rating, 1 = Pure Team Score">Beta Weight (Default 0.7)</label>
                     <input type="number" step="0.1" id="dpw-beta" value="${existingConfig?.beta || 0.7}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid #45475a;">
                 </div>
             </div>
@@ -149,12 +188,10 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         };
 
         document.getElementById('dpw-save').onclick = () => {
-            // Save SVs
             document.querySelectorAll('.sv-input').forEach(input => {
                 cache.unitSVs[input.getAttribute('data-unit')] = parseFloat(input.value) || 0;
             });
 
-            // Calculate Team Scores (TS)
             let playerTSMap = {};
             players.forEach(p => {
                 if (cache.rawTS[p.id] !== undefined) {
@@ -162,7 +199,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 } else {
                     let total = 0;
                     const team = parsedPlayerTeams[p.id] || [];
-                    team.forEach(unit => total += (cache.unitSVs[unit] || 0)); // Duplicates are correctly counted multiple times
+                    team.forEach(unit => total += (cache.unitSVs[unit] || 0)); 
                     playerTSMap[p.id] = total;
                 }
             });
@@ -186,8 +223,8 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 target_spread: parseFloat(document.getElementById('dpw-spread').value) || 200,
                 beta: parseFloat(document.getElementById('dpw-beta').value) || 0.7,
                 C_TS: computed_C_TS,
-                tiebreakers: ["dpw_rating", "head_to_head", "buchholz"], // Force Rating as primary
-                dpwData: cache // Save memory
+                tiebreakers: ["dpw_rating", "head_to_head", "buchholz"], 
+                dpwData: cache 
             };
 
             overlay.remove();
