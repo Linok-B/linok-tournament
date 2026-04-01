@@ -417,6 +417,20 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
     
 });
 
+
+// Clear All Players Event
+document.getElementById('btn-clear-players').addEventListener('click', () => {
+    if (currentTournament.status !== "setup") {
+        alert("Cannot remove players after the tournament has started!");
+        return;
+    }
+    if (confirm("Are you sure you want to delete ALL players?")) {
+        currentTournament.players = [];
+        saveTournamentLocally(currentTournament);
+        updateUI();
+    }
+});
+
 // --- BLUEPRINT BUILDER EVENT LISTENERS ---
 
 // Add a new stage to the pipeline
