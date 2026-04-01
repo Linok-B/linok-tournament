@@ -221,9 +221,46 @@ export class Tournament {
                     const p1 = this.players.find(p => p.id === match.player1?.id);
                     const p2 = this.players.find(p => p.id === match.player2?.id);
 
+                    // PRE-CALCULATE DPW DELTAS FOR UI (Frozen in Time)
+                    if (stage.config.type === "dpw_swiss" && p1 && p2 && !match.isBye) {
+                        const p1TS = p1.metadata?.dpwTS ?? 0;
+                        const p2TS = p2.metadata?.dpwTS ?? 0;
+                        const C_TS = Math.max(stage.config.C_TS ?? 1, 1);  
+                        const C_R = 400;
+                        const beta = stage.config.beta ?? 0.7;
+                        const roundsCount = stage.config.maxRounds ?? 3;
+                        const target_spread = stage.config.target_spread ?? 200;
+                        
+                        const K_base = stage.config.K_base ?? (target_spread / roundsCount); 
+                        const r_ramp = stage.config.r_ramp ?? Math.max(1, Math.floor(roundsCount / 3));
+                        const K_r = K_base * Math.min(1, match.round / r_ramp);  
+                        
+                        const D = beta * ((p1TS - p2TS) / C_TS) + (1 - beta) * ((p1.stats.dpwRating - p2.stats.dpwRating) / C_R);
+                        const E_A = 1 / (1 + Math.pow(10, -D));
+
+                        const getDelta = (S) => {
+                            const raw = K_r * (S - E_A);
+                            const mag = Math.abs(raw) >= 0.5 ? Math.max(1, Math.round(Math.abs(raw))) : 0;
+                            return { raw, mag };
+                        };
+
+                        const winStats = getDelta(1);
+                        const lossStats = getDelta(0);
+                        const tieStats = getDelta(0.5);
+
+                        match.dpwDeltas = {
+                            p1Win: winStats.mag, 
+                            p2Win: lossStats.mag, 
+                            tieRaw: tieStats.raw, 
+                            tieMag: tieStats.mag
+                        };
+                    }
+
+                    if (!match.winner) return;
+
                     if (match.isBye && p1) {
                         p1.stats.matchWins++; p1.stats.points += ptsForWin;
-                        return; // Byes don't kill anyone nor affect rating in dpw
+                        return; // Byes don't affect rating, only standings points
                     }
 
                     if (p1 && p2) {
@@ -233,7 +270,7 @@ export class Tournament {
                         p1.stats.gameDraws += (match.draws || 0);
                         p2.stats.gameDraws += (match.draws || 0);
 
-                        let loserObj = null; // Track who lost this specific match
+                        let loserObj = null;
 
                         if (match.winner.id === p1.id) {
                             p1.stats.matchWins++; p1.stats.points += ptsForWin; 
@@ -248,57 +285,38 @@ export class Tournament {
                             p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
                         }
 
-                        // --- DPW SWISS RATING MATH ---
-                        if (stage.config.type === "dpw_swiss") {
-                            const p1TS = p1.metadata?.dpwTS ?? 0;
-                            const p2TS = p2.metadata?.dpwTS ?? 0;
-                            
-                            let S = 0.5;
-                            if (match.winner === "tie") S = 0.5;
-                            else if (match.winner?.id === p1.id) S = 1;
-                            else S = 0;
-                            
-                            // Safety: Protects against undefined resulting in NaN
-                            const C_TS = Math.max(stage.config.C_TS ?? 1, 1);  
-                            const C_R = 400;
-                            const beta = stage.config.beta ?? 0.7;
-                            const roundsCount = stage.config.maxRounds ?? 3;
-                            const target_spread = stage.config.target_spread ?? 200;
-                            
-                            const K_base = stage.config.K_base ?? (target_spread / roundsCount); 
-                            const r_ramp = stage.config.r_ramp ?? Math.max(1, Math.floor(roundsCount / 3));
-                            const K_r = K_base * Math.min(1, match.round / r_ramp);  
-                            
-                            const D = beta * ((p1TS - p2TS) / C_TS) + (1 - beta) * ((p1.stats.dpwRating - p2.stats.dpwRating) / C_R);
-                            const E_A = 1 / (1 + Math.pow(10, -D));
-                            
-                            const raw_change = K_r * (S - E_A);
-                            const raw_magnitude = Math.abs(raw_change);
-                            const delta = raw_magnitude >= 0.5 ? Math.max(1, Math.round(raw_magnitude)) : 0;
-                            
-                            if (delta > 0) {
-                                if (raw_change > 0) {
-                                    p1.stats.dpwRating += delta;
-                                    p2.stats.dpwRating -= delta;
-                                } else if (raw_change < 0) {
-                                    p1.stats.dpwRating -= delta;
-                                    p2.stats.dpwRating += delta;
+                        // --- APPLY DPW RATING ---
+                        if (stage.config.type === "dpw_swiss" && match.dpwDeltas) {
+                            let actualRaw = 0;
+                            let actualMag = 0;
+
+                            if (match.winner === "tie") {
+                                actualRaw = match.dpwDeltas.tieRaw;
+                                actualMag = match.dpwDeltas.tieMag;
+                            } else if (match.winner.id === p1.id) {
+                                actualRaw = 1; // P1 won
+                                actualMag = match.dpwDeltas.p1Win;
+                            } else {
+                                actualRaw = -1; // P2 won
+                                actualMag = match.dpwDeltas.p2Win;
+                            }
+
+                            if (actualMag > 0) {
+                                if (actualRaw > 0) {
+                                    p1.stats.dpwRating += actualMag;
+                                    p2.stats.dpwRating -= actualMag;
+                                } else if (actualRaw < 0) {
+                                    p1.stats.dpwRating -= actualMag;
+                                    p2.stats.dpwRating += actualMag;
                                 }
                             }
                         }
 
                         // Iron-clad Elimination check!
-                        // If this stage is single elimination, and someone lost, they are dead forever.
-                        if (stage.config.type === "single_elimination" && loserObj) {
-                            loserObj.isEliminated = true;
-                        }
-                        
-                        // Double Elimination Death Logic
                         if (loserObj) {
                             if (stage.config.type === "single_elimination") {
-                                loserObj.isEliminated = true; // Instantly dead in Single Elim
+                                loserObj.isEliminated = true;
                             } else if (stage.config.type === "double_elimination") {
-                                // In Double Elim, you only die if you lose in the Loser's Bracket or Grand Finals
                                 if (match.bracket === "losers" || match.bracket === "grand_finals") {
                                     loserObj.isEliminated = true; 
                                 }
