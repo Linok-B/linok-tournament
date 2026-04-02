@@ -194,7 +194,7 @@ body.streamer-mode #bracket-viewport {
     /* Tells the browser this element's children won't affect the rest of the page */
     contain: layout style; 
     /* Pre-allocates GPU memory for panning and zooming */
-    will-change: transform; 
+    /* will-change: transform; */
 }
 
 #bracket-lines {
