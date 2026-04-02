@@ -692,7 +692,7 @@ export function renderStandings(tournament, containerId) {
         html += `
             <tr style="border-bottom: 1px solid #45475a;">
                 <td style="padding: 10px;"><b>${currentDisplayRank}</b></td>
-                <td style="padding: 10px;">${player.name}</td>
+                <td style="padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${player.name}">${player.name}</td>
                 <td style="padding: 10px; font-weight: bold; color: var(--accent);">${displayPoints}</td>
                 <td style="padding: 10px;">${player.stats.matchWins}-${player.stats.matchLosses}-${player.stats.matchDraws}</td>
                 <td style="padding: 10px;">${player.stats.gameWins}-${player.stats.gameLosses}-${player.stats.gameDraws}</td>
