@@ -160,6 +160,7 @@ body.streamer-mode #bracket-viewport {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    content-visibility: auto; /* testing */
 }
 
 
