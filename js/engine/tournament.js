@@ -144,6 +144,8 @@ export class Tournament {
             status: "active"
         });
 
+        this.recalculateAllStats();
+
         // Trigger save and update
         import('../store/localData.js').then(({ saveTournamentLocally }) => {
             saveTournamentLocally(this);
