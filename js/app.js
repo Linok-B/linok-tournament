@@ -28,6 +28,7 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     document.getElementById('setting-third-place').checked = currentTournament.settings.playThirdPlaceMatch || false;
     document.getElementById('setting-full-bracket').checked = currentTournament.settings.showFullBracket || false;
     document.getElementById('setting-hide-byes').checked = currentTournament.settings.hideByes || false;
+    document.getElementById('setting-show-seeds').checked = currentTournament.settings.showSeeds || false;
     
     settingsModal.style.display = 'flex';
 });
@@ -46,6 +47,7 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
     currentTournament.settings.playThirdPlaceMatch = document.getElementById('setting-third-place').checked;
     currentTournament.settings.showFullBracket = document.getElementById('setting-full-bracket').checked;
     currentTournament.settings.hideByes = document.getElementById('setting-hide-byes').checked;
+    currentTournament.settings.showSeeds = document.getElementById('setting-show-seeds').checked;
     
     if (currentTournament.status !== "setup") {
         currentTournament.recalculateAllStats(); 
