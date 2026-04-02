@@ -541,9 +541,14 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                 </div>
             </div>`;
     } else if (isActiveStage) {
-        // --- DPW Visual Additions ---
-        const p1WinStr = match.dpwDeltas ? `<span style="color:#a6e3a1; font-size:10px; margin-left:5px;" title="Rating gained if they win">(+${match.dpwDeltas.p1Win})</span>` : '';
-        const p2WinStr = match.dpwDeltas ? `<span style="color:#a6e3a1; font-size:10px; margin-left:5px;" title="Rating gained if they win">(+${match.dpwDeltas.p2Win})</span>` : '';
+        
+        // 1. Get Seeds (if toggle is on)
+        const p1Seed = tournament.settings.showSeeds ? `<span style="color:gray; font-size:10px;">[${match.player1?.seed || '-'}]</span> ` : '';
+        const p2Seed = tournament.settings.showSeeds ? `<span style="color:gray; font-size:10px;">[${match.player2?.seed || '-'}]</span> ` : '';
+
+        // 2. Get DPW Deltas
+        const p1WinStr = match.dpwDeltas ? `<span style="position:absolute; right:0; top:0; color:#a6e3a1; font-size:10px;" title="Rating gained if they win">(+${match.dpwDeltas.p1Win})</span>` : '';
+        const p2WinStr = match.dpwDeltas ? `<span style="position:absolute; right:0; top:0; color:#a6e3a1; font-size:10px;" title="Rating gained if they win">(+${match.dpwDeltas.p2Win})</span>` : '';
         
         let tieDisplay = "Ties:";
         if (match.dpwDeltas) {
@@ -554,11 +559,19 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
         matchBox.innerHTML = `
             <div style="display:flex; height:100%; align-items:center; position: relative;">
                 <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
+                
                 <div style="overflow:hidden; padding-right:10px; width: 140px;">
-                    <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p1Name}${p1WinStr}</div>
-                    <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px; height: 20px; line-height: 20px;">${p2Name}${p2WinStr}</div>
+                    <div title="${p1Name}" style="position:relative; padding-right:35px; margin-bottom:5px; height: 20px; line-height: 20px;">
+                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">${p1Seed}${p1Name}</div>
+                        ${p1WinStr}
+                    </div>
+                    <div title="${p2Name}" style="position:relative; padding-right:35px; margin-bottom:5px; height: 20px; line-height: 20px;">
+                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">${p2Seed}${p2Name}</div>
+                        ${p2WinStr}
+                    </div>
                     <div style="font-size:10px; color:gray; text-align:right; height: 16px; line-height: 16px;">${tieDisplay}</div>
                 </div>
+
                 <div style="display:flex; flex-direction:column; gap:3px;">
                     <input type="number" id="s1-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
                     <input type="number" id="s2-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
