@@ -189,6 +189,8 @@ export class Tournament {
 
             activeStage.data = formatEngine.advanceStage(activeStage.data, combinedConfig, this.players);
 
+            this.recalculateAllStats();
+
             if (activeStage.data.isComplete) {
                 activeStage.status = "completed";
                 if (this.stages.length >= this.settings.pipeline.length) {
