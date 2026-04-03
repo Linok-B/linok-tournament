@@ -601,15 +601,15 @@ export function applyPanAndZoom(viewport, board) {
 
     function setTransform() {
         board.style.transform = `translate(${window.bracketCamera.x}px, ${window.bracketCamera.y}px) scale(${window.bracketCamera.scale})`;
-        
-        // --- HYBRID RENDERING TRICK ---
+        /*
+        // --- HYBRID RENDERING TRICK (deprecated)---
         // If zoomed in (> 1.0), remove the GPU lock so text renders as crisp vectors.
         // If zoomed out (<= 1.0), apply the GPU lock so massive brackets don't lag when panning.
         if (window.bracketCamera.scale > 1.0) {
             board.style.willChange = 'auto'; 
         } else {
             board.style.willChange = 'transform';
-        }
+        } */
     }
 
     // Instantly apply the saved camera position on load!
