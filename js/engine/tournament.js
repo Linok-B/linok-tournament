@@ -220,7 +220,6 @@ export class Tournament {
         this.stages.forEach(stage => {
             stage.data.rounds.forEach(round => {
                 round.forEach(match => {
-                    if (!match.winner) return;
 
                     const p1 = this.players.find(p => p.id === match.player1?.id);
                     const p2 = this.players.find(p => p.id === match.player2?.id);
