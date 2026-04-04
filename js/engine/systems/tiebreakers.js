@@ -36,17 +36,30 @@ export function calculateTiebreakers(players, stagesConfig) {
     });
 
     // 3. Return the Sorting Waterfall
+    // 3. Return the Sorting Waterfall
     return function sortPlayers(a, b, tiebreakerArray) {
-        // Fallback for missing settings
-        const activeTiebreakers = tiebreakerArray || ["game_differential", "head_to_head", "buchholz", "seed"];
-
-        // 0. Primary Sort: Match Points
-        const ptsA = a.stats?.points ?? 0;
-        const ptsB = b.stats?.points ?? 0;
-        if (ptsB !== ptsA) return ptsB - ptsA;
-
+        
+        let activeRules = [...(tiebreakerArray || [])];
+        
+        // Failsafe: If an old save file loads and doesn't have points or dpw_rating, inject points!
+        if (!activeRules.includes("points") && !activeRules.includes("dpw_rating")) {
+            activeRules.unshift("points");
+        }
+        
         // 1. Loop through the custom tiebreaker waterfall
-        for (let rule of activeTiebreakers) {
+        for (let rule of activeRules) {
+            
+            if (rule === "points") {
+                const ptsA = a.stats?.points ?? 0;
+                const ptsB = b.stats?.points ?? 0;
+                if (ptsB !== ptsA) return ptsB - ptsA;
+            }
+
+            if (rule === "dpw_rating") {
+                const aRat = a.stats?.dpwRating ?? 1000;
+                const bRat = b.stats?.dpwRating ?? 1000;
+                if (bRat !== aRat) return bRat - aRat;
+            }
             
             if (rule === "game_differential") {
                 const aDiff = (a.stats?.gameWins ?? 0) - (a.stats?.gameLosses ?? 0);
@@ -54,7 +67,7 @@ export function calculateTiebreakers(players, stagesConfig) {
                 if (bDiff !== aDiff) return bDiff - aDiff;
             }
             
-            if (rule === "median_buchholz") {
+            if (rule === "median_buchholz") { 
                 const aMed = a.stats?.median_buchholz ?? 0;
                 const bMed = b.stats?.median_buchholz ?? 0;
                 if (bMed !== aMed) return bMed - aMed;
@@ -96,12 +109,6 @@ export function calculateTiebreakers(players, stagesConfig) {
                 const aSeed = a.seed ?? 999;
                 const bSeed = b.seed ?? 999;
                 if (aSeed !== bSeed) return aSeed - bSeed;
-            }
-            
-            if (rule === "dpw_rating") {
-                const aRat = a.stats?.dpwRating ?? 1000;
-                const bRat = b.stats?.dpwRating ?? 1000;
-                if (bRat !== aRat) return bRat - aRat;
             }
         } 
 
