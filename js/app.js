@@ -457,7 +457,7 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
     const type = document.getElementById('blueprint-type').value;
     const rounds = parseInt(document.getElementById('blueprint-rounds').value);
     const cut = parseInt(document.getElementById('blueprint-cut').value);
-    const tbProfile = document.getElementById('blueprint-tiebreakers').value;
+    // (Removed tbProfile because the dropdown doesn't exist anymore)
     
     // DPW SWISS INTERCEPT
     if (type === "dpw_swiss") {
@@ -466,6 +466,7 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
             return;
         }
         
+        // Pass the custom tiebreakers into the setup modal via the 5th parameter (existingConfig)!
         openDPWSetupModal(currentTournament.players, rounds, cut, (dpwConfig, playerTSMap) => {
             currentTournament.players.forEach(p => {
                 if (!p.metadata) p.metadata = {};
@@ -476,15 +477,15 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
             document.getElementById('blueprint-cut').value = '';
             saveTournamentLocally(currentTournament);
             updateUI();
-        });
+        }, { tiebreakers: [...pendingTiebreakers] }); 
+        
         return; // Halt normal execution
     }
 
-    let tbArray = ["game_differential", "head_to_head", "seed"]; 
-    if (tbProfile === "chess") tbArray = ["median_buchholz", "buchholz", "head_to_head", "seed"];
-    if (tbProfile === "elo") tbArray = ["elo", "head_to_head", "seed"];
-
-    const newStage = { type: type, tiebreakers: tbArray };
+    // --- Standard Formats ---
+    // Inject the active tiebreakers configured in the builder (cloned so they don't mutate later)
+    const newStage = { type: type, tiebreakers: [...pendingTiebreakers] };
+    
     if (!isNaN(rounds) && rounds > 0) newStage.maxRounds = rounds;
     if (!isNaN(cut) && cut > 0) newStage.cutToTop = cut;
     
