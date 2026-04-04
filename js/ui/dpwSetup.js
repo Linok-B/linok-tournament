@@ -223,7 +223,10 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 target_spread: parseFloat(document.getElementById('dpw-spread').value) || 200,
                 beta: parseFloat(document.getElementById('dpw-beta').value) || 0.7,
                 C_TS: computed_C_TS,
-                tiebreakers: ["dpw_rating", "head_to_head", "buchholz"], 
+                
+                // USE THE CUSTOM TIEBREAKERS PASSED IN (Fallback to standard DPW if missing)
+                tiebreakers: existingConfig?.tiebreakers || ["dpw_rating", "head_to_head", "buchholz"], 
+                
                 dpwData: cache 
             };
 
