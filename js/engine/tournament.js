@@ -209,7 +209,7 @@ export class Tournament {
         // Reset everyone to zero AND revive everyone
         this.players.forEach(p => {
             p.isEliminated = false; 
-            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, gameDraws: 0, points: 0, dpwRating: 1000 };
+            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, gameDraws: 0, points: 0, dpwRating: 1000, eliminationScore: 9999 };
         });
 
         const ptsForWin = this.settings.pointsForWin !== undefined ? this.settings.pointsForWin : 3;
@@ -316,13 +316,34 @@ export class Tournament {
                         }
 
                         // Iron-clad Elimination check!
+                        // --- FGC PLACEMENT & ELIMINATION CHECK ---
                         if (loserObj) {
+                            let isTrueElimination = false;
+
                             if (stage.config.type === "single_elimination") {
-                                loserObj.isEliminated = true;
+                                if (!match.isThirdPlaceMatch) isTrueElimination = true;
                             } else if (stage.config.type === "double_elimination") {
-                                if (match.bracket === "losers" || match.bracket === "grand_finals") {
-                                    loserObj.isEliminated = true; 
+                                if (match.bracket === "losers") isTrueElimination = true;
+                                if (match.bracket === "grand_finals") {
+                                    // In GF1, if the Winners Champ loses, they just drop to GF2. Not eliminated yet!
+                                    if (!match.bracketReset && loserObj.id === match.player1?.id) {
+                                        isTrueElimination = false;
+                                    } else {
+                                        isTrueElimination = true;
+                                    }
                                 }
+                            }
+
+                            if (isTrueElimination) {
+                                loserObj.isEliminated = true;
+                                loserObj.stats.eliminationScore = match.round;
+                            }
+
+                            // Explicit placement logic for 3rd Place Match
+                            // (Loser gets Round - 0.9, Winner gets Round - 0.5, perfectly putting them between Semis and GF)
+                            if (stage.config.type === "single_elimination" && match.isThirdPlaceMatch) {
+                                loserObj.stats.eliminationScore = match.round - 0.9; 
+                                match.winner.stats.eliminationScore = match.round - 0.5;
                             }
                         }
                     }
