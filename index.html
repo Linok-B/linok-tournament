@@ -54,11 +54,7 @@
                         </div>
                     </div>
                     <label style="font-size: 11px; color: gray;">Tiebreaker Profile</label>
-                    <select id="blueprint-tiebreakers" style="width: 100%; margin-bottom: 10px; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
-                        <option value="standard">Standard (Diff -> H2H -> Seed)</option>
-                        <option value="chess">Chess (Median -> Buchholz -> H2H)</option>
-                        <option value="elo">Ranked (ELO -> H2H -> Seed)</option>
-                    </select>
+                    <button id="btn-open-tb-builder" style="width: 100%; margin-bottom: 10px; padding: 8px; background: #45475a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">⚖️ Configure Tiebreakers</button>
                     <button id="btn-add-stage" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold;">+ Add Stage</button>
                 </div>
             </div>
@@ -185,6 +181,38 @@
             </div>
             
             <button id="btn-save-settings" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">Save Settings</button>
+        </div>
+    </div>
+
+    <!-- TIEBREAKER BUILDER MODAL -->
+    <div id="tiebreaker-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; width: 400px; border: 2px solid var(--accent);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #45475a; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; color: var(--accent);">⚖️ Tiebreaker Builder</h2>
+                <button id="btn-close-tb-builder" style="background: transparent; border: none; color: gray; font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
+            </div>
+            
+            <p style="font-size: 12px; color: gray; margin-top: 0;">Rules evaluate from top to bottom. If players remain tied after all rules, they will share a rank.</p>
+            
+            <div id="tb-active-list" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; min-height: 100px;">
+                <!-- Filled by JS -->
+            </div>
+
+            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <select id="tb-add-select" style="flex-grow: 1; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                    <option value="points">Match Points</option>
+                    <option value="dpw_rating">DPW Rating</option>
+                    <option value="game_differential">Game W-L Differential</option>
+                    <option value="head_to_head">Head-to-Head</option>
+                    <option value="buchholz">Buchholz (Schedule Strength)</option>
+                    <option value="median_buchholz">Median Buchholz</option>
+                    <option value="elo">Starting ELO / Rating</option>
+                    <option value="seed">Registration Seed</option>
+                </select>
+                <button id="btn-tb-add" style="background: #a6e3a1; color: #1e1e2e; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold;">+ Add</button>
+            </div>
+
+            <button id="btn-save-tb" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">Save Tiebreakers</button>
         </div>
     </div>
 
