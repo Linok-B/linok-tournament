@@ -33,6 +33,23 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     settingsModal.style.display = 'flex';
 });
 
+// --- TIEBREAKER BUILDER LOGIC ---
+const TB_NAMES = {
+    "points": "Match Points", "dpw_rating": "DPW Rating", "game_differential": "Game W-L Differential",
+    "head_to_head": "Head-to-Head", "buchholz": "Buchholz", "median_buchholz": "Median Buchholz",
+    "elo": "Starting ELO", "seed": "Registration Seed"
+};
+
+const TB_DEFAULTS = {
+    "single_elimination": ["seed"],
+    "double_elimination": ["seed"],
+    "round_robin": ["points", "game_differential", "head_to_head", "seed"],
+    "swiss": ["points", "buchholz", "game_differential", "head_to_head", "seed"],
+    "dpw_swiss": ["dpw_rating", "head_to_head", "buchholz", "seed"]
+};
+
+let pendingTiebreakers = [...TB_DEFAULTS["single_elimination"]]; // Init state
+
 document.getElementById('btn-close-settings').addEventListener('click', () => {
     settingsModal.style.display = 'none';
 });
@@ -507,6 +524,73 @@ document.getElementById('setup-blueprint-group').addEventListener('click', (e) =
     }
 });
 
+// BLUEPRINTS
+document.getElementById('blueprint-type').addEventListener('change', (e) => {
+    const format = e.target.value;
+    pendingTiebreakers = [...(TB_DEFAULTS[format] || ["points"])];
+    // Update button text to notify user
+    document.getElementById('btn-open-tb-builder').innerText = `⚖️ Tiebreakers: ${pendingTiebreakers.length} Rules`;
+});
+
+const tbModal = document.getElementById('tiebreaker-modal');
+
+function renderTBList() {
+    const list = document.getElementById('tb-active-list');
+    list.innerHTML = '';
+    const isDPW = document.getElementById('blueprint-type').value === "dpw_swiss";
+
+    pendingTiebreakers.forEach((rule, index) => {
+        const isLocked = isDPW && rule === "dpw_rating"; // DPW Rating is mandatory for DPW Swiss!
+
+        list.innerHTML += `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:5px 10px; border:1px solid #45475a; border-radius:4px;">
+                <span style="font-size:13px; color:${isLocked ? '#f9e2af' : 'white'}"><b>${index + 1}.</b> ${TB_NAMES[rule] || rule} ${isLocked ? '(Locked)' : ''}</span>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-tb-up" data-index="${index}" ${index === 0 || isLocked || (index===1 && pendingTiebreakers[0]==="dpw_rating" && isDPW) ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↑</button>
+                    <button class="btn-tb-down" data-index="${index}" ${index === pendingTiebreakers.length - 1 || isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↓</button>
+                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed; color:gray;"' : 'style="color:var(--danger); cursor:pointer;"'}>X</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+document.getElementById('btn-open-tb-builder').addEventListener('click', () => {
+    renderTBList();
+    tbModal.style.display = 'flex';
+});
+
+document.getElementById('btn-close-tb-builder').addEventListener('click', () => tbModal.style.display = 'none');
+document.getElementById('btn-save-tb').addEventListener('click', () => {
+    document.getElementById('btn-open-tb-builder').innerText = `⚖️ Tiebreakers: ${pendingTiebreakers.length} Rules`;
+    tbModal.style.display = 'none';
+});
+
+// Adding a rule
+document.getElementById('btn-tb-add').addEventListener('click', () => {
+    const rule = document.getElementById('tb-add-select').value;
+    if (pendingTiebreakers.includes(rule)) {
+        alert("Rule already active!");
+        return;
+    }
+    pendingTiebreakers.push(rule);
+    renderTBList();
+});
+
+// Moving / Removing rules
+document.getElementById('tb-active-list').addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') return;
+    const index = parseInt(e.target.getAttribute('data-index'));
+    
+    if (e.target.classList.contains('btn-tb-remove')) {
+        pendingTiebreakers.splice(index, 1);
+    } else if (e.target.classList.contains('btn-tb-up')) {
+        [pendingTiebreakers[index - 1], pendingTiebreakers[index]] = [pendingTiebreakers[index], pendingTiebreakers[index - 1]];
+    } else if (e.target.classList.contains('btn-tb-down')) {
+        [pendingTiebreakers[index + 1], pendingTiebreakers[index]] = [pendingTiebreakers[index], pendingTiebreakers[index + 1]];
+    }
+    renderTBList();
+});
 
 // hamburgur :tongue:
 // Sidebar Toggle
