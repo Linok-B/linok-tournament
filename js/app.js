@@ -41,8 +41,8 @@ const TB_NAMES = {
 };
 
 const TB_DEFAULTS = {
-    "single_elimination": ["seed"],
-    "double_elimination": ["seed"],
+    "single_elimination": ["points", "seed"],
+    "double_elimination": ["points", "seed"],
     "round_robin": ["points", "game_differential", "head_to_head", "seed"],
     "swiss": ["points", "buchholz", "game_differential", "head_to_head", "seed"],
     "dpw_swiss": ["dpw_rating", "head_to_head", "buchholz", "seed"]
