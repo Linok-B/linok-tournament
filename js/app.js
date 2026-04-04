@@ -35,14 +35,15 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
 
 // --- TIEBREAKER BUILDER LOGIC ---
 const TB_NAMES = {
+    "placement": "Tournament Placement",
     "points": "Match Points", "dpw_rating": "DPW Rating", "game_differential": "Game W-L Differential",
     "head_to_head": "Head-to-Head", "buchholz": "Buchholz", "median_buchholz": "Median Buchholz",
     "elo": "Starting ELO", "seed": "Registration Seed"
 };
 
 const TB_DEFAULTS = {
-    "single_elimination": ["points", "seed"],
-    "double_elimination": ["points", "seed"],
+    "single_elimination": ["placement", "seed"],
+    "double_elimination": ["placement", "seed"],
     "round_robin": ["points", "game_differential", "head_to_head", "seed"],
     "swiss": ["points", "buchholz", "game_differential", "head_to_head", "seed"],
     "dpw_swiss": ["dpw_rating", "head_to_head", "buchholz", "seed"]
