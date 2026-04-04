@@ -55,6 +55,13 @@ export function calculateTiebreakers(players, stagesConfig) {
                 if (ptsB !== ptsA) return ptsB - ptsA;
             }
 
+            if (rule === "placement") {
+                const aPlc = a.stats?.eliminationScore ?? 0;
+                const bPlc = b.stats?.eliminationScore ?? 0;
+                // Higher score is better (9999 = 1st Place, 5 = 5th Round Elim, 2 = 2nd Round Elim)
+                if (bPlc !== aPlc) return bPlc - aPlc; 
+            }
+
             if (rule === "dpw_rating") {
                 const aRat = a.stats?.dpwRating ?? 1000;
                 const bRat = b.stats?.dpwRating ?? 1000;
