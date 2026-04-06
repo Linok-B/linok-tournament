@@ -491,21 +491,16 @@ function drawBracketMath(stage, isActiveStage, tournament) {
 function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournament) {
     const matchBox = document.createElement('div');
     
-    // HIDDEN BOXES
+    // HIDDEN BOXES (Phantoms and Hidden Byes)
     if ((match.winner && match.winner.isPhantom) || (tournament.settings.hideByes && !match.isSimulated && !match.isGhost && match.isBye)) {
         matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; visibility:hidden;`;
         return matchBox;
     }
 
-    // GENERATE SEEDS FOR ALL STATES
-    const seedStyle = "display:inline-block; width:22px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:gray; font-size:10px; vertical-align:bottom;";
-    const p1Seed = tournament.settings.showSeeds ? `<span style="${seedStyle}" title="Seed: ${match.player1?.seed || '-'}">[${match.player1?.seed || '-'}]</span> ` : '';
-    const p2Seed = tournament.settings.showSeeds ? `<span style="${seedStyle}" title="Seed: ${match.player2?.seed || '-'}">[${match.player2?.seed || '-'}]</span> ` : '';
-
     matchBox.className = 'match-box';
     matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; padding:8px; box-sizing:border-box;`;
     
-    // GHOSTS
+    // GHOSTS (Simulated Previews)
     if (match.isSimulated || match.isGhost) {
         matchBox.style.opacity = "0.3";
         matchBox.style.border = "1px dashed #45475a";
@@ -513,94 +508,123 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
         return matchBox;
     }
 
+    // Border Color Logic
     let borderColor = match.winner ? '#a6e3a1' : (!isActiveStage ? '#f38ba8' : '#45475a'); 
     matchBox.style.borderLeft = `4px solid ${borderColor}`; 
 
-    const p1Name = match.player1 ? match.player1.name : "TBD";
-    const p2Name = match.player2 ? match.player2.name : "TBD";
-    let p1Disp = (match.winner?.id === match.player1?.id || match.winner === "tie") ? `<strong>${p1Name}</strong>` : p1Name;
-    let p2Disp = (match.winner?.id === match.player2?.id || match.winner === "tie") ? `<strong>${p2Name}</strong>` : p2Name;
+    const p1 = match.player1;
+    const p2 = match.player2;
+    const p1Name = p1 ? p1.name : "TBD";
+    const p2Name = p2 ? p2.name : "TBD";
+    
+    // Highlight winner text in green
+    const p1Color = (match.winner?.id === p1?.id) ? '#a6e3a1' : 'var(--text-main)';
+    const p2Color = (match.winner?.id === p2?.id) ? '#a6e3a1' : 'var(--text-main)';
 
+    // Bracket Tags [W], [L], [GF]
     let bracketLabel = "";
-    let statusText = match.isThirdPlaceMatch ? '3rd' : (match.isBye ? 'Auto' : (match.winner ? 'Done' : ''));
     if (match.bracket === "winners") bracketLabel = `<span style="color:#a6e3a1;">[W]</span>`;
     if (match.bracket === "losers") bracketLabel = `<span style="color:#f38ba8;">[L]</span>`;
     if (match.bracket === "grand_finals") bracketLabel = `<span style="color:#f9e2af;">${match.bracketReset ? '[RESET]' : '[GF]'}</span>`;
 
-    if (match.winner || match.isBye) {
-        matchBox.innerHTML = `
-            <div style="display:flex; height:100%; align-items:center; position: relative;">
-                <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
-                <div style="flex-grow:1; overflow:hidden; width: 140px;">
-                    <div title="${p1Name}" style="${match.winner?.id === match.player1?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">
-                        ${p1Seed}${p1Disp}
-                    </div>
-                    <div title="${p2Name}" style="${match.winner?.id === match.player2?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                        ${p2Seed}${p2Disp}
-                    </div>
-                </div>
-                <div style="min-width: 30px; text-align:right; font-weight:bold; margin-right: 10px;">
-                    <div style="margin-bottom:5px;">${match.score1}</div>
-                    <div>${match.score2}</div>
-                    ${match.draws ? `<div style="font-size:10px; color:gray; margin-top:2px;">${match.draws} Ties</div>` : ''}
-                </div>
-                <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
-                    <small style="color:gray; font-size:10px; margin-bottom:5px;">${statusText}</small>
-                    ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" style="padding:4px 8px; font-size:10px; background:#f9e2af; color:#1e1e2e; border:none; border-radius:3px; cursor:pointer;">Edit</button>` : ''}
-                </div>
-            </div>`;
-    } else if (isActiveStage) {
-        
-        // 1. Get Seeds (if toggle is on)
-        const p1Seed = tournament.settings.showSeeds ? `<span style="color:gray; font-size:10px;">[${match.player1?.seed || '-'}]</span> ` : '';
-        const p2Seed = tournament.settings.showSeeds ? `<span style="color:gray; font-size:10px;">[${match.player2?.seed || '-'}]</span> ` : '';
+    // Seed Generation
+    const showSeeds = tournament.settings.showSeeds;
+    const p1SeedStr = showSeeds ? `<span style="width:24px; flex-shrink:0; color:gray; font-size:10px; text-align:left;" title="Seed: ${p1?.originalSeed || p1?.seed || '-'}">[${p1?.originalSeed || p1?.seed || '-'}]</span>` : '';
+    const p2SeedStr = showSeeds ? `<span style="width:24px; flex-shrink:0; color:gray; font-size:10px; text-align:left;" title="Seed: ${p2?.originalSeed || p2?.seed || '-'}">[${p2?.originalSeed || p2?.seed || '-'}]</span>` : '';
 
-        // 2. Get DPW Deltas
-        const p1WinStr = match.dpwDeltas ? `<span style="position:absolute; right:0; top:0; color:#a6e3a1; font-size:10px;" title="Rating gained if they win">(+${match.dpwDeltas.p1Win})</span>` : '';
-        const p2WinStr = match.dpwDeltas ? `<span style="position:absolute; right:0; top:0; color:#a6e3a1; font-size:10px;" title="Rating gained if they win">(+${match.dpwDeltas.p2Win})</span>` : '';
-        
-        let tieDisplay = "Ties:";
-        if (match.dpwDeltas) {
-            const tieSign = match.dpwDeltas.tieRaw > 0 ? '+' : (match.dpwDeltas.tieRaw < 0 ? '-' : '±');
-            tieDisplay = `Tie (Top Plym): <span style="color:${match.dpwDeltas.tieRaw > 0 ? '#a6e3a1' : '#f38ba8'};">${tieSign}${match.dpwDeltas.tieMag}</span>`;
-        }
-
-        matchBox.innerHTML = `
-            <div style="display:flex; height:100%; align-items:center; position: relative;">
-                <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
-                
-                <div style="overflow:hidden; padding-right:10px; width: 140px;">
-                    <div title="${p1Name}" style="position:relative; padding-right:35px; margin-bottom:5px; height: 20px; line-height: 20px;">
-                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
-                            ${p1Seed}${p1Name}
-                        </div>
-                        ${p1WinStr}
-                    </div>
-                    <div title="${p2Name}" style="position:relative; padding-right:35px; margin-bottom:5px; height: 20px; line-height: 20px;">
-                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
-                            ${p2Seed}${p2Name}
-                        </div>
-                        ${p2WinStr}
-                    </div>
-                    <div style="font-size:10px; color:gray; text-align:right; height: 16px; line-height: 16px;">${tieDisplay}</div>
-                </div>
-
-                <div style="display:flex; flex-direction:column; gap:3px;">
-                    <input type="number" id="s1-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score1}">
-                    <input type="number" id="s2-${match.id}" style="width:45px; height:20px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a;" value="${match.score2}">
-                    <input type="number" id="d-${match.id}" style="width:45px; height:16px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a;" value="${match.draws || 0}">
-                </div>
-                <button class="btn-report" data-matchid="${match.id}" style="margin-left:10px; height:48px; width:40px; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px; font-weight:bold;">✓</button>
-            </div>`;
-    } else {
-        matchBox.innerHTML = `
-            <div style="position:absolute; top:5px; right: 5px;">${bracketLabel}</div>
-            <div style="display:flex; flex-direction:column; justify-content:center; height:100%;">
-                <div title="${p1Name}">${p1Name}</div>
-                <div title="${p2Name}">${p2Name}</div>
-                <small style="color:gray; margin-top:5px;">Pending</small>
-            </div>`;
+    // DPW Delta Generation
+    const p1WinStr = match.dpwDeltas ? `<span style="color:#a6e3a1; font-size:10px; margin-left:4px; flex-shrink:0;" title="Rating gained if they win">(+${match.dpwDeltas.p1Win})</span>` : '';
+    const p2WinStr = match.dpwDeltas ? `<span style="color:#a6e3a1; font-size:10px; margin-left:4px; flex-shrink:0;" title="Rating gained if they win">(+${match.dpwDeltas.p2Win})</span>` : '';
+    
+    let tieDisplay = isActiveStage ? "Ties:" : "";
+    if (match.dpwDeltas) {
+        const tieSign = match.dpwDeltas.tieRaw > 0 ? '+' : (match.dpwDeltas.tieRaw < 0 ? '-' : '±');
+        tieDisplay = `Tie: <span style="color:${match.dpwDeltas.tieRaw > 0 ? '#a6e3a1' : '#f38ba8'};">${tieSign}${match.dpwDeltas.tieMag}</span>`;
     }
+
+    // SVG Icons
+    const iconSubmit = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    const iconEdit = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+
+    // --- RENDER LOGIC ---
+    if (match.winner || match.isBye) {
+        // COMPLETED STATE
+        let statusText = match.isThirdPlaceMatch ? '3rd Place' : (match.isBye ? 'Auto-Bye' : 'Completed');
+        
+        matchBox.innerHTML = `
+            <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
+            <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; height:100%; padding-right: 40px; position:relative;">
+                
+                <!-- Player 1 Row -->
+                <div style="display:flex; align-items:center; height:20px; width:100%;">
+                    ${p1SeedStr}
+                    <div title="${p1Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:${p1Color}; font-weight:${match.winner?.id === p1?.id ? 'bold' : 'normal'};">${p1Name}</div>
+                    <div style="width:20px; text-align:right; font-weight:bold; flex-shrink:0;">${match.score1}</div>
+                </div>
+
+                <!-- Player 2 Row -->
+                <div style="display:flex; align-items:center; height:20px; width:100%;">
+                    ${p2SeedStr}
+                    <div title="${p2Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:${p2Color}; font-weight:${match.winner?.id === p2?.id ? 'bold' : 'normal'};">${p2Name}</div>
+                    <div style="width:20px; text-align:right; font-weight:bold; flex-shrink:0;">${match.score2}</div>
+                </div>
+
+                <!-- Info Row -->
+                <div style="display:flex; justify-content:space-between; align-items:center; height:14px; font-size:10px; color:gray;">
+                    <span>${statusText}</span>
+                    <span>${match.draws ? `${match.draws} Ties` : ''}</span>
+                </div>
+
+                <!-- Edit Button (Square, Fixed Right) -->
+                ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" title="Edit Match" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:32px; height:32px; display:flex; justify-content:center; align-items:center; background:#f9e2af; color:#1e1e2e; border:none; border-radius:4px; cursor:pointer;">${iconEdit}</button>` : ''}
+            </div>
+        `;
+
+    } else if (isActiveStage) {
+        // ACTIVE STATE
+        matchBox.innerHTML = `
+            <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
+            <div style="display:flex; flex-direction:column; justify-content:center; gap:3px; height:100%; padding-right: 40px; position:relative;">
+                
+                <!-- Player 1 Row -->
+                <div style="display:flex; align-items:center; height:22px; width:100%;">
+                    ${p1SeedStr}
+                    <div title="${p1Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1Name}</div>
+                    ${p1WinStr}
+                    <input type="number" id="s1-${match.id}" style="width:40px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a; margin-left:6px; flex-shrink:0;" value="${match.score1}">
+                </div>
+
+                <!-- Player 2 Row -->
+                <div style="display:flex; align-items:center; height:22px; width:100%;">
+                    ${p2SeedStr}
+                    <div title="${p2Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Name}</div>
+                    ${p2WinStr}
+                    <input type="number" id="s2-${match.id}" style="width:40px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a; margin-left:6px; flex-shrink:0;" value="${match.score2}">
+                </div>
+
+                <!-- Info/Draws Row -->
+                <div style="display:flex; justify-content:space-between; align-items:center; height:18px;">
+                    <span style="font-size:10px; color:gray;">${tieDisplay}</span>
+                    <input type="number" id="d-${match.id}" title="Ties/Draws" style="width:40px; height:18px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a; flex-shrink:0;" value="${match.draws || 0}">
+                </div>
+
+                <!-- Submit Button (Square, Fixed Right) -->
+                <button class="btn-report" data-matchid="${match.id}" title="Submit Score" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:32px; height:32px; display:flex; justify-content:center; align-items:center; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px;">${iconSubmit}</button>
+            </div>
+        `;
+        
+    } else {
+        // FUTURE STATE (Pending)
+        matchBox.innerHTML = `
+            <div style="position:absolute; top:5px; right: 5px; font-size:10px;">${bracketLabel}</div>
+            <div style="display:flex; flex-direction:column; justify-content:center; gap:5px; height:100%;">
+                <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1SeedStr}${p1Name}</div>
+                <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2SeedStr}${p2Name}</div>
+                <small style="color:gray;">Pending</small>
+            </div>
+        `;
+    }
+    
     return matchBox;
 }
 
