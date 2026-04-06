@@ -2,8 +2,12 @@
     --bg-dark: #1e1e2e;
     --bg-panel: #2a2a3e;
     --text-main: #cdd6f4;
+    --text-muted: #a6adc8;   /* Replaces 'gray' */
     --accent: #89b4fa;
-    --danger: #f38ba8;
+    --danger: #f38ba8;       /* Losers bracket, errors */
+    --success: #a6e3a1;      /* Winners bracket, checkmarks */
+    --warning: #f9e2af;      /* GF Reset, Edit buttons, Ties */
+    --border-main: #45475a;  /* All the box borders */
 }
 
 body, html {
