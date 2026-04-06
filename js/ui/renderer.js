@@ -497,6 +497,11 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
         return matchBox;
     }
 
+    // GENERATE SEEDS FOR ALL STATES
+    const seedStyle = "display:inline-block; width:22px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:gray; font-size:10px; vertical-align:bottom;";
+    const p1Seed = tournament.settings.showSeeds ? `<span style="${seedStyle}" title="Seed: ${match.player1?.seed || '-'}">[${match.player1?.seed || '-'}]</span> ` : '';
+    const p2Seed = tournament.settings.showSeeds ? `<span style="${seedStyle}" title="Seed: ${match.player2?.seed || '-'}">[${match.player2?.seed || '-'}]</span> ` : '';
+
     matchBox.className = 'match-box';
     matchBox.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${width}px; height:${height}px; padding:8px; box-sizing:border-box;`;
     
@@ -527,8 +532,12 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
             <div style="display:flex; height:100%; align-items:center; position: relative;">
                 <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
                 <div style="flex-grow:1; overflow:hidden; width: 140px;">
-                    <div title="${p1Name}" style="${match.winner?.id === match.player1?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">${p1Disp}</div>
-                    <div title="${p2Name}" style="${match.winner?.id === match.player2?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Disp}</div>
+                    <div title="${p1Name}" style="${match.winner?.id === match.player1?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:5px;">
+                        ${p1Seed}${p1Disp}
+                    </div>
+                    <div title="${p2Name}" style="${match.winner?.id === match.player2?.id ? 'color:#a6e3a1;' : ''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        ${p2Seed}${p2Disp}
+                    </div>
                 </div>
                 <div style="min-width: 30px; text-align:right; font-weight:bold; margin-right: 10px;">
                     <div style="margin-bottom:5px;">${match.score1}</div>
@@ -562,11 +571,15 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                 
                 <div style="overflow:hidden; padding-right:10px; width: 140px;">
                     <div title="${p1Name}" style="position:relative; padding-right:35px; margin-bottom:5px; height: 20px; line-height: 20px;">
-                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">${p1Seed}${p1Name}</div>
+                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
+                            ${p1Seed}${p1Name}
+                        </div>
                         ${p1WinStr}
                     </div>
                     <div title="${p2Name}" style="position:relative; padding-right:35px; margin-bottom:5px; height: 20px; line-height: 20px;">
-                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">${p2Seed}${p2Name}</div>
+                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
+                            ${p2Seed}${p2Name}
+                        </div>
                         ${p2WinStr}
                     </div>
                     <div style="font-size:10px; color:gray; text-align:right; height: 16px; line-height: 16px;">${tieDisplay}</div>
