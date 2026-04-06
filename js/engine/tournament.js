@@ -38,6 +38,7 @@ export class Tournament {
             name: name, 
             elo: parseInt(startingElo) || 1200, 
             seed: this.players.length + 1, 
+            originalSeed: this.players.length + 1,
             
             // FUTURE PROOFING: A place to inject JSON team data, unit weights, or custom flags later
             metadata: {
