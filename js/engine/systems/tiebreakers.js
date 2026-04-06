@@ -68,7 +68,6 @@ export function calculateTiebreakers(players, stagesConfig) {
             if (rule === "placement") {
                 const aPlc = a.stats?.eliminationScore ?? 0;
                 const bPlc = b.stats?.eliminationScore ?? 0;
-                // Higher score is better (9999 = 1st Place, 5 = 5th Round Elim, 2 = 2nd Round Elim)
                 if (bPlc !== aPlc) return bPlc - aPlc; 
             }
 
@@ -123,8 +122,8 @@ export function calculateTiebreakers(players, stagesConfig) {
             }
             
             if (rule === "seed") {
-                const aSeed = a.seed ?? 999;
-                const bSeed = b.seed ?? 999;
+                const aSeed = a.originalSeed ?? a.seed ?? 999999;
+                const bSeed = b.originalSeed ?? b.seed ?? 999999;
                 if (aSeed !== bSeed) return aSeed - bSeed;
             }
         } 
