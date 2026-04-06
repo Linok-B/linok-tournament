@@ -543,30 +543,30 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
     }
 
     // SVG Icons
-    const iconSubmit = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-    const iconEdit = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-
+    const iconSubmit = `<svg style="pointer-events: none;" viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    const iconEdit = `<svg style="pointer-events: none;" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+    
     // --- RENDER LOGIC ---
     if (match.winner || match.isBye) {
         // COMPLETED STATE
         let statusText = match.isThirdPlaceMatch ? '3rd Place' : (match.isBye ? 'Auto-Bye' : 'Completed');
         
         matchBox.innerHTML = `
-            <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
-            <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; height:100%; padding-right: 40px; position:relative;">
+            <small style="position: absolute; top: 2px; right: 4px; font-size: 10px;">${bracketLabel}</small>
+            <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; height:100%; padding-right: 42px; position:relative;">
                 
                 <!-- Player 1 Row -->
                 <div style="display:flex; align-items:center; height:20px; width:100%;">
                     ${p1SeedStr}
                     <div title="${p1Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:${p1Color}; font-weight:${match.winner?.id === p1?.id ? 'bold' : 'normal'};">${p1Name}</div>
-                    <div style="width:20px; text-align:right; font-weight:bold; flex-shrink:0;">${match.score1}</div>
+                    <div style="width:25px; text-align:right; font-weight:bold; flex-shrink:0;">${match.score1}</div>
                 </div>
 
                 <!-- Player 2 Row -->
                 <div style="display:flex; align-items:center; height:20px; width:100%;">
                     ${p2SeedStr}
                     <div title="${p2Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:${p2Color}; font-weight:${match.winner?.id === p2?.id ? 'bold' : 'normal'};">${p2Name}</div>
-                    <div style="width:20px; text-align:right; font-weight:bold; flex-shrink:0;">${match.score2}</div>
+                    <div style="width:25px; text-align:right; font-weight:bold; flex-shrink:0;">${match.score2}</div>
                 </div>
 
                 <!-- Info Row -->
@@ -575,23 +575,23 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                     <span>${match.draws ? `${match.draws} Ties` : ''}</span>
                 </div>
 
-                <!-- Edit Button (Square, Fixed Right) -->
-                ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" title="Edit Match" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:32px; height:32px; display:flex; justify-content:center; align-items:center; background:#f9e2af; color:#1e1e2e; border:none; border-radius:4px; cursor:pointer;">${iconEdit}</button>` : ''}
+                <!-- Edit Button -->
+                ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" title="Edit Match" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:36px; height:36px; display:flex; justify-content:center; align-items:center; background:#f9e2af; color:#1e1e2e; border:none; border-radius:4px; cursor:pointer;">${iconEdit}</button>` : ''}
             </div>
         `;
 
     } else if (isActiveStage) {
         // ACTIVE STATE
         matchBox.innerHTML = `
-            <small style="position: absolute; top: -5px; right: 0; font-size: 10px;">${bracketLabel}</small>
-            <div style="display:flex; flex-direction:column; justify-content:center; gap:3px; height:100%; padding-right: 40px; position:relative;">
+            <small style="position: absolute; top: 2px; right: 4px; font-size: 10px;">${bracketLabel}</small>
+            <div style="display:flex; flex-direction:column; justify-content:center; gap:3px; height:100%; padding-right: 42px; position:relative;">
                 
                 <!-- Player 1 Row -->
                 <div style="display:flex; align-items:center; height:22px; width:100%;">
                     ${p1SeedStr}
                     <div title="${p1Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1Name}</div>
                     ${p1WinStr}
-                    <input type="number" id="s1-${match.id}" style="width:40px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a; margin-left:6px; flex-shrink:0;" value="${match.score1}">
+                    <input type="number" id="s1-${match.id}" style="width:50px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a; margin-left:6px; flex-shrink:0;" value="${match.score1}">
                 </div>
 
                 <!-- Player 2 Row -->
@@ -599,17 +599,17 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                     ${p2SeedStr}
                     <div title="${p2Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Name}</div>
                     ${p2WinStr}
-                    <input type="number" id="s2-${match.id}" style="width:40px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a; margin-left:6px; flex-shrink:0;" value="${match.score2}">
+                    <input type="number" id="s2-${match.id}" style="width:50px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a; margin-left:6px; flex-shrink:0;" value="${match.score2}">
                 </div>
 
                 <!-- Info/Draws Row -->
                 <div style="display:flex; justify-content:space-between; align-items:center; height:18px;">
                     <span style="font-size:10px; color:gray;">${tieDisplay}</span>
-                    <input type="number" id="d-${match.id}" title="Ties/Draws" style="width:40px; height:18px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a; flex-shrink:0;" value="${match.draws || 0}">
+                    <input type="number" id="d-${match.id}" title="Ties/Draws" style="width:50px; height:18px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a; flex-shrink:0;" value="${match.draws || 0}">
                 </div>
 
-                <!-- Submit Button (Square, Fixed Right) -->
-                <button class="btn-report" data-matchid="${match.id}" title="Submit Score" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:32px; height:32px; display:flex; justify-content:center; align-items:center; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px;">${iconSubmit}</button>
+                <!-- Submit Button -->
+                <button class="btn-report" data-matchid="${match.id}" title="Submit Score" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:36px; height:36px; display:flex; justify-content:center; align-items:center; cursor:pointer; background:var(--accent); color:var(--bg-dark); border:none; border-radius:4px;">${iconSubmit}</button>
             </div>
         `;
         
