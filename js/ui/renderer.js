@@ -29,7 +29,7 @@ export function renderPlayerList(players, containerId) {
         card.style.width = '100%'; 
         
         card.innerHTML = `
-            <div class="drag-handle" style="color: #89b4fa; font-size: 16px; font-weight: bold; cursor: grab; padding: 5px; flex-shrink: 0;">⋮⋮</div>
+            <div class="drag-handle" style="color: var(--accent); font-size: 16px; font-weight: bold; cursor: grab; padding: 5px; flex-shrink: 0;">⋮⋮</div>
             
             <!-- This container GROWS to fill all available space! -->
             <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0;">
@@ -199,7 +199,7 @@ export function renderBracket(tournament, containerId) {
         </div>
         
         <!-- THE NEW VIEWPORT (With the Eye Button inside!) -->
-        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: #1e1e2e; border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
+        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: var(--bg-dark); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
             
             <button id="btn-streamer-mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-main); padding: 5px 10px; border-radius: 4px; cursor: pointer;">👁️ Stream Mode</button>
             
@@ -576,7 +576,7 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                 </div>
 
                 <!-- Edit Button -->
-                ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" title="Edit Match" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:36px; height:36px; display:flex; justify-content:center; align-items:center; background:var(--warning); color:#1e1e2e; border:none; border-radius:4px; cursor:pointer;">${iconEdit}</button>` : ''}
+                ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" title="Edit Match" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:36px; height:36px; display:flex; justify-content:center; align-items:center; background:var(--warning); color:var(--bg-dark); border:none; border-radius:4px; cursor:pointer;">${iconEdit}</button>` : ''}
             </div>
         `;
 
