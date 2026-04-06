@@ -35,9 +35,9 @@ export function renderPlayerList(players, containerId) {
             <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0;">
                 <strong title="${player.name}" style="color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     <!-- ONLY THE NUMBER GOES IN THIS SPAN! -->
-                    <span class="seed-number" style="color: gray; margin-right: 5px;">${player.seed}</span>. ${player.name}
+                    <span class="seed-number" style="color: var(--text-muted); margin-right: 5px;">${player.seed}</span>. ${player.name}
                 </strong>
-                <span style="font-size: 12px; color: gray; flex-shrink: 0;">(ELO: ${player.elo})</span>
+                <span style="font-size: 12px; color: var(--text-muted); flex-shrink: 0;">(ELO: ${player.elo})</span>
             </div>
             
             <button class="btn-remove-player" data-id="${player.id}" style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; flex-shrink: 0;">X</button>
@@ -184,7 +184,7 @@ export function renderBracket(tournament, containerId) {
     const stageToRender = tournament.stages[viewIndex];
     const isActiveStage = (viewIndex === tournament.stages.length - 1 && tournament.status !== "completed");
     
-    let tabsHtml = `<div class="stage-tabs-container" style="display:flex; gap:10px; margin-bottom: 20px; border-bottom: 2px solid #45475a; padding-bottom: 10px;">`;
+    let tabsHtml = `<div class="stage-tabs-container" style="display:flex; gap:10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-main); padding-bottom: 10px;">`;
     tournament.stages.forEach((stage, index) => {
         const isSelected = index === viewIndex;
         tabsHtml += `<button class="btn-stage-tab" data-index="${index}" style="background: ${isSelected ? 'var(--accent)' : 'transparent'}; color: ${isSelected ? 'var(--bg-dark)' : 'var(--text-main)'}; border: 1px solid var(--accent); padding: 5px 15px; cursor: pointer; font-weight: bold;">Stage ${index + 1}: ${stage.config.type.replace('_', ' ').toUpperCase()}</button>`;
@@ -194,14 +194,14 @@ export function renderBracket(tournament, containerId) {
     let html = `
         ${tabsHtml}
         <div class="stage-header-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}</h2>
+            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: var(--text-muted); font-size: 14px;">(Completed)</span>' : ''}</h2>
             ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">⏹ Force End Stage Early</button>` : ''}
         </div>
         
         <!-- THE NEW VIEWPORT (With the Eye Button inside!) -->
-        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: #1e1e2e; border: 2px solid #45475a; border-radius: 8px; position: relative; cursor: grab;">
+        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: #1e1e2e; border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
             
-            <button id="btn-streamer-mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 1px solid #45475a; padding: 5px 10px; border-radius: 4px; cursor: pointer;">👁️ Stream Mode</button>
+            <button id="btn-streamer-mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-main); padding: 5px 10px; border-radius: 4px; cursor: pointer;">👁️ Stream Mode</button>
             
             <!-- We will draw the boxes and lines inside this board -->
             <div id="bracket-board" style="position: absolute; top: 0; left: 0; transform-origin: 0 0;">
@@ -455,11 +455,11 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         const cy = childData.centerY;
         
         const dash = (parentData.isSimOrGhost || childData.isSimOrGhost) ? 'stroke-dasharray="5,5"' : '';
-        let color = "#45475a"; 
+        let color = "var(--border-main)"; 
         
-        if (childData.match.bracketReset) color = "#f9e2af"; 
-        else if (childData.match.bracket === "grand_finals" && parentData.match.bracket === "winners") color = "#a6e3a1"; 
-        else if (childData.match.bracket === "grand_finals" && parentData.match.bracket === "losers") color = "#f38ba8"; 
+        if (childData.match.bracketReset) color = "var(--warning)"; 
+        else if (childData.match.bracket === "grand_finals" && parentData.match.bracket === "winners") color = "var(--success)"; 
+        else if (childData.match.bracket === "grand_finals" && parentData.match.bracket === "losers") color = "var(--danger)"; 
 
         if (py === cy) {
             svgPaths.push(`<path d="M ${px} ${py} L ${cx} ${cy}" stroke="${color}" stroke-width="2" fill="none" ${dash} />`);
@@ -474,7 +474,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         const cx = childData.leftX;
         const cy = childData.centerY;
         const dash = childData.isSimOrGhost ? 'stroke-dasharray="5,5"' : '';
-        svgPaths.push(`<path d="M ${cx - (gapX/2)} ${cy - 80} L ${cx - (gapX/2)} ${cy} L ${cx} ${cy}" stroke="#f38ba8" stroke-width="2" fill="none" ${dash} />`);
+        svgPaths.push(`<path d="M ${cx - (gapX/2)} ${cy - 80} L ${cx - (gapX/2)} ${cy} L ${cx} ${cy}" stroke="var(--danger)" stroke-width="2" fill="none" ${dash} />`);
     }
 
     svgLayer.innerHTML = svgPaths.join('');
@@ -503,13 +503,13 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
     // GHOSTS (Simulated Previews)
     if (match.isSimulated || match.isGhost) {
         matchBox.style.opacity = "0.3";
-        matchBox.style.border = "1px dashed #45475a";
-        matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%; color:gray; font-style:italic;"><div>TBD</div><div style="margin-top:10px;">TBD</div></div>`;
+        matchBox.style.border = "1px dashed var(--border-main)";
+        matchBox.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; height:100%; color:var(--text-muted); font-style:italic;"><div>TBD</div><div style="margin-top:10px;">TBD</div></div>`;
         return matchBox;
     }
 
     // Border Color Logic
-    let borderColor = match.winner ? '#a6e3a1' : (!isActiveStage ? '#f38ba8' : '#45475a'); 
+    let borderColor = match.winner ? 'var(--success)' : (!isActiveStage ? 'var(--danger)' : 'var(--border-main)'); 
     matchBox.style.borderLeft = `4px solid ${borderColor}`; 
 
     const p1 = match.player1;
@@ -518,28 +518,28 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
     const p2Name = p2 ? p2.name : "TBD";
     
     // Highlight winner text in green
-    const p1Color = (match.winner?.id === p1?.id) ? '#a6e3a1' : 'var(--text-main)';
-    const p2Color = (match.winner?.id === p2?.id) ? '#a6e3a1' : 'var(--text-main)';
+    const p1Color = (match.winner?.id === p1?.id) ? 'var(--success)' : 'var(--text-main)';
+    const p2Color = (match.winner?.id === p2?.id) ? 'var(--success)' : 'var(--text-main)';
 
     // Bracket Tags [W], [L], [GF]
     let bracketLabel = "";
-    if (match.bracket === "winners") bracketLabel = `<span style="color:#a6e3a1;">[W]</span>`;
-    if (match.bracket === "losers") bracketLabel = `<span style="color:#f38ba8;">[L]</span>`;
-    if (match.bracket === "grand_finals") bracketLabel = `<span style="color:#f9e2af;">${match.bracketReset ? '[RESET]' : '[GF]'}</span>`;
+    if (match.bracket === "winners") bracketLabel = `<span style="color:var(--success);">[W]</span>`;
+    if (match.bracket === "losers") bracketLabel = `<span style="color:var(--danger);">[L]</span>`;
+    if (match.bracket === "grand_finals") bracketLabel = `<span style="color:var(--warning);">${match.bracketReset ? '[RESET]' : '[GF]'}</span>`;
 
     // Seed Generation
     const showSeeds = tournament.settings.showSeeds;
-    const p1SeedStr = showSeeds ? `<span style="width:24px; flex-shrink:0; color:gray; font-size:10px; text-align:left;" title="Seed: ${p1?.originalSeed || p1?.seed || '-'}">[${p1?.originalSeed || p1?.seed || '-'}]</span>` : '';
-    const p2SeedStr = showSeeds ? `<span style="width:24px; flex-shrink:0; color:gray; font-size:10px; text-align:left;" title="Seed: ${p2?.originalSeed || p2?.seed || '-'}">[${p2?.originalSeed || p2?.seed || '-'}]</span>` : '';
+    const p1SeedStr = showSeeds ? `<span style="width:24px; flex-shrink:0; color:var(--text-muted); font-size:10px; text-align:left;" title="Seed: ${p1?.originalSeed || p1?.seed || '-'}">[${p1?.originalSeed || p1?.seed || '-'}]</span>` : '';
+    const p2SeedStr = showSeeds ? `<span style="width:24px; flex-shrink:0; color:var(--text-muted); font-size:10px; text-align:left;" title="Seed: ${p2?.originalSeed || p2?.seed || '-'}">[${p2?.originalSeed || p2?.seed || '-'}]</span>` : '';
 
     // DPW Delta Generation
-    const p1WinStr = match.dpwDeltas ? `<span style="color:#a6e3a1; font-size:10px; margin-left:4px; flex-shrink:0;" title="Rating gained if they win">(+${match.dpwDeltas.p1Win})</span>` : '';
-    const p2WinStr = match.dpwDeltas ? `<span style="color:#a6e3a1; font-size:10px; margin-left:4px; flex-shrink:0;" title="Rating gained if they win">(+${match.dpwDeltas.p2Win})</span>` : '';
+    const p1WinStr = match.dpwDeltas ? `<span style="color:var(--success); font-size:10px; margin-left:4px; flex-shrink:0;" title="Rating gained if they win">(+${match.dpwDeltas.p1Win})</span>` : '';
+    const p2WinStr = match.dpwDeltas ? `<span style="color:var(--success); font-size:10px; margin-left:4px; flex-shrink:0;" title="Rating gained if they win">(+${match.dpwDeltas.p2Win})</span>` : '';
     
     let tieDisplay = isActiveStage ? "Ties:" : "";
     if (match.dpwDeltas) {
         const tieSign = match.dpwDeltas.tieRaw > 0 ? '+' : (match.dpwDeltas.tieRaw < 0 ? '-' : '±');
-        tieDisplay = `Tie: <span style="color:${match.dpwDeltas.tieRaw > 0 ? '#a6e3a1' : '#f38ba8'};">${tieSign}${match.dpwDeltas.tieMag}</span>`;
+        tieDisplay = `Tie: <span style="color:${match.dpwDeltas.tieRaw > 0 ? 'var(--success)' : 'var(--danger)'};">${tieSign}${match.dpwDeltas.tieMag}</span>`;
     }
 
     // SVG Icons
@@ -570,13 +570,13 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                 </div>
 
                 <!-- Info Row -->
-                <div style="display:flex; justify-content:space-between; align-items:center; height:14px; font-size:10px; color:gray;">
+                <div style="display:flex; justify-content:space-between; align-items:center; height:14px; font-size:10px; color:var(--text-muted);">
                     <span>${statusText}</span>
                     <span>${match.draws ? `${match.draws} Ties` : ''}</span>
                 </div>
 
                 <!-- Edit Button -->
-                ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" title="Edit Match" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:36px; height:36px; display:flex; justify-content:center; align-items:center; background:#f9e2af; color:#1e1e2e; border:none; border-radius:4px; cursor:pointer;">${iconEdit}</button>` : ''}
+                ${!match.isBye ? `<button class="btn-edit-match" data-matchid="${match.id}" title="Edit Match" style="position:absolute; right:0; top:50%; transform:translateY(-50%); width:36px; height:36px; display:flex; justify-content:center; align-items:center; background:var(--warning); color:#1e1e2e; border:none; border-radius:4px; cursor:pointer;">${iconEdit}</button>` : ''}
             </div>
         `;
 
@@ -591,7 +591,7 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                     ${p1SeedStr}
                     <div title="${p1Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1Name}</div>
                     ${p1WinStr}
-                    <input type="number" id="s1-${match.id}" style="width:50px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a; margin-left:6px; flex-shrink:0;" value="${match.score1}">
+                    <input type="number" id="s1-${match.id}" style="width:50px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid var(--border-main); margin-left:6px; flex-shrink:0;" value="${match.score1}">
                 </div>
 
                 <!-- Player 2 Row -->
@@ -599,13 +599,13 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                     ${p2SeedStr}
                     <div title="${p2Name}" style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2Name}</div>
                     ${p2WinStr}
-                    <input type="number" id="s2-${match.id}" style="width:50px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid #45475a; margin-left:6px; flex-shrink:0;" value="${match.score2}">
+                    <input type="number" id="s2-${match.id}" style="width:50px; height:22px; box-sizing:border-box; background:var(--bg-dark); color:white; border:1px solid var(--border-main); margin-left:6px; flex-shrink:0;" value="${match.score2}">
                 </div>
 
                 <!-- Info/Draws Row -->
                 <div style="display:flex; justify-content:space-between; align-items:center; height:18px;">
-                    <span style="font-size:10px; color:gray;">${tieDisplay}</span>
-                    <input type="number" id="d-${match.id}" title="Ties/Draws" style="width:50px; height:18px; box-sizing:border-box; background:var(--bg-dark); color:gray; font-size:10px; border:1px solid #45475a; flex-shrink:0;" value="${match.draws || 0}">
+                    <span style="font-size:10px; color:var(--text-muted);">${tieDisplay}</span>
+                    <input type="number" id="d-${match.id}" title="Ties/Draws" style="width:50px; height:18px; box-sizing:border-box; background:var(--bg-dark); color:var(--text-muted); font-size:10px; border:1px solid var(--border-main); flex-shrink:0;" value="${match.draws || 0}">
                 </div>
 
                 <!-- Submit Button -->
@@ -620,7 +620,7 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
             <div style="display:flex; flex-direction:column; justify-content:center; gap:5px; height:100%;">
                 <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1SeedStr}${p1Name}</div>
                 <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2SeedStr}${p2Name}</div>
-                <small style="color:gray;">Pending</small>
+                <small style="color:var(--text-muted);">Pending</small>
             </div>
         `;
     }
@@ -719,7 +719,7 @@ export function renderStandings(tournament, containerId) {
     const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, stageTiebreakers));
 
     let html = `
-        <h2 style="margin-top: 40px; border-top: 1px solid #45475a; padding-top: 20px;">Current Standings</h2>
+        <h2 style="margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;">Current Standings</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
             <thead>
                 <tr style="border-bottom: 2px solid var(--accent);">
@@ -749,7 +749,7 @@ export function renderStandings(tournament, containerId) {
         const displayPoints = isDPW ? (player.stats.dpwRating ?? 1000) : player.stats.points;
 
         html += `
-            <tr style="border-bottom: 1px solid #45475a;">
+            <tr style="border-bottom: 1px solid var(--border-main);">
                 <td style="padding: 10px;"><b>${currentDisplayRank}</b></td>
                 <td style="padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${player.name}">${player.name}</td>
                 <td style="padding: 10px; font-weight: bold; color: var(--accent);">${displayPoints}</td>
