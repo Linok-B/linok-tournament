@@ -21,7 +21,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         let html = `
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:var(--accent);">DPW Swiss Setup (1/2)</h2>
-                <button id="dpw-close" style="background:transparent; color:gray; border:none; cursor:pointer; font-weight:bold; font-size:18px;">X</button>
+                <button id="dpw-close" style="background:transparent; color:var(--text-muted); border:none; cursor:pointer; font-weight:bold; font-size:18px;">X</button>
             </div>
             <p style="font-size:14px; margin-top:0; color:var(--text-main);">Upload/Paste the Team JSON, OR manually input their Team Score (TS).</p>
             <div style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:10px; padding-right:10px; margin-bottom:15px;" id="dpw-player-list">
@@ -45,7 +45,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                     </div>
 
                     <div style="display:flex; flex-direction:column; align-items:center;">
-                        <label style="font-size:10px; color:gray; margin-bottom:2px;">Raw TS</label>
+                        <label style="font-size:10px; color:var(--text-muted); margin-bottom:2px;">Raw TS</label>
                         <input type="number" id="raw-${p.id}" placeholder="Auto" value="${savedRaw}" style="width:60px; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px;">
                     </div>
                 </div>
@@ -132,11 +132,11 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         let html = `
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:var(--accent);">Assign Unit Strength Values</h2>
-                <button id="dpw-back" style="background:transparent; color:gray; border:none; cursor:pointer; font-weight:bold; font-size:14px;">⬅ Back</button>
+                <button id="dpw-back" style="background:transparent; color:var(--text-muted); border:none; cursor:pointer; font-weight:bold; font-size:14px;">⬅ Back</button>
             </div>
             
             <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
-                <label style="font-size:12px; color:gray;">Set all unset units to:</label>
+                <label style="font-size:12px; color:var(--text-muted);">Set all unset units to:</label>
                 <input type="number" id="global-sv" style="width:80px; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px;">
                 <button id="btn-apply-global" style="background:var(--success); color:#1e1e2e; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
             </div>
@@ -145,7 +145,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         `;
 
         if (uniqueUnits.length === 0) {
-            html += `<p style="text-align:center; color:gray;">No units detected. Using Raw TS values.</p>`;
+            html += `<p style="text-align:center; color:var(--text-muted);">No units detected. Using Raw TS values.</p>`;
         } else {
             uniqueUnits.forEach(unit => {
                 const val = cache.unitSVs[unit] !== undefined ? cache.unitSVs[unit] : "";
@@ -163,11 +163,11 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <div style="flex:1;">
-                    <label style="font-size:11px; color:gray;" title="Desired rating gap between 1st and last place at the end of the tournament">Target Spread (Default 200)</label>
+                    <label style="font-size:11px; color:var(--text-muted);" title="Desired rating gap between 1st and last place at the end of the tournament">Target Spread (Default 200)</label>
                     <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--border-main);">
                 </div>
                 <div style="flex:1;">
-                    <label style="font-size:11px; color:gray;" title="0 = Pure Rating, 1 = Pure Team Score">Beta Weight (Default 0.7)</label>
+                    <label style="font-size:11px; color:var(--text-muted);" title="0 = Pure Rating, 1 = Pure Team Score">Beta Weight (Default 0.7)</label>
                     <input type="number" step="0.1" id="dpw-beta" value="${existingConfig?.beta || 0.7}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--border-main);">
                 </div>
             </div>
