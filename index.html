@@ -33,8 +33,8 @@
                 <div id="blueprint-list" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;"></div>
                 
                 <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
-                    <label style="font-size: 11px; color: gray;">Format</label>
-                    <select id="blueprint-type" style="width: 100%; margin-bottom: 5px; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                    <label style="font-size: 11px; color: var(--text-muted);;">Format</label>
+                    <select id="blueprint-type" style="width: 100%; margin-bottom: 5px; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
                         <option value="single_elimination">Single Elimination</option>
                         <option value="round_robin">Round Robin</option>
                         <option value="swiss">Swiss System</option>
@@ -45,16 +45,16 @@
                     
                     <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                         <div style="flex: 1;" title="Max rounds to play (for Swiss/Round Robin)">
-                            <label style="font-size: 11px; color: gray;">Rounds (Opt)</label>
+                            <label style="font-size: 11px; color: var(--text-muted);;">Rounds (Opt)</label>
                             <input type="number" id="blueprint-rounds" placeholder="All" style="width: 100%; box-sizing: border-box; padding: 5px;">
                         </div>
                         <div style="flex: 1;" title="Only advance top N players from the Leaderboard">
-                            <label style="font-size: 11px; color: gray;">Top Cut (Opt)</label>
+                            <label style="font-size: 11px; color: var(--text-muted);;">Top Cut (Opt)</label>
                             <input type="number" id="blueprint-cut" placeholder="All" style="width: 100%; box-sizing: border-box; padding: 5px;">
                         </div>
                     </div>
-                    <label style="font-size: 11px; color: gray;">Tiebreaker Profile</label>
-                    <button id="btn-open-tb-builder" style="width: 100%; margin-bottom: 10px; padding: 8px; background: #45475a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">⚖️ Configure Tiebreakers</button>
+                    <label style="font-size: 11px; color: var(--text-muted);;">Tiebreaker Profile</label>
+                    <button id="btn-open-tb-builder" style="width: 100%; margin-bottom: 10px; padding: 8px; background: var(--border-main); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">⚖️ Configure Tiebreakers</button>
                     <button id="btn-add-stage" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold;">+ Add Stage</button>
                 </div>
             </div>
@@ -69,9 +69,9 @@
             <!-- Export / Import Group -->
             <div class="control-group">
                 <h3>Data Management</h3>
-                <button id="btn-export-data" style="background-color: #a6e3a1; color: #1e1e2e;">💾 Export to File</button>
+                <button id="btn-export-data" style="background-color: var(--success); color: #1e1e2e;">💾 Export to File</button>
                 <input type="file" id="file-import" accept=".json" style="display: none;">
-                <button id="btn-import-data" style="background-color: #f9e2af; color: #1e1e2e;">📂 Import from File</button>
+                <button id="btn-import-data" style="background-color: var(--warning); color: #1e1e2e;">📂 Import from File</button>
             </div>
         </aside>
 
@@ -97,8 +97,8 @@
             <p id="warning-modal-text">Editing this match will permanently delete all rounds and stages that happened after it.</p>
             <p>It is highly recommended to Export a backup before continuing.</p>
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
-                <button id="modal-btn-cancel" style="background: #45475a; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancel</button>
-                <button id="modal-btn-export" style="background: #a6e3a1; color: #1e1e2e; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💾 Backup Data</button>
+                <button id="modal-btn-cancel" style="background: var(--border-main); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <button id="modal-btn-export" style="background: var(--success); color: #1e1e2e; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💾 Backup Data</button>
                 <button id="modal-btn-confirm" style="background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Delete & Edit</button>
             </div>
         </div>
@@ -115,11 +115,11 @@
                     <strong>Rollback Round</strong><br><small>Delete ALL matches in this current round. Only use previous rounds for standings.</small>
                 </button>
                 
-                <button id="modal-btn-end-tie" style="background: #f9e2af; color: #1e1e2e; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
+                <button id="modal-btn-end-tie" style="background: var(--warning); color: #1e1e2e; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
                     <strong>Force Ties (TCG Rules)</strong><br><small>Keep submitted scores. Force all unfinished matches to be a 0-0 Tie.</small>
                 </button>
                 
-                <button id="modal-btn-end-cancel" style="background: #45475a; color: white; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
+                <button id="modal-btn-end-cancel" style="background: var(--border-main); color: white; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
                     Cancel
                 </button>
             </div>
@@ -129,29 +129,29 @@
     <!-- TOURNAMENT SETTINGS MODAL -->
     <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
         <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; width: 400px; border: 2px solid var(--accent);">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #45475a; padding-bottom: 10px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px; margin-bottom: 20px;">
                 <h2 style="margin: 0; color: var(--accent);">⚙️ Global Settings</h2>
-                <button id="btn-close-settings" style="background: transparent; border: none; color: gray; font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
+                <button id="btn-close-settings" style="background: transparent; border: none; color: var(--text-muted);; font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
             </div>
             
             <!-- Global Info -->
-            <label style="font-size: 12px; color: gray;">Tournament Name</label>
-            <input type="text" id="setting-name" placeholder="My Custom Tournament" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 15px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+            <label style="font-size: 12px; color: var(--text-muted);;">Tournament Name</label>
+            <input type="text" id="setting-name" placeholder="My Custom Tournament" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 15px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
             
             <!-- Leaderboard Points -->
             <h4 style="margin: 0 0 5px 0; color: var(--text-main);">Leaderboard Points</h4>
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <div style="flex: 1;">
-                    <label style="font-size: 11px; color: gray;">Win</label>
-                    <input type="number" id="setting-pts-win" value="3" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                    <label style="font-size: 11px; color: var(--text-muted);;">Win</label>
+                    <input type="number" id="setting-pts-win" value="3" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
                 </div>
                 <div style="flex: 1;">
-                    <label style="font-size: 11px; color: gray;">Draw</label>
-                    <input type="number" id="setting-pts-draw" value="1" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                    <label style="font-size: 11px; color: var(--text-muted);;">Draw</label>
+                    <input type="number" id="setting-pts-draw" value="1" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
                 </div>
                 <div style="flex: 1;">
-                    <label style="font-size: 11px; color: gray;">Loss</label>
-                    <input type="number" id="setting-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                    <label style="font-size: 11px; color: var(--text-muted);;">Loss</label>
+                    <input type="number" id="setting-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
                 </div>
             </div>
 
@@ -187,19 +187,19 @@
     <!-- TIEBREAKER BUILDER MODAL -->
     <div id="tiebreaker-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
         <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; width: 400px; border: 2px solid var(--accent);">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #45475a; padding-bottom: 10px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px; margin-bottom: 15px;">
                 <h2 style="margin: 0; color: var(--accent);">⚖️ Tiebreaker Builder</h2>
-                <button id="btn-close-tb-builder" style="background: transparent; border: none; color: gray; font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
+                <button id="btn-close-tb-builder" style="background: transparent; border: none; color: var(--text-muted);; font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
             </div>
             
-            <p style="font-size: 12px; color: gray; margin-top: 0;">Rules evaluate from top to bottom. If players remain tied after all rules, they will share a rank.</p>
+            <p style="font-size: 12px; color: var(--text-muted);; margin-top: 0;">Rules evaluate from top to bottom. If players remain tied after all rules, they will share a rank.</p>
             
             <div id="tb-active-list" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; min-height: 100px;">
                 <!-- Filled by JS -->
             </div>
 
             <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-                <select id="tb-add-select" style="flex-grow: 1; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid #45475a;">
+                <select id="tb-add-select" style="flex-grow: 1; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
                     <option value="placement">Tournament Placement (Elimination)</option>
                     <option value="points">Match Points</option>
                     <option value="dpw_rating">DPW Rating</option>
@@ -210,7 +210,7 @@
                     <option value="elo">Starting ELO / Rating</option>
                     <option value="seed">Registration Seed</option>
                 </select>
-                <button id="btn-tb-add" style="background: #a6e3a1; color: #1e1e2e; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold;">+ Add</button>
+                <button id="btn-tb-add" style="background: var(--success); color: #1e1e2e; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold;">+ Add</button>
             </div>
 
             <button id="btn-save-tb" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">Save Tiebreakers</button>
