@@ -1,3 +1,11 @@
+const TB_DEFAULTS = {
+    "single_elimination": ["placement", "seed"],
+    "double_elimination": ["placement", "seed"],
+    "round_robin": ["points", "game_differential", "head_to_head", "seed"],
+    "swiss": ["points", "buchholz", "game_differential", "head_to_head", "seed"],
+    "dpw_swiss": ["dpw_rating", "head_to_head", "buchholz", "seed"]
+};
+
 export function calculateTiebreakers(players, stagesConfig) {
     // 1. Gather all opponents for each player
     players.forEach(p => {
@@ -36,15 +44,17 @@ export function calculateTiebreakers(players, stagesConfig) {
     });
 
     // 3. Return the Sorting Waterfall
-    // 3. Return the Sorting Waterfall
     return function sortPlayers(a, b, tiebreakerArray) {
         
-        let activeRules = [...(tiebreakerArray || [])];
-        
-        // Failsafe: If an old save file loads and doesn't have points or dpw_rating, inject points!
-        if (!activeRules.includes("points") && !activeRules.includes("dpw_rating")) {
-            activeRules.unshift("points");
+        // Find what format we are currently looking at (for legacy save fallbacks)
+        let currentFormat = "swiss";
+        if (stagesConfig && stagesConfig.length > 0) {
+            currentFormat = stagesConfig[stagesConfig.length - 1].config.type;
         }
+
+        // If undefined/null (legacy save), use format default!
+        // If explicitly [] (User deleted all rules), it stays [] and everyone ties (Why would you want that)
+        let activeRules = tiebreakerArray ? [...tiebreakerArray] : [...(TB_DEFAULTS[currentFormat] || ["points"])];
         
         // 1. Loop through the custom tiebreaker waterfall
         for (let rule of activeRules) {
