@@ -61,7 +61,7 @@ input, button {
 input {
     background: var(--bg-dark);
     color: var(--text-main);
-    border: 1px solid #45475a;
+    border: 1px solid var(--border-main);
 }
 
 button {
@@ -158,7 +158,7 @@ body.streamer-mode #bracket-viewport {
     border-radius: 5px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     position: relative;
-    border: 1px solid #45475a;
+    border: 1px solid var(--border-main);
     user-select: none;
     height: 80px;
     display: flex;
@@ -187,7 +187,7 @@ body.streamer-mode #bracket-viewport {
 /* The empty space left behind in the list */
 .player-card.is-placeholder {
     background: transparent !important;
-    border: 2px dashed #45475a !important;
+    border: 2px dashed var(--border-main) !important;
     box-shadow: none !important;
 }
 .player-card.is-placeholder * {
