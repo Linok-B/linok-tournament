@@ -19,7 +19,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
     // --- RENDER PAGE 1: JSON INPUT ---
     function renderPage1() {
         let html = `
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #45475a; padding-bottom:10px; margin-bottom:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:var(--accent);">DPW Swiss Setup (1/2)</h2>
                 <button id="dpw-close" style="background:transparent; color:gray; border:none; cursor:pointer; font-weight:bold; font-size:18px;">X</button>
             </div>
@@ -36,17 +36,17 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                     <strong style="width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.name}">${p.name}</strong>
                     
                     <div style="display:flex; flex-direction:column; flex-grow:1; gap:5px;">
-                        <textarea id="json-${p.id}" placeholder="Paste JSON here..." style="height:35px; resize:none; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px; font-family:monospace; font-size:11px;">${savedJson}</textarea>
+                        <textarea id="json-${p.id}" placeholder="Paste JSON here..." style="height:35px; resize:none; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px; font-family:monospace; font-size:11px;">${savedJson}</textarea>
                         
                         <div style="display:flex; gap:5px;">
                             <input type="file" id="file-${p.id}" accept=".json" style="display:none;">
-                            <button class="btn-browse-file" data-id="${p.id}" style="background:#45475a; color:white; border:none; padding:4px 8px; border-radius:3px; font-size:10px; cursor:pointer;">📂 Browse File</button>
+                            <button class="btn-browse-file" data-id="${p.id}" style="background:var(--border-main); color:white; border:none; padding:4px 8px; border-radius:3px; font-size:10px; cursor:pointer;">📂 Browse File</button>
                         </div>
                     </div>
 
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <label style="font-size:10px; color:gray; margin-bottom:2px;">Raw TS</label>
-                        <input type="number" id="raw-${p.id}" placeholder="Auto" value="${savedRaw}" style="width:60px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
+                        <input type="number" id="raw-${p.id}" placeholder="Auto" value="${savedRaw}" style="width:60px; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px;">
                     </div>
                 </div>
             `;
@@ -130,18 +130,18 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
     // --- RENDER PAGE 2: UNIT VALUES ---
     function renderPage2(uniqueUnits, parsedPlayerTeams) {
         let html = `
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #45475a; padding-bottom:10px; margin-bottom:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:var(--accent);">Assign Unit Strength Values</h2>
                 <button id="dpw-back" style="background:transparent; color:gray; border:none; cursor:pointer; font-weight:bold; font-size:14px;">⬅ Back</button>
             </div>
             
             <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
                 <label style="font-size:12px; color:gray;">Set all unset units to:</label>
-                <input type="number" id="global-sv" style="width:80px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
-                <button id="btn-apply-global" style="background:#a6e3a1; color:#1e1e2e; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
+                <input type="number" id="global-sv" style="width:80px; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px;">
+                <button id="btn-apply-global" style="background:var(--success); color:#1e1e2e; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
             </div>
 
-            <div style="overflow-y:auto; flex-grow:1; margin-bottom:15px; border:1px solid #45475a; border-radius:4px; padding:10px;">
+            <div style="overflow-y:auto; flex-grow:1; margin-bottom:15px; border:1px solid var(--border-main); border-radius:4px; padding:10px;">
         `;
 
         if (uniqueUnits.length === 0) {
@@ -150,9 +150,9 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             uniqueUnits.forEach(unit => {
                 const val = cache.unitSVs[unit] !== undefined ? cache.unitSVs[unit] : "";
                 html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px dashed #45475a; padding-bottom:5px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px dashed var(--border-main); padding-bottom:5px;">
                         <span style="font-size:14px; color:var(--text-main);">${unit}</span>
-                        <input type="number" step="0.1" class="sv-input" data-unit="${unit}" value="${val}" style="width:80px; background:var(--bg-dark); color:white; border:1px solid #45475a; padding:5px;">
+                        <input type="number" step="0.1" class="sv-input" data-unit="${unit}" value="${val}" style="width:80px; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px;">
                     </div>
                 `;
             });
@@ -164,11 +164,11 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <div style="flex:1;">
                     <label style="font-size:11px; color:gray;" title="Desired rating gap between 1st and last place at the end of the tournament">Target Spread (Default 200)</label>
-                    <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid #45475a;">
+                    <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--border-main);">
                 </div>
                 <div style="flex:1;">
                     <label style="font-size:11px; color:gray;" title="0 = Pure Rating, 1 = Pure Team Score">Beta Weight (Default 0.7)</label>
-                    <input type="number" step="0.1" id="dpw-beta" value="${existingConfig?.beta || 0.7}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid #45475a;">
+                    <input type="number" step="0.1" id="dpw-beta" value="${existingConfig?.beta || 0.7}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--border-main);">
                 </div>
             </div>
 
