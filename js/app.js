@@ -100,16 +100,16 @@ function renderBlueprintList() {
         let details = [];
         if (stage.maxRounds) details.push(`${stage.maxRounds} Rnds`);
         if (stage.cutToTop) details.push(`Top ${stage.cutToTop}`);
-        const detailStr = details.length > 0 ? ` <small style="color:gray;">(${details.join(', ')})</small>` : '';
+        const detailStr = details.length > 0 ? ` <small style="color:var(--text-muted);">(${details.join(', ')})</small>` : '';
         
         list.innerHTML += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isLocked ? '#a6e3a1' : 'var(--accent)'};">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isLocked ? 'var(--success)' : 'var(--accent)'};">
                 <span style="font-size: 13px;"><b>${index + 1}.</b> ${formatNames[stage.type]}${detailStr}</span>
                 <div>
-                    ${stage.type === 'dpw_swiss' && !isLocked ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: #f9e2af; border: none; cursor: pointer; font-weight: bold; padding: 0 5px;" title="Edit Teams">⚙️</button>` : ''}
+                    ${stage.type === 'dpw_swiss' && !isLocked ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--warning); border: none; cursor: pointer; font-weight: bold; padding: 0 5px;" title="Edit Teams">⚙️</button>` : ''}
                     ${!isLocked 
                         ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0 5px;">X</button>` 
-                        : '<span style="font-size:10px; color:gray;">Locked</span>'}
+                        : '<span style="font-size:10px; color:var(--text-muted);">Locked</span>'}
                 </div>
             </div>
         `;
@@ -545,12 +545,12 @@ function renderTBList() {
         const isLocked = isDPW && rule === "dpw_rating"; // DPW Rating is mandatory for DPW Swiss!
 
         list.innerHTML += `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:5px 10px; border:1px solid #45475a; border-radius:4px;">
-                <span style="font-size:13px; color:${isLocked ? '#f9e2af' : 'white'}"><b>${index + 1}.</b> ${TB_NAMES[rule] || rule} ${isLocked ? '(Locked)' : ''}</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:5px 10px; border:1px solid var(--border-main); border-radius:4px;">
+                <span style="font-size:13px; color:${isLocked ? 'var(--warning)' : 'white'}"><b>${index + 1}.</b> ${TB_NAMES[rule] || rule} ${isLocked ? '(Locked)' : ''}</span>
                 <div style="display:flex; gap:5px;">
                     <button class="btn-tb-up" data-index="${index}" ${index === 0 || isLocked || (index===1 && pendingTiebreakers[0]==="dpw_rating" && isDPW) ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↑</button>
                     <button class="btn-tb-down" data-index="${index}" ${index === pendingTiebreakers.length - 1 || isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↓</button>
-                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed; color:gray;"' : 'style="color:var(--danger); cursor:pointer;"'}>X</button>
+                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed; color:var(--text-muted);"' : 'style="color:var(--danger); cursor:pointer;"'}>X</button>
                 </div>
             </div>
         `;
