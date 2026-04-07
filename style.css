@@ -1,14 +1,20 @@
 :root {
     --bg-dark: #1e1e2e;
     --bg-panel: #2a2a3e;
+    --bg-bracket: #11111b;
+    
     --text-main: #cdd6f4;
-    --text-muted: #a6adc8;   /* Replaces 'gray' */
+    --text-muted: #a6adc8;
     --accent: #89b4fa;
-    --danger: #f38ba8;       /* Losers bracket, errors */
-    --success: #a6e3a1;      /* Winners bracket, checkmarks */
-    --warning: #f9e2af;      /* GF Reset, Edit buttons, Ties */
-    --border-main: #45475a;  /* All the box borders */
-    --bg-bracket: #1e1e2e;
+    --danger: #f38ba8;
+    --success: #a6e3a1;
+    --warning: #f9e2af;
+    --border-main: #45475a;
+
+    --box-width: 280px;
+    --box-height: 95px;
+    --gap-x: 60px;
+    --gap-y: 20px;
 }
 
 body, html {
