@@ -305,35 +305,44 @@ body.streamer-mode #bracket-viewport {
     cursor: pointer;
 }
 
-/* =========================================
-   THEME: ARCADE (Magenta & Orange)
-   ========================================= */
+/* =============
+   THEME: ARCADE
+   ============= */
 body.theme-arcade {
-    --success: #E60CE6;      /* Magenta (Winners / Checkmarks) */
-    --danger: #F26D00;       /* Orange (Losers / Pending) */
-    --warning: #20D920;      /* Green (Edit Buttons / Resets) */
-    --accent: #E60CE6;       /* Magenta Main Accent */
+    /* Pure Grayscale UI */
+    --bg-dark: #121212;
+    --bg-panel: #1f1f1f;
+    --bg-bracket: #080808;   /* Deepest black for the canvas */
+    
+    --text-main: #e0e0e0;
+    --text-muted: #808080;
+    --border-main: #333333;
+
+    /* Desaturated Arcade Colors */
+    --success: #c238b3;      /* Muted Magenta (Winners) */
+    --danger: #d97a26;       /* Muted Orange (Losers) */
+    --warning: #3da33d;      /* Muted Green (Edits / Resets) */
+    --accent: #c238b3;       /* UI Accent matches Magenta */
 }
 
-/* =========================================
-   LAYOUT: CLASSIC (Compact, Sharp Edges)
-   ========================================= */
+/* ===============
+   LAYOUT: CLASSIC
+   =============== */
 body.layout-classic {
-    /* 1. Change the JS Math Grid */
     --box-height: 75px; 
-    --gap-y: 10px;      /* Tighter vertical spacing */
-    --gap-x: 40px;      /* Tighter horizontal spacing */
+    --gap-y: 10px;      
+    --gap-x: 40px;      
 }
 
 body.layout-classic .match-box {
-    border-radius: 0px;             /* Sharp corners */
-    background-color: transparent;  /* No thick background */
+    border-radius: 0px;             
+    background-color: var(--bg-panel); /* Now they will pop off the black background! */
     border: 1px solid var(--border-main);
-    box-shadow: none;               /* Flat look */
+    box-shadow: none;               
 }
 
 body.layout-classic .match-player-row {
-    height: 18px; /* Tighter text rows */
+    height: 18px; 
 }
 
 body.layout-classic .match-score-input {
@@ -342,5 +351,5 @@ body.layout-classic .match-score-input {
 }
 
 body.layout-classic .btn-match-action {
-    border-radius: 0; /* Sharp buttons */
+    border-radius: 0; 
 }
