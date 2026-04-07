@@ -199,7 +199,7 @@ export function renderBracket(tournament, containerId) {
         </div>
         
         <!-- THE NEW VIEWPORT (With the Eye Button inside!) -->
-        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: var(--bg-dark); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
+        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: var(--bg-bracket); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
             
             <button id="btn-streamer-mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-main); padding: 5px 10px; border-radius: 4px; cursor: pointer;">👁️ Stream Mode</button>
             
