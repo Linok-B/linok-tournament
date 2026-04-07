@@ -213,6 +213,8 @@ body.streamer-mode #bracket-viewport {
 :root {
     --box-width: 280px;
     --box-height: 95px;
+    --gap-x: 60px;
+    --gap-y: 20px;
 }
 
 /* --- BASE MATCH BOX STRUCTURE --- */
