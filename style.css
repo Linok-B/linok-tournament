@@ -298,3 +298,43 @@ body.streamer-mode #bracket-viewport {
     border-radius: 4px;
     cursor: pointer;
 }
+
+/* =========================================
+   THEME: ARCADE (Magenta & Orange)
+   ========================================= */
+body.theme-arcade {
+    --success: #E60CE6;      /* Magenta (Winners / Checkmarks) */
+    --danger: #F26D00;       /* Orange (Losers / Pending) */
+    --warning: #20D920;      /* Green (Edit Buttons / Resets) */
+    --accent: #E60CE6;       /* Magenta Main Accent */
+}
+
+/* =========================================
+   LAYOUT: CLASSIC (Compact, Sharp Edges)
+   ========================================= */
+body.layout-classic {
+    /* 1. Change the JS Math Grid */
+    --box-height: 75px; 
+    --gap-y: 10px;      /* Tighter vertical spacing */
+    --gap-x: 40px;      /* Tighter horizontal spacing */
+}
+
+body.layout-classic .match-box {
+    border-radius: 0px;             /* Sharp corners */
+    background-color: transparent;  /* No thick background */
+    border: 1px solid var(--border-main);
+    box-shadow: none;               /* Flat look */
+}
+
+body.layout-classic .match-player-row {
+    height: 18px; /* Tighter text rows */
+}
+
+body.layout-classic .match-score-input {
+    height: 18px;
+    border-radius: 0;
+}
+
+body.layout-classic .btn-match-action {
+    border-radius: 0; /* Sharp buttons */
+}
