@@ -8,6 +8,7 @@
     --success: #a6e3a1;      /* Winners bracket, checkmarks */
     --warning: #f9e2af;      /* GF Reset, Edit buttons, Ties */
     --border-main: #45475a;  /* All the box borders */
+    --bg-bracket: #1e1e2e;
 }
 
 body, html {
