@@ -207,3 +207,92 @@ body.streamer-mode #bracket-viewport {
     /* Optimizes SVG anti-aliasing for large maps */
     shape-rendering: geometricPrecision;
 }
+
+
+/* --- BRACKET GRID VARIABLES --- */
+:root {
+    --box-width: 280px;
+    --box-height: 95px;
+}
+
+/* --- BASE MATCH BOX STRUCTURE --- */
+.match-box-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+    padding-right: 42px; /* Space for the absolute button */
+    position: relative;
+}
+
+.match-player-row {
+    display: flex;
+    align-items: center;
+    height: 22px;
+    width: 100%;
+}
+
+.match-player-name {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.match-seed {
+    width: 24px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 10px;
+    text-align: left;
+}
+
+.match-dpw-delta {
+    color: var(--success);
+    font-size: 10px;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+.match-score {
+    width: 25px;
+    text-align: right;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.match-score-input {
+    width: 50px;
+    height: 22px;
+    box-sizing: border-box;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid var(--border-main);
+    margin-left: 6px;
+    flex-shrink: 0;
+}
+
+.match-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 18px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.btn-match-action {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
