@@ -309,47 +309,74 @@ body.streamer-mode #bracket-viewport {
    THEME: ARCADE
    ============= */
 body.theme-arcade {
-    /* Pure Grayscale UI */
     --bg-dark: #121212;
     --bg-panel: #1f1f1f;
-    --bg-bracket: #080808;   /* Deepest black for the canvas */
+    --bg-bracket: #080808;
     
     --text-main: #e0e0e0;
     --text-muted: #808080;
     --border-main: #333333;
 
-    /* Desaturated Arcade Colors */
-    --success: #c238b3;      /* Muted Magenta (Winners) */
-    --danger: #d97a26;       /* Muted Orange (Losers) */
-    --warning: #3da33d;      /* Muted Green (Edits / Resets) */
-    --accent: #c238b3;       /* UI Accent matches Magenta */
+    --success: #c238b3;
+    --danger: #d97a26;
+    --warning: #d4a017;
+    --accent: #c238b3;
 }
 
 /* ===============
    LAYOUT: CLASSIC
    =============== */
 body.layout-classic {
-    --box-height: 75px; 
-    --gap-y: 10px;      
-    --gap-x: 40px;      
+    --box-height: 75px;
+    --gap-y: 10px;
+    --gap-x: 40px;
 }
 
+/* 1. Global Sharp Edges (Inputs, Buttons, Modals) */
+body.layout-classic button,
+body.layout-classic input,
+body.layout-classic select,
+body.layout-classic textarea {
+    border-radius: 0 !important;
+}
+
+body.layout-classic div[style*="border-radius: 8px"] {
+    border-radius: 0 !important; /* Forces modals to have sharp corners */
+}
+
+/* 2. Flatten the Match Boxes */
 body.layout-classic .match-box {
-    border-radius: 0px;             
-    background-color: var(--bg-panel); /* Now they will pop off the black background! */
+    border-radius: 0px;
+    background-color: var(--bg-panel);
     border: 1px solid var(--border-main);
-    box-shadow: none;               
+    box-shadow: none;
 }
+body.layout-classic .match-player-row { height: 18px; }
+body.layout-classic .match-score-input { height: 18px; }
+body.layout-classic .btn-match-action { border-radius: 0; }
 
-body.layout-classic .match-player-row {
-    height: 18px; 
-}
-
-body.layout-classic .match-score-input {
-    height: 18px;
+/* 3. Flatten the Sidebar "Boxception" */
+body.layout-classic .control-group {
+    background: transparent;
     border-radius: 0;
+    border-bottom: 1px solid var(--border-main);
+    padding-left: 0;
+    padding-right: 0;
+    box-shadow: none;
 }
 
-body.layout-classic .btn-match-action {
-    border-radius: 0; 
+body.layout-classic .player-card {
+    background: transparent;
+    border: 1px solid var(--border-main);
+    border-left: 4px solid var(--accent);
+    border-radius: 0;
+    margin-bottom: 5px;
+}
+
+/* 4. Flatten the Blueprint List */
+body.layout-classic #blueprint-list > div {
+    background: transparent !important;
+    border-radius: 0 !important;
+    border: 1px solid var(--border-main);
+    border-left: 3px solid var(--accent) !important;
 }
