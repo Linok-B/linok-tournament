@@ -12,7 +12,7 @@
         <aside class="controls-panel">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2 style="margin: 0;">Host Controls</h2>
-                <!-- NEW: Settings Gear Button -->
+                <!-- Settings Gear Button -->
                 <button id="btn-open-settings" title="Tournament Settings" style="background: transparent; border: none; font-size: 20px; cursor: pointer; color: var(--text-main);">⚙️</button>
             </div>
 
@@ -36,10 +36,11 @@
                     <label style="font-size: 11px; color: var(--text-muted);;">Format</label>
                     <select id="blueprint-type" style="width: 100%; margin-bottom: 5px; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
                         <option value="single_elimination">Single Elimination</option>
+                        <option value="double_elimination">Double Elimination</option>
                         <option value="round_robin">Round Robin</option>
                         <option value="swiss">Swiss System</option>
                         <option value="dpw_swiss">DPW Swiss</option>
-                        <option value="double_elimination">Double Elimination</option>
+                        
                         
                     </select>
                     
@@ -78,7 +79,7 @@
         <!-- TOURNAMENT DISPLAY -->
         <main class="display-panel" style="position: relative;">
             
-            <!-- NEW HAMBURGER BUTTON (Toggles Sidebar) -->
+            <!-- HAMBURGER BUTTON (Toggles Sidebar) -->
             <button id="btn-hamburger" title="Toggle Sidebar" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--text-main); position: absolute; top: 15px; left: 15px; z-index: 50;">☰</button>
             
             <div id="tournament-header" style="padding: 10px 20px 10px 60px;">
@@ -153,6 +154,36 @@
                     <label style="font-size: 11px; color: var(--text-muted);;">Loss</label>
                     <input type="number" id="setting-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
                 </div>
+            </div>
+
+            <!-- Appearance Settings -->
+            <h4 style="margin: 0 0 10px 0; color: var(--text-main);">Appearance</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Layout</label>
+                    <select id="setting-ui-layout" style="width: 100%; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
+                        <option value="modern">Modern (Card UI)</option>
+                        <option value="classic">Classic (Flat UI)</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Color Theme</label>
+                    <select id="setting-ui-theme" style="width: 100%; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
+                        <option value="modern">Catppuccin (Blue)</option>
+                        <option value="arcade">Arcade (Dark/Magenta)</option>
+                        <option value="custom">Custom Colors...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Custom Color Pickers (Hidden by default) -->
+            <div id="setting-custom-colors" style="display: none; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
+                <div><label style="font-size: 10px; color: gray;">Base Dark</label><input type="color" id="color-bg-dark" style="width:100%;"></div>
+                <div><label style="font-size: 10px; color: gray;">Panels</label><input type="color" id="color-bg-panel" style="width:100%;"></div>
+                <div><label style="font-size: 10px; color: gray;">Bracket BG</label><input type="color" id="color-bg-bracket" style="width:100%;"></div>
+                <div><label style="font-size: 10px; color: gray;">Accent</label><input type="color" id="color-accent" style="width:100%;"></div>
+                <div><label style="font-size: 10px; color: gray;">Win/Check</label><input type="color" id="color-success" style="width:100%;"></div>
+                <div><label style="font-size: 10px; color: gray;">Loss/Drop</label><input type="color" id="color-danger" style="width:100%;"></div>
             </div>
 
             <!-- Toggles -->
