@@ -25,8 +25,22 @@ export class Tournament {
             
             // Default to just Single Elim
             pipeline: [
-                { type: "single_elimination" } 
-            ]
+                { type: "single_elimination" }
+            ],
+
+            // UI STATE
+            ui: {
+                theme: "modern",
+                layout: "modern",
+                customColors: {
+                    bgDark: "#1e1e2e",
+                    bgPanel: "#2a2a3e",
+                    bgBracket: "#11111b",
+                    accent: "#89b4fa",
+                    success: "#a6e3a1",
+                    danger: "#f38ba8"
+                }
+            }
         };
     }
 
