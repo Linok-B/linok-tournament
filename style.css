@@ -380,3 +380,10 @@ body.layout-classic #blueprint-list > div {
     border: 1px solid var(--border-main);
     border-left: 3px solid var(--accent) !important;
 }
+
+/* 5. Flatten the inner blueprint form */
+body.layout-classic #setup-blueprint-group > div:not(#blueprint-list) {
+    background: transparent !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
