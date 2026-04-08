@@ -7,6 +7,29 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+    <!-- ANTI-FLASH SCRIPT -->
+    <script>
+        try {
+            const saved = localStorage.getItem('tournament_state');
+            if (saved) {
+                const ui = JSON.parse(saved).settings?.ui;
+                if (ui) {
+                    if (ui.layout === 'classic') document.body.classList.add('layout-classic');
+                    if (ui.theme === 'arcade') document.body.classList.add('theme-arcade');
+                    if (ui.theme === 'custom' && ui.customColors) {
+                        const r = document.documentElement.style;
+                        r.setProperty('--bg-dark', ui.customColors.bgDark);
+                        r.setProperty('--bg-panel', ui.customColors.bgPanel);
+                        r.setProperty('--bg-bracket', ui.customColors.bgBracket);
+                        r.setProperty('--accent', ui.customColors.accent);
+                        r.setProperty('--success', ui.customColors.success);
+                        r.setProperty('--danger', ui.customColors.danger);
+                        r.setProperty('--text-main', ui.customColors.textMain || '#ffffff');
+                    }
+                }
+            }
+        } catch(e) {}
+    </script>
     <div class="app-container">
         <!-- HOST CONTROLS -->
         <aside class="controls-panel">
