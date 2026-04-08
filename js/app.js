@@ -31,6 +31,20 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     document.getElementById('setting-show-seeds').checked = currentTournament.settings.showSeeds || false;
     
     settingsModal.style.display = 'flex';
+
+    const ui = currentTournament.settings.ui || { theme: "modern", layout: "modern", customColors: {} };
+    document.getElementById('setting-ui-layout').value = ui.layout;
+    document.getElementById('setting-ui-theme').value = ui.theme;
+    
+    if (ui.customColors) {
+        document.getElementById('color-bg-dark').value = ui.customColors.bgDark || "#1e1e2e";
+        document.getElementById('color-bg-panel').value = ui.customColors.bgPanel || "#2a2a3e";
+        document.getElementById('color-bg-bracket').value = ui.customColors.bgBracket || "#11111b";
+        document.getElementById('color-accent').value = ui.customColors.accent || "#89b4fa";
+        document.getElementById('color-success').value = ui.customColors.success || "#a6e3a1";
+        document.getElementById('color-danger').value = ui.customColors.danger || "#f38ba8";
+    }
+    document.getElementById('setting-custom-colors').style.display = (ui.theme === "custom") ? "grid" : "none";
 });
 
 // --- TIEBREAKER BUILDER LOGIC ---
@@ -70,6 +84,21 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
     if (currentTournament.status !== "setup") {
         currentTournament.recalculateAllStats(); 
     }
+
+    // Ensure UI object exists
+    if (!currentTournament.settings.ui) currentTournament.settings.ui = {};
+    
+    currentTournament.settings.ui.layout = document.getElementById('setting-ui-layout').value;
+    currentTournament.settings.ui.theme = document.getElementById('setting-ui-theme').value;
+    
+    currentTournament.settings.ui.customColors = {
+        bgDark: document.getElementById('color-bg-dark').value,
+        bgPanel: document.getElementById('color-bg-panel').value,
+        bgBracket: document.getElementById('color-bg-bracket').value,
+        accent: document.getElementById('color-accent').value,
+        success: document.getElementById('color-success').value,
+        danger: document.getElementById('color-danger').value
+    };
     
     settingsModal.style.display = 'none';
     saveTournamentLocally(currentTournament);
@@ -79,6 +108,41 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
 function updateTitle() {
     const titleEl = document.getElementById('main-tournament-title');
     if (titleEl) titleEl.innerText = currentTournament.settings.name;
+}
+
+// Applies the CSS Classes and Custom Colors to the DOM
+function applyUITheme() {
+    const ui = currentTournament.settings.ui || { theme: "modern", layout: "modern" };
+    
+    // 1. Set Layout Class
+    document.body.classList.remove('layout-classic');
+    if (ui.layout === "classic") document.body.classList.add('layout-classic');
+
+    // 2. Set Theme Class
+    document.body.classList.remove('theme-arcade', 'theme-custom');
+    if (ui.theme === "arcade") document.body.classList.add('theme-arcade');
+    
+    // 3. Handle Custom Colors via CSS Variables
+    const root = document.documentElement;
+    if (ui.theme === "custom" && ui.customColors) {
+        root.style.setProperty('--bg-dark', ui.customColors.bgDark);
+        root.style.setProperty('--bg-panel', ui.customColors.bgPanel);
+        root.style.setProperty('--bg-bracket', ui.customColors.bgBracket);
+        root.style.setProperty('--accent', ui.customColors.accent);
+        root.style.setProperty('--success', ui.customColors.success);
+        root.style.setProperty('--danger', ui.customColors.danger);
+        // Force text contrast for custom themes
+        root.style.setProperty('--text-main', '#ffffff');
+    } else {
+        // Clear manual overrides so CSS classes take over again
+        root.style.removeProperty('--bg-dark');
+        root.style.removeProperty('--bg-panel');
+        root.style.removeProperty('--bg-bracket');
+        root.style.removeProperty('--accent');
+        root.style.removeProperty('--success');
+        root.style.removeProperty('--danger');
+        root.style.removeProperty('--text-main');
+    }
 }
 
 function renderBlueprintList() {
@@ -253,6 +317,7 @@ document.getElementById('file-import').addEventListener('change', (e) => {
 
 // Master UI Sync
 function updateUI() {
+    
     const inputs = document.querySelectorAll('#player-list-container input[type="number"]');
     const draftScores = {};
     inputs.forEach(input => { draftScores[input.id] = input.value; });
@@ -260,7 +325,8 @@ function updateUI() {
     const sidebar = document.querySelector('.controls-panel');
     const savedScrollTop = sidebar ? sidebar.scrollTop : 0;
 
-    updateTitle(); 
+    applyUITheme();
+    updateTitle();
     renderBlueprintList(); 
     renderBracket(currentTournament, 'player-list-container');
     
@@ -653,4 +719,8 @@ document.addEventListener('playerListReordered', (e) => {
     }
     
     saveTournamentLocally(currentTournament);
+});
+
+document.getElementById('setting-ui-theme').addEventListener('change', (e) => {
+    document.getElementById('setting-custom-colors').style.display = (e.target.value === "custom") ? "grid" : "none";
 });
