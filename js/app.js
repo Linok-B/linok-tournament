@@ -131,8 +131,8 @@ function applyUITheme() {
         root.style.setProperty('--accent', ui.customColors.accent);
         root.style.setProperty('--success', ui.customColors.success);
         root.style.setProperty('--danger', ui.customColors.danger);
-        // Force text contrast for custom themes
-        root.style.setProperty('--text-main', '#ffffff');
+        root.style.setProperty('--text-main', ui.customColors.textMain || '#ffffff');
+        root.style.setProperty('--text-muted', ui.customColors.textMuted || '#a6adc8');
     } else {
         // Clear manual overrides so CSS classes take over again
         root.style.removeProperty('--bg-dark');
