@@ -335,7 +335,7 @@ function updateUI() {
     renderBlueprintList(); 
     renderBracket(currentTournament, 'player-list-container');
     
-    // CRITICAL FIX: Clear the leaderboard if we are in Setup phase!
+    // Clear the leaderboard if we are in Setup phase
     const standingsDiv = document.getElementById('standings-container');
     if (currentTournament.status !== "setup") {
         renderStandings(currentTournament, 'standings-container');
@@ -449,7 +449,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         
         // Are there actually unfinished matches?
         const isRoundUnfinished = currentRound.some(m => m.winner === null && !m.isBye);
-        const matchesSubmitted = currentRound.filter(m => m.winner !== null || m.isBye).length; // FIXED: Count completed matches correctly
+        const matchesSubmitted = currentRound.filter(m => m.winner !== null || m.isBye).length;
         
         // Helper function to finalize
         function executeEndStage() {
@@ -712,7 +712,7 @@ document.addEventListener('playerListReordered', (e) => {
         p.seed = index + 1;
     });
     
-    // 2. FIXED UI UPDATE: Target the correct sub-list
+    // 2. Target the correct sub-list
     const listContainer = document.getElementById('players-list');
     if (listContainer) {
         Array.from(listContainer.children).forEach((card, index) => {
