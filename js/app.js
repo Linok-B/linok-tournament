@@ -729,3 +729,14 @@ document.addEventListener('playerListReordered', (e) => {
 document.getElementById('setting-ui-theme').addEventListener('change', (e) => {
     document.getElementById('setting-custom-colors').style.display = (e.target.value === "custom") ? "grid" : "none";
 });
+
+document.getElementById('btn-reset-colors').addEventListener('click', () => {
+    document.getElementById('color-bg-dark').value = "#1e1e2e";
+    document.getElementById('color-bg-panel').value = "#2a2a3e";
+    document.getElementById('color-bg-bracket').value = "#11111b";
+    document.getElementById('color-text-main').value = "#ffffff";
+    document.getElementById('color-text-muted').value = "#a6adc8";
+    document.getElementById('color-accent').value = "#89b4fa";
+    document.getElementById('color-success').value = "#a6e3a1";
+    document.getElementById('color-danger').value = "#f38ba8";
+});
