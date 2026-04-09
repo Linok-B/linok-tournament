@@ -40,6 +40,8 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
         document.getElementById('color-bg-dark').value = ui.customColors.bgDark || "#1e1e2e";
         document.getElementById('color-bg-panel').value = ui.customColors.bgPanel || "#2a2a3e";
         document.getElementById('color-bg-bracket').value = ui.customColors.bgBracket || "#11111b";
+        document.getElementById('color-text-main').value = ui.customColors.textMain || "#ffffff";
+        document.getElementById('color-text-muted').value = ui.customColors.textMuted || "#a6adc8";
         document.getElementById('color-accent').value = ui.customColors.accent || "#89b4fa";
         document.getElementById('color-success').value = ui.customColors.success || "#a6e3a1";
         document.getElementById('color-danger').value = ui.customColors.danger || "#f38ba8";
@@ -95,14 +97,17 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
         bgDark: document.getElementById('color-bg-dark').value,
         bgPanel: document.getElementById('color-bg-panel').value,
         bgBracket: document.getElementById('color-bg-bracket').value,
+        textMain: document.getElementById('color-text-main').value,
+        textMuted: document.getElementById('color-text-muted').value,
         accent: document.getElementById('color-accent').value,
         success: document.getElementById('color-success').value,
         danger: document.getElementById('color-danger').value
     };
     
-    settingsModal.style.display = 'none';
+    
     saveTournamentLocally(currentTournament);
     updateUI();
+    settingsModal.style.display = 'none';
 });
 
 function updateTitle() {
