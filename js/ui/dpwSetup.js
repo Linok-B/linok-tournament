@@ -1,6 +1,6 @@
 export function openDPWSetupModal(players, rounds, cut, onComplete, existingConfig = null) {
     const overlay = document.createElement('div');
-    // Change background slightly (0.81) so the global app.js listener ignores it!
+    // Change background slightly (0.81) so the global app.js listener ignores it (ts should be handled better but whatever)
     overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.81); z-index:9999; display:flex; justify-content:center; align-items:center;";
 
     const modal = document.createElement('div');
@@ -8,7 +8,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // FIX: Safely destroy the modal if user clicks the dark background
+    // Safely destroy the modal if user clicks the dark background
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
     });
@@ -36,17 +36,17 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                     <strong style="width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.name}">${p.name}</strong>
                     
                     <div style="display:flex; flex-direction:column; flex-grow:1; gap:5px;">
-                        <textarea id="json-${p.id}" placeholder="Paste JSON here..." style="height:35px; resize:none; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px; font-family:monospace; font-size:11px;">${savedJson}</textarea>
+                        <textarea id="json-${p.id}" placeholder="Paste JSON here..." style="height:35px; resize:none; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px; font-family:monospace; font-size:11px;">${savedJson}</textarea>
                         
                         <div style="display:flex; gap:5px;">
                             <input type="file" id="file-${p.id}" accept=".json" style="display:none;">
-                            <button class="btn-browse-file" data-id="${p.id}" style="background:var(--border-main); color:white; border:none; padding:4px 8px; border-radius:3px; font-size:10px; cursor:pointer;">📂 Browse File</button>
+                            <button class="btn-browse-file" data-id="${p.id}" style="background:var(--border-main); color:var(--text-main); border:none; padding:4px 8px; border-radius:3px; font-size:10px; cursor:pointer;">📂 Browse File</button>
                         </div>
                     </div>
 
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <label style="font-size:10px; color:var(--text-muted); margin-bottom:2px;">Raw TS</label>
-                        <input type="number" id="raw-${p.id}" placeholder="Auto" value="${savedRaw}" style="width:60px; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px;">
+                        <input type="number" id="raw-${p.id}" placeholder="Auto" value="${savedRaw}" style="width:60px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
                     </div>
                 </div>
             `;
@@ -137,7 +137,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             
             <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
                 <label style="font-size:12px; color:var(--text-muted);">Set all unset units to:</label>
-                <input type="number" id="global-sv" style="width:80px; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px;">
+                <input type="number" id="global-sv" style="width:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
                 <button id="btn-apply-global" style="background:var(--success); color:var(--bg-dark); border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
             </div>
 
@@ -152,7 +152,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 html += `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px dashed var(--border-main); padding-bottom:5px;">
                         <span style="font-size:14px; color:var(--text-main);">${unit}</span>
-                        <input type="number" step="0.1" class="sv-input" data-unit="${unit}" value="${val}" style="width:80px; background:var(--bg-dark); color:white; border:1px solid var(--border-main); padding:5px;">
+                        <input type="number" step="0.1" class="sv-input" data-unit="${unit}" value="${val}" style="width:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
                     </div>
                 `;
             });
@@ -164,11 +164,11 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <div style="flex:1;">
                     <label style="font-size:11px; color:var(--text-muted);" title="Desired rating gap between 1st and last place at the end of the tournament">Target Spread (Default 200)</label>
-                    <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--border-main);">
+                    <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main);">
                 </div>
                 <div style="flex:1;">
                     <label style="font-size:11px; color:var(--text-muted);" title="0 = Pure Rating, 1 = Pure Team Score">Beta Weight (Default 0.7)</label>
-                    <input type="number" step="0.1" id="dpw-beta" value="${existingConfig?.beta || 0.7}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--border-main);">
+                    <input type="number" step="0.1" id="dpw-beta" value="${existingConfig?.beta || 0.7}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main);">
                 </div>
             </div>
 
