@@ -617,11 +617,11 @@ function renderTBList() {
 
         list.innerHTML += `
             <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:5px 10px; border:1px solid var(--border-main); border-radius:4px;">
-                <span style="font-size:13px; color:${isLocked ? 'var(--warning)' : 'white'}"><b>${index + 1}.</b> ${TB_NAMES[rule] || rule} ${isLocked ? '(Locked)' : ''}</span>
+                <span style="font-size:13px; color:${isLocked ? 'var(--warning)' : 'var(--text-main)'}"><b>${index + 1}.</b> ${TB_NAMES[rule] || rule} ${isLocked ? '(Locked)' : ''}</span>
                 <div style="display:flex; gap:5px;">
                     <button class="btn-tb-up" data-index="${index}" ${index === 0 || isLocked || (index===1 && pendingTiebreakers[0]==="dpw_rating" && isDPW) ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↑</button>
                     <button class="btn-tb-down" data-index="${index}" ${index === pendingTiebreakers.length - 1 || isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↓</button>
-                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed; background:var(--border-main); color:gray;"' : 'style="background:var(--danger); color:var(--bg-dark); border:none; border-radius:3px; padding:2px 8px; cursor:pointer; font-weight:bold;"'}>X</button>
+                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed; background:var(--border-main); color:gray;"' : 'style="background:var(--danger); color:var(--text-on-accent); border:none; border-radius:3px; padding:2px 8px; cursor:pointer; font-weight:bold;"'}>X</button>
                 </div>
             </div>
         `;
