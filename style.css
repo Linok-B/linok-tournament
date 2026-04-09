@@ -5,6 +5,7 @@
     
     --text-main: #cdd6f4;
     --text-muted: #a6adc8;
+    --text-on-accent: #111111;
     --accent: #89b4fa;
     --danger: #f38ba8;
     --success: #a6e3a1;
@@ -315,6 +316,7 @@ body.theme-arcade {
     
     --text-main: #e0e0e0;
     --text-muted: #808080;
+    --text-on-accent: #111111;
     --border-main: #333333;
 
     --success: #c238b3;
