@@ -27,6 +27,12 @@ body, html {
     height: 100vh;
 }
 
+input, select, textarea {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid var(--border-main);
+}
+
 .app-container {
     display: flex;
     height: 100vh;
