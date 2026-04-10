@@ -3,6 +3,7 @@ import { saveTournamentLocally, loadTournamentLocally, clearLocalData } from './
 import { renderBracket, renderStandings } from './ui/renderer.js';
 import { exportTournamentJSON, importTournamentJSON } from './store/export.js';
 import { openDPWSetupModal } from './ui/dpwSetup.js';
+import { getIcon } from './ui/icons.js';
 
 let currentTournament = new Tournament();
 
@@ -678,11 +679,13 @@ document.addEventListener('click', (e) => {
         
         // Change icon based on state
         if (document.body.classList.contains('streamer-mode')) {
-            e.target.innerText = "❌ Exit Stream Mode";
+            e.target.innerHTML = getIcon('closedEye', 20);
             e.target.style.background = "var(--danger)";
+            e.target.style.color = "var(--text-on-accent)";
         } else {
-            e.target.innerText = "👁️ Stream Mode";
-            e.target.style.background = "rgba(0,0,0,0.5)";
+            e.target.innerHTML = getIcon('openEye', 20);
+            e.target.style.background = "var(--bg-panel)";
+            e.target.style.color = "var(--text-main)";
         }
     }
 });
