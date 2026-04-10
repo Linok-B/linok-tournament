@@ -1,6 +1,6 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 import { simulatePreview } from '../engine/formats/registry.js';
-import { getIcon } from './ui/icons.js';
+import { getIcon } from './icons.js';
 
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
