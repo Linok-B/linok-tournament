@@ -257,7 +257,7 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
 document.getElementById('btn-clear-data').addEventListener('click', () => {
     const modal = document.getElementById('warning-modal');
     
-    document.querySelector('#warning-modal h2').innerText = "⚠️ RESTART TOURNAMENT";
+    document.getElementById('warning-modal-title').innerHTML = `${getIcon('warning', 28)} RESTART TOURNAMENT`;
     document.getElementById('warning-modal-text').innerText = "This will delete all match history and return to the Setup phase. All players and settings will be KEPT. Are you sure?";
     document.getElementById('modal-btn-confirm').innerText = "Restart & Keep Players";
     
@@ -414,7 +414,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
             const modal = document.getElementById('warning-modal');
             
             // Dynamically set text back to the Edit Warning
-            document.querySelector('#warning-modal h2').innerText = "⚠️ DESTRUCTIVE ACTION";
+            document.getElementById('warning-modal-title').innerHTML = `${getIcon('warning', 28)} DESTRUCTIVE ACTION`;
             document.getElementById('warning-modal-text').innerText = "Editing this match will permanently delete all rounds and stages that happened after it.";
             document.getElementById('modal-btn-confirm').innerText = "Delete & Edit";
             
