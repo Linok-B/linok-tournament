@@ -1,5 +1,6 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 import { simulatePreview } from '../engine/formats/registry.js';
+import { getIcon } from './ui/icons.js';
 
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
@@ -191,20 +192,28 @@ export function renderBracket(tournament, containerId) {
     });
     tabsHtml += `</div>`;
 
+    // Check current state to draw the correct button immediately
+    const isStreamerMode = document.body.classList.contains('streamer-mode');
+    const eyeIcon = isStreamerMode ? getIcon('closedEye', 20) : getIcon('openEye', 20);
+    const eyeBg = isStreamerMode ? 'var(--danger)' : 'var(--bg-panel)';
+    const eyeColor = isStreamerMode ? 'var(--text-on-accent)' : 'var(--text-main)';
+
     let html = `
         ${tabsHtml}
         <div class="stage-header-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: var(--text-muted); font-size: 14px;">(Completed)</span>' : ''}</h2>
-            ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">⏹ Force End Stage Early</button>` : ''}
+            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}</h2>
+            ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Force End Stage Early</button>` : ''}
         </div>
         
-        <!-- THE NEW VIEWPORT (With the Eye Button inside!) -->
+        <!-- THE NEW VIEWPORT (With the SVG Eye Button inside!) -->
         <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: var(--bg-bracket); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
             
-            <button id="btn-streamer-mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-main); padding: 5px 10px; border-radius: 4px; cursor: pointer;">👁️ Stream Mode</button>
+            <button id="btn-streamer-mode" title="Toggle Streamer Mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
+                ${eyeIcon}
+            </button>
             
             <!-- We will draw the boxes and lines inside this board -->
-            <div id="bracket-board" style="position: absolute; top: 0; left: 0; transform-origin: 0 0;">
+            <div id="bracket-board" style="position: absolute; top: 0; left: 0; transform-origin: 0 0; contain: layout style;">
                 <svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
             </div>
         </div>
