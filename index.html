@@ -118,7 +118,9 @@
     <!-- WARNING MODAL (HIDDEN) -->
     <div id="warning-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
         <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; max-width: 500px; border: 2px solid var(--danger); text-align: center;">
-            <h2 style="color: var(--danger); margin-top: 0;">⚠️ DESTRUCTIVE ACTION</h2>
+            <h2 id="warning-modal-title" style="color: var(--danger); margin-top: 0; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                <span data-icon="warning"></span> DESTRUCTIVE ACTION
+            </h2>
             <p id="warning-modal-text">Editing this match will permanently delete all rounds and stages that happened after it.</p>
             <p>It is highly recommended to Export a backup before continuing.</p>
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
