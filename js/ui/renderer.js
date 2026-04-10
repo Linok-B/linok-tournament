@@ -195,9 +195,9 @@ export function renderBracket(tournament, containerId) {
     // Check current state to draw the correct button immediately
     const isStreamerMode = document.body.classList.contains('streamer-mode');
     const eyeIcon = isStreamerMode ? getIcon('closedEye', 20) : getIcon('openEye', 20);
-    const eyeBg = isStreamerMode ? 'var(--danger)' : 'var(--bg-panel)';
-    const eyeColor = isStreamerMode ? 'var(--text-on-accent)' : 'var(--text-main)';
-
+    const eyeBg = 'var(--bg-panel)';
+    const eyeColor = 'var(--text-main)';
+    
     let html = `
         ${tabsHtml}
         <div class="stage-header-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
