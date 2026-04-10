@@ -5,6 +5,12 @@ import { exportTournamentJSON, importTournamentJSON } from './store/export.js';
 import { openDPWSetupModal } from './ui/dpwSetup.js';
 import { getIcon } from './ui/icons.js';
 
+// Auto-inject SVGs into the HTML
+document.querySelectorAll('[data-icon]').forEach(el => {
+    const iconName = el.getAttribute('data-icon');
+    el.innerHTML = getIcon(iconName, 18);
+});
+
 let currentTournament = new Tournament();
 
 const savedData = loadTournamentLocally();
