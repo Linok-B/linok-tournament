@@ -30,7 +30,10 @@ const icons = {
     },
     stop: {
         viewBox: "0 0 24 24",
-        html: `<rect x="5" y="5" width="14" height="14" fill="currentColor" stroke="none"/>`
+        html: `
+            <rect x="2" y="2" width="20" height="20" fill="currentColor" opacity="0.2"/>
+            <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+        `
     },
     warning: {
         viewBox: "0 0 24 24",
