@@ -204,7 +204,10 @@
 
             <!-- Custom Color Pickers -->
             <div id="setting-custom-colors" style="display: none; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
-                <div><label style="font-size: 10px; color: gray;">Base Dark</label><input type="color" id="color-bg-dark" style="width:100%; height:30px; border:none; cursor:pointer; padding:0;"></div>
+                <div>
+                    <label style="font-size: 10px; color: gray;">Base Dark</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-bg-dark"></div>
+                </div>
                 <div><label style="font-size: 10px; color: gray;">Panels</label><input type="color" id="color-bg-panel" style="width:100%; height:30px; border:none; cursor:pointer; padding:0;"></div>
                 <div><label style="font-size: 10px; color: gray;">Bracket BG</label><input type="color" id="color-bg-bracket" style="width:100%; height:30px; border:none; cursor:pointer; padding:0;"></div>
                 
@@ -216,7 +219,7 @@
                 <div><label style="font-size: 10px; color: gray;">Loss/Drop</label><input type="color" id="color-danger" style="width:100%; height:30px; border:none; cursor:pointer; padding:0;"></div>
                 <!-- Reset Button -->
                 <div style="display:flex; flex-direction:column; justify-content:flex-end;">
-                    <button id="btn-reset-colors" style="width:100%; height:30px; background:transparent; color:var(--text-muted); border:1px solid var(--border-main); border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; transition:0.2s;">↺ Reset</button>
+                    <button id="btn-reset-colors" style="width:100%; height:30px; background:transparent; color:var(--text-muted); border:1px solid var(--border-main); border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; transition:0.2s; display:flex; justify-content:center; align-items:center; padding:0;">↺ Reset</button>
                 </div>
             </div>
 
