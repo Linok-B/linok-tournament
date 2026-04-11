@@ -168,6 +168,12 @@ body.streamer-mode #bracket-viewport {
     border-radius: 0 !important;
 }
 
+body.streamer-mode .display-panel { 
+    padding: 0 !important; 
+    overflow: hidden; 
+    width: 100vw !important; /* Force it to ignore Flexbox and take the whole screen */
+    margin: 0 !important;
+}
 
 /* Make the column take up the full height of the board */
 .bracket-column {
