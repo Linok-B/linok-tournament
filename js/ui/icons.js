@@ -31,8 +31,8 @@ const icons = {
     stop: {
         viewBox: "0 0 24 24",
         html: `
-            <rect x="2" y="2" width="20" height="20" fill="currentColor" opacity="0.2"/>
-            <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+            <rect x="2" y="2" width="20" height="20" fill="currentColor" opacity="0.2" rx="4" class="svg-rect"/>
+            <rect x="6" y="6" width="12" height="12" fill="currentColor" rx="2" class="svg-rect"/>
         `
     },
     warning: {
