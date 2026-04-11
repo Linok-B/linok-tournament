@@ -610,7 +610,10 @@ document.getElementById('blueprint-type').addEventListener('change', (e) => {
     const format = e.target.value;
     pendingTiebreakers = [...(TB_DEFAULTS[format] || ["points"])];
     // Update button text to notify user
-    document.getElementById('btn-open-tb-builder').innerText = `⚖️ Tiebreakers: ${pendingTiebreakers.length} Rules`;
+    document.getElementById('btn-open-tb-builder').innerHTML = `<span data-icon="scale" data-size="16"></span> Tiebreakers: ${pendingTiebreakers.length} Rules`;
+    // Re-run the injector for this specific element so the icon renders!
+    const span = document.getElementById('btn-open-tb-builder').querySelector('span');
+    span.innerHTML = getIcon('scale', 16);
 });
 
 const tbModal = document.getElementById('tiebreaker-modal');
@@ -643,7 +646,9 @@ document.getElementById('btn-open-tb-builder').addEventListener('click', () => {
 
 document.getElementById('btn-close-tb-builder').addEventListener('click', () => tbModal.style.display = 'none');
 document.getElementById('btn-save-tb').addEventListener('click', () => {
-    document.getElementById('btn-open-tb-builder').innerText = `⚖️ Tiebreakers: ${pendingTiebreakers.length} Rules`;
+    document.getElementById('btn-open-tb-builder').innerHTML = `<span data-icon="scale" data-size="16"></span> Tiebreakers: ${pendingTiebreakers.length} Rules`;
+    const span = document.getElementById('btn-open-tb-builder').querySelector('span');
+    span.innerHTML = getIcon('scale', 16);
     tbModal.style.display = 'none';
 });
 
