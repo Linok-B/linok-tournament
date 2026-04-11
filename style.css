@@ -396,6 +396,12 @@ body.layout-classic {
     --gap-x: 40px;
 }
 
+/* Force SVGs to have sharp corners in Classic Mode */
+body.layout-classic .svg-rect {
+    rx: 0 !important;
+    ry: 0 !important;
+}
+
 /* 1. Global Sharp Edges (Inputs, Buttons, Modals) */
 body.layout-classic button,
 body.layout-classic input,
