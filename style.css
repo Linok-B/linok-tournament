@@ -159,7 +159,13 @@ body.streamer-mode .stage-tabs-container {
     display: none !important;
 }
 
-body.streamer-mode .display-panel { padding: 0 !important; overflow: hidden; }
+body.streamer-mode .display-panel,
+body.streamer-mode #player-list-container { 
+    padding: 0 !important; 
+    overflow: hidden; 
+    width: 100vw !important;
+    margin: 0 !important;
+}
 
 /* The Viewport expansions */
 body.streamer-mode #bracket-viewport {
@@ -453,6 +459,8 @@ body.layout-classic .player-card {
 
 body.layout-classic .player-card.is-placeholder {
     border-radius: 0 !important;
+    background: transparent !important;
+    border: 2px dashed var(--border-main) !important;
 }
 
 /* 4. Flatten the Blueprint List */
