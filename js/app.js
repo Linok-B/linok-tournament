@@ -8,7 +8,8 @@ import { getIcon } from './ui/icons.js';
 // Auto-inject SVGs into the HTML
 document.querySelectorAll('[data-icon]').forEach(el => {
     const iconName = el.getAttribute('data-icon');
-    el.innerHTML = getIcon(iconName, 18);
+    const size = el.getAttribute('data-size') || 18;
+    el.innerHTML = getIcon(iconName, size);
 });
 
 let currentTournament = new Tournament();
