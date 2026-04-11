@@ -33,6 +33,32 @@ input, select, textarea {
     border: 1px solid var(--border-main);
 }
 
+/* CUSTOM SCROLLBARS (Matches Dark/Arcade Themes!) */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-bracket); /* The deep background color */
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-main); /* The lighter gray/border color */
+    border-radius: 5px;
+    border: 2px solid var(--bg-bracket); /* Creates a nice padding effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted); /* Brightens when you hover over it */
+}
+
+/* Firefox Support */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-main) var(--bg-bracket);
+}
+
 .app-container {
     display: flex;
     height: 100vh;
@@ -311,6 +337,8 @@ body.streamer-mode #bracket-viewport {
     border-radius: 4px;
     cursor: pointer;
 }
+
+
 
 /* =============
    THEME: ARCADE
