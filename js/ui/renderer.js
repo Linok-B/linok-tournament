@@ -202,7 +202,7 @@ export function renderBracket(tournament, containerId) {
         ${tabsHtml}
         <div class="stage-header-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}</h2>
-            ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Force End Stage Early</button>` : ''}
+            ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">${getIcon('stop', 14, "fill:currentColor;")} Force End Stage Early</button>` : ''}
         </div>
         
         <!-- THE NEW VIEWPORT (With the SVG Eye Button inside!) -->
