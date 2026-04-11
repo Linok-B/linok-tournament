@@ -686,9 +686,9 @@ document.addEventListener('click', (e) => {
         
         // Change icon based on state
         if (document.body.classList.contains('streamer-mode')) {
-            e.target.innerHTML = getIcon('closedEye', 20);
-        } else {
             e.target.innerHTML = getIcon('openEye', 20);
+        } else {
+            e.target.innerHTML = getIcon('closedEye', 20);
         }
         // Ensure background always matches the panel
         e.target.style.background = "var(--bg-panel)";
