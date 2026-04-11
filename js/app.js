@@ -256,6 +256,10 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
 
 // Reset Button Event
 document.getElementById('btn-clear-data').addEventListener('click', () => {
+    if (currentTournament.status === "setup") {
+        alert("The tournament hasn't started yet! You are still in the Setup phase.");
+        return;
+    }
     const modal = document.getElementById('warning-modal');
     
     document.getElementById('warning-modal-title').innerHTML = `${getIcon('warning', 28)} RESTART TOURNAMENT`;
