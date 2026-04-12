@@ -239,18 +239,18 @@ export class Tournament {
                     const p1 = this.players.find(p => p.id === match.player1?.id);
                     const p2 = this.players.find(p => p.id === match.player2?.id);
 
-                    // PRE-CALCULATE DPW DELTAS FOR UI (Frozen in Time)
+                    // --- PRE-CALCULATE DPW DELTAS FOR UI (Frozen in Time) ---
                     if (stage.config.type === "dpw_swiss" && p1 && p2 && !match.isBye) {
                         const p1TS = p1.metadata?.dpwTS ?? 0;
                         const p2TS = p2.metadata?.dpwTS ?? 0;
+                        
                         const C_TS = Math.max(stage.config.C_TS ?? 1, 1);  
                         const C_R = 400;
                         const beta = stage.config.beta ?? 0.7;
-                        const roundsCount = stage.config.maxRounds ?? 3;
-                        const target_spread = stage.config.target_spread ?? 200;
                         
-                        const K_base = stage.config.K_base ?? (target_spread / roundsCount); 
-                        const r_ramp = stage.config.r_ramp ?? Math.max(1, Math.floor(roundsCount / 3));
+                        // Engine now just reads the explicitly saved values!
+                        const K_base = stage.config.K_base ?? 20; 
+                        const r_ramp = stage.config.r_ramp ?? 1;
                         const K_r = K_base * Math.min(1, match.round / r_ramp);  
                         
                         const D = beta * ((p1TS - p2TS) / C_TS) + (1 - beta) * ((p1.stats.dpwRating - p2.stats.dpwRating) / C_R);
