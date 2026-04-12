@@ -16,7 +16,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
     // State Memory
     const cache = existingConfig?.dpwData || { playerJsons: {}, rawTS: {}, unitSVs: {} };
 
-    // --- RENDER PAGE 1: JSON INPUT ---
+    // RENDER PAGE 1: JSON INPUT
     function renderPage1() {
         let html = `
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
@@ -127,7 +127,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         };
     }
 
-    // --- RENDER PAGE 2: UNIT VALUES ---
+    // RENDER PAGE 2: UNIT VALUES
     function renderPage2(uniqueUnits, parsedPlayerTeams) {
         let html = `
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
@@ -187,6 +187,44 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             });
         };
 
+        // --- EXPORT SVS ---
+        document.getElementById('dpw-btn-export').onclick = () => {
+            const exportData = {
+                unitSVs: {},
+                target_spread: parseFloat(document.getElementById('dpw-spread').value) || 200,
+                beta: parseFloat(document.getElementById('dpw-beta').value) || 0.7
+            };
+            document.querySelectorAll('.sv-input').forEach(input => {
+                exportData.unitSVs[input.getAttribute('data-unit')] = parseFloat(input.value) || 0;
+            });
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `DPW_Unit_Values.json`;
+            a.click();
+        };
+
+        // --- IMPORT SVS ---
+        document.getElementById('dpw-btn-import').onclick = () => document.getElementById('dpw-file-import').click();
+        document.getElementById('dpw-file-import').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (imported.unitSVs) cache.unitSVs = imported.unitSVs;
+                    if (imported.target_spread) document.getElementById('dpw-spread').value = imported.target_spread;
+                    if (imported.beta !== undefined) document.getElementById('dpw-beta').value = imported.beta;
+                    
+                    // Re-render to show new values
+                    renderPage2(uniqueUnits, parsedPlayerTeams);
+                } catch(err) { alert("Invalid DPW values file."); }
+            };
+            reader.readAsText(file);
+        };
+
         document.getElementById('dpw-save').onclick = () => {
             document.querySelectorAll('.sv-input').forEach(input => {
                 cache.unitSVs[input.getAttribute('data-unit')] = parseFloat(input.value) || 0;
@@ -204,35 +242,14 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 }
             });
 
-            // 1. Calculate Pairwise C_TS
-            const tsValues = Object.values(playerTSMap);
-            let sumDiff = 0, pairs = 0;
-            for(let i=0; i<tsValues.length; i++) {
-                for(let j=i+1; j<tsValues.length; j++) {
-                    sumDiff += Math.abs(tsValues[i] - tsValues[j]);
-                    pairs++;
-                }
-            }
-            const avgDiff = pairs > 0 ? (sumDiff / pairs) : 0;
-            const computed_C_TS = Math.max(4 * avgDiff, 1);
-
-            // 2. Lock in DPW Math Variables (Using user inputs or smart defaults)
-            const targetSpread = parseFloat(document.getElementById('dpw-spread').value) || 200;
-            const totalRounds = rounds || Math.max(1, Math.ceil(Math.log2(players.length)));
-            const auto_r_ramp = Math.max(1, Math.floor(totalRounds / 3));
-            const auto_K_base = targetSpread / totalRounds;
-
-            // 3. Save to config
             const finalConfig = {
                 type: "dpw_swiss",
-                maxRounds: totalRounds,
+                maxRounds: rounds || undefined,
                 cutToTop: cut || undefined,
-                target_spread: targetSpread,
+                target_spread: parseFloat(document.getElementById('dpw-spread').value) || 200,
                 beta: parseFloat(document.getElementById('dpw-beta').value) || 0.7,
-                C_TS: computed_C_TS,
-                K_base: auto_K_base,
-                r_ramp: existingConfig?.r_ramp || auto_r_ramp,
-                tiebreakers: existingConfig?.tiebreakers || ["dpw_rating", "head_to_head", "buchholz"], 
+                resetRatings: document.getElementById('dpw-reset-ratings').checked,
+                tiebreakers: existingConfig?.tiebreakers || ["dpw_rating", "head_to_head", "buchholz", "seed"], 
                 dpwData: cache 
             };
 
