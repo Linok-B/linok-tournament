@@ -42,7 +42,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                         
                         <div style="display:flex; gap:5px;">
                             <input type="file" id="file-${p.id}" accept=".json" style="display:none;">
-                            <button class="btn-browse-file" data-id="${p.id}" style="background:var(--border-main); color:var(--text-main); border:none; padding:4px 8px; border-radius:3px; font-size:10px; cursor:pointer;">📂 Browse File</button>
+                            <button class="btn-browse-file" data-id="${p.id}" style="background:var(--border-main); color:var(--text-main); border:none; padding:4px 8px; border-radius:3px; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:4px;">${getIcon('folderOpen', 12)} Browse File</button>
                         </div>
                     </div>
 
