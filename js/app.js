@@ -636,7 +636,7 @@ function renderTBList() {
                 <div style="display:flex; gap:5px;">
                     <button class="btn-tb-up" data-index="${index}" ${index === 0 || isLocked || (index===1 && pendingTiebreakers[0]==="dpw_rating" && isDPW) ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↑</button>
                     <button class="btn-tb-down" data-index="${index}" ${index === pendingTiebreakers.length - 1 || isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↓</button>
-                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed; background:var(--border-main); color:gray;"' : 'style="background:var(--danger); color:var(--text-on-accent); border:none; border-radius:3px; padding:2px 8px; cursor:pointer; font-weight:bold;"'}>X</button>
+                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="padding:2px 8px; border:none; border-radius:3px; font-weight:bold; opacity:0.5; cursor:not-allowed; background:var(--border-main); color:var(--text-muted);"' : 'style="padding:2px 8px; border:none; border-radius:3px; font-weight:bold; background:var(--danger); color:var(--text-on-accent); cursor:pointer;"'}>X</button>
                 </div>
             </div>
         `;
