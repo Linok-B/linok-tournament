@@ -477,3 +477,49 @@ body.layout-classic #setup-blueprint-group > div:not(#blueprint-list) {
     padding-left: 0 !important;
     padding-right: 0 !important;
 }
+
+/* 6. Flatten the DPW Setup Modal (Page 1) */
+body.layout-classic #dpw-player-list > div {
+    background: transparent !important;
+    border-radius: 0 !important;
+    border-bottom: 1px solid var(--border-main); /* Acts as a visual separator instead of a background box */
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* 7. Flatten the DPW Setup Modal (Page 2) */
+/* The "Set all unset units to" box */
+body.layout-classic #btn-apply-global { border-radius: 0 !important; }
+body.layout-classic #btn-apply-global[style*="background:rgba(0,0,0,0.3)"] {
+    background: transparent !important;
+    border-radius: 0 !important;
+    border-bottom: 1px dashed var(--border-main);
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* The Units List container */
+body.layout-classic div[style*="overflow-y:auto; flex-grow:1; margin-bottom:15px; border:1px solid var(--border-main); border-radius:4px; padding:10px;"] {
+    border-radius: 0 !important;
+    background: var(--bg-dark) !important;
+}
+
+/* 8. Flatten the Tiebreaker Modal */
+/* The container holding all the rules */
+body.layout-classic #tb-active-list {
+    background: transparent !important;
+    border-radius: 0 !important;
+    border: 1px solid var(--border-main);
+}
+
+/* The individual rule boxes inside */
+body.layout-classic #tb-active-list > div {
+    background: transparent !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px dashed var(--border-main) !important;
+}
+/* Hide the bottom dashed line on the very last rule */
+body.layout-classic #tb-active-list > div:last-child {
+    border-bottom: none !important;
+}
