@@ -147,7 +147,7 @@ export class Tournament {
     executeTransition(playersForNextStage, config, nextStageIndex) {
         const formatEngine = getFormat(config.type);
 
-        // --- NEW: DYNAMIC DPW MATH CALCULATION ---
+        // DYNAMIC DPW MATH CALCULATION
         if (config.type === "dpw_swiss") {
             let sumDiff = 0, pairs = 0;
             for(let i=0; i<playersForNextStage.length; i++) {
@@ -252,7 +252,7 @@ export class Tournament {
 
         // Tally up every completed match
         this.stages.forEach(stage => {
-            // --- CHRONOLOGICAL RATING RESET ---
+            // CHRONOLOGICAL RATING RESET
             if (stage.config.type === "dpw_swiss" && stage.config.resetRatings !== false) {
                 this.players.forEach(p => p.stats.dpwRating = 1000);
             }
@@ -262,7 +262,7 @@ export class Tournament {
                     const p1 = this.players.find(p => p.id === match.player1?.id);
                     const p2 = this.players.find(p => p.id === match.player2?.id);
 
-                    // --- PRE-CALCULATE DPW DELTAS FOR UI ---
+                    // PRE-CALCULATE DPW DELTAS FOR UI
                     if (stage.config.type === "dpw_swiss" && p1 && p2 && !match.isBye) {
                         const p1TS = p1.metadata?.dpwTS ?? 0;
                         const p2TS = p2.metadata?.dpwTS ?? 0;
@@ -326,7 +326,7 @@ export class Tournament {
                             p1.stats.points += ptsForDraw; p2.stats.points += ptsForDraw;
                         }
 
-                        // --- APPLY DPW RATING ---
+                        // APPLY DPW RATING
                         if (stage.config.type === "dpw_swiss" && match.dpwDeltas) {
                             let actualRaw = 0;
                             let actualMag = 0;
@@ -354,7 +354,7 @@ export class Tournament {
                         }
 
                         // Iron-clad Elimination check!
-                        // --- FGC PLACEMENT & ELIMINATION CHECK ---
+                        // FGC PLACEMENT & ELIMINATION CHECK
                         if (loserObj) {
                             let isTrueElimination = false;
 
