@@ -137,7 +137,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             
             <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
                 <label style="font-size:12px; color:var(--text-muted);">Set all unset units to:</label>
-                <input type="number" id="global-sv" style="width:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
+                <input type="number" id="global-sv" min="0" style="width:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
                 <button id="btn-apply-global" style="background:var(--success); color:var(--bg-dark); border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
             </div>
 
@@ -152,7 +152,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 html += `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px dashed var(--border-main); padding-bottom:5px;">
                         <span style="font-size:14px; color:var(--text-main);">${unit}</span>
-                        <input type="number" step="0.1" class="sv-input" data-unit="${unit}" value="${val}" style="width:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
+                        <input type="number" step="0.1" min="0" class="sv-input" data-unit="${unit}" value="${val}" style="width:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
                     </div>
                 `;
             });
@@ -204,7 +204,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 }
             });
 
-            // Calculate pairwise C_TS
+            // 1. Calculate Pairwise C_TS
             const tsValues = Object.values(playerTSMap);
             let sumDiff = 0, pairs = 0;
             for(let i=0; i<tsValues.length; i++) {
@@ -216,17 +216,23 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             const avgDiff = pairs > 0 ? (sumDiff / pairs) : 0;
             const computed_C_TS = Math.max(4 * avgDiff, 1);
 
+            // 2. Lock in DPW Math Variables (Using user inputs or smart defaults)
+            const targetSpread = parseFloat(document.getElementById('dpw-spread').value) || 200;
+            const totalRounds = rounds || Math.max(1, Math.ceil(Math.log2(players.length)));
+            const auto_r_ramp = Math.max(1, Math.floor(totalRounds / 3));
+            const auto_K_base = targetSpread / totalRounds;
+
+            // 3. Save to config
             const finalConfig = {
                 type: "dpw_swiss",
-                maxRounds: rounds || undefined,
+                maxRounds: totalRounds,
                 cutToTop: cut || undefined,
-                target_spread: parseFloat(document.getElementById('dpw-spread').value) || 200,
+                target_spread: targetSpread,
                 beta: parseFloat(document.getElementById('dpw-beta').value) || 0.7,
                 C_TS: computed_C_TS,
-                
-                // USE THE CUSTOM TIEBREAKERS PASSED IN (Fallback to standard DPW if missing)
+                K_base: auto_K_base,
+                r_ramp: existingConfig?.r_ramp || auto_r_ramp,
                 tiebreakers: existingConfig?.tiebreakers || ["dpw_rating", "head_to_head", "buchholz"], 
-                
                 dpwData: cache 
             };
 
