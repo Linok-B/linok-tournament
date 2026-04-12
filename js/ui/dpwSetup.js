@@ -1,3 +1,5 @@
+import { getIcon } from './icons.js';
+
 export function openDPWSetupModal(players, rounds, cut, onComplete, existingConfig = null) {
     const overlay = document.createElement('div');
     // Change background slightly (0.81) so the global app.js listener ignores it (ts should be handled better but whatever)
@@ -54,7 +56,9 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
 
         html += `
             </div>
-            <button id="dpw-next" style="background:var(--accent); color:var(--bg-dark); font-weight:bold; padding:10px; border:none; border-radius:4px; cursor:pointer;">Next ➔</button>
+            <button id="dpw-next" style="background:var(--accent); color:var(--text-on-accent); font-weight:bold; padding:10px; border:none; border-radius:4px; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px;">
+                Next ${getIcon('arrowLeft', 16, 'transform: rotate(180deg);')}
+            </button>
         `;
         
         modal.innerHTML = html;
@@ -132,13 +136,21 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         let html = `
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:var(--accent);">Assign Unit Strength Values</h2>
-                <button id="dpw-back" style="background:transparent; color:var(--text-muted); border:none; cursor:pointer; font-weight:bold; font-size:14px;">⬅ Back</button>
+                <div style="display:flex; gap:10px;">
+                    <input type="file" id="dpw-file-import" accept=".json" style="display:none;">
+                    <button id="dpw-btn-import" style="background:var(--warning); color:var(--text-on-accent); border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px; font-weight:bold; display:flex; align-items:center; gap:6px;">
+                        ${getIcon('folder', 14)} Import SVs
+                    </button>
+                    <button id="dpw-btn-export" style="background:var(--success); color:var(--text-on-accent); border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px; font-weight:bold; display:flex; align-items:center; gap:6px;">
+                        ${getIcon('save', 14)} Export SVs
+                    </button>
+                </div>
             </div>
             
             <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
                 <label style="font-size:12px; color:var(--text-muted);">Set all unset units to:</label>
                 <input type="number" id="global-sv" min="0" style="width:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
-                <button id="btn-apply-global" style="background:var(--success); color:var(--bg-dark); border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
+                <button id="btn-apply-global" style="background:var(--success); color:var(--text-on-accent); border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
             </div>
 
             <div style="overflow-y:auto; flex-grow:1; margin-bottom:15px; border:1px solid var(--border-main); border-radius:4px; padding:10px;">
@@ -161,9 +173,9 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         html += `
             </div>
             
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <div style="flex:1;">
-                    <label style="font-size:11px; color:var(--text-muted);" title="Desired rating gap between 1st and last place at the end of the tournament">Target Spread (Default 200)</label>
+                    <label style="font-size:11px; color:var(--text-muted);" title="Desired rating gap between 1st and last place">Target Spread (Default 200)</label>
                     <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main);">
                 </div>
                 <div style="flex:1;">
@@ -172,7 +184,19 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 </div>
             </div>
 
-            <button id="dpw-save" style="background:var(--accent); color:var(--bg-dark); font-weight:bold; padding:10px; border:none; border-radius:4px; cursor:pointer;">💾 Save Stage Settings</button>
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:15px; cursor:pointer;">
+                <input type="checkbox" id="dpw-reset-ratings" ${existingConfig?.resetRatings !== false ? 'checked' : ''}>
+                <span style="font-size:12px; color:var(--text-main);">Reset all player Ratings to 1000 at start of stage</span>
+            </label>
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button id="dpw-back" style="background:transparent; color:var(--text-muted); border:none; cursor:pointer; font-weight:bold; font-size:14px; display:flex; align-items:center; gap:6px;">
+                    ${getIcon('arrowLeft', 14)} Back
+                </button>
+                <button id="dpw-save" style="background:var(--accent); color:var(--text-on-accent); font-weight:bold; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                    ${getIcon('save', 16)} Save Stage Settings
+                </button>
+            </div>
         `;
 
         modal.innerHTML = html;
