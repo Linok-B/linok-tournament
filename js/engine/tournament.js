@@ -79,8 +79,6 @@ export class Tournament {
         return true;
     }
 
-    // In js/engine/tournament.js - Update startTournament()
-
     startTournament() {
         if (this.players.length < 2 || this.settings.pipeline.length === 0) return false;
         
@@ -147,8 +145,30 @@ export class Tournament {
     }
 
     executeTransition(playersForNextStage, config, nextStageIndex) {
-        // Ensure format registry is loaded
         const formatEngine = getFormat(config.type);
+
+        // --- NEW: DYNAMIC DPW MATH CALCULATION ---
+        if (config.type === "dpw_swiss") {
+            let sumDiff = 0, pairs = 0;
+            for(let i=0; i<playersForNextStage.length; i++) {
+                for(let j=i+1; j<playersForNextStage.length; j++) {
+                    const ts1 = playersForNextStage[i].metadata?.dpwTS || 0;
+                    const ts2 = playersForNextStage[j].metadata?.dpwTS || 0;
+                    sumDiff += Math.abs(ts1 - ts2);
+                    pairs++;
+                }
+            }
+            const avgDiff = pairs > 0 ? (sumDiff / pairs) : 0;
+            const C_TS = Math.max(4 * avgDiff, 1);
+
+            const totalRounds = config.maxRounds || Math.max(1, Math.ceil(Math.log2(playersForNextStage.length)));
+            const r_ramp = Math.max(1, Math.floor(totalRounds / 3));
+            const K_base = (config.target_spread || 200) / totalRounds;
+
+            // Freeze the math for this specific stage execution!
+            config.computedMath = { C_TS, K_base, r_ramp, totalRounds };
+        }
+
         const stageData = formatEngine.initStage(playersForNextStage, config);
 
         this.stages.push({
@@ -161,7 +181,6 @@ export class Tournament {
 
         this.recalculateAllStats();
 
-        // Trigger save and update
         import('../store/localData.js').then(({ saveTournamentLocally }) => {
             saveTournamentLocally(this);
             document.getElementById('btn-add-player').dispatchEvent(new Event('stateChanged'));
@@ -233,24 +252,28 @@ export class Tournament {
 
         // Tally up every completed match
         this.stages.forEach(stage => {
+            // --- CHRONOLOGICAL RATING RESET ---
+            if (stage.config.type === "dpw_swiss" && stage.config.resetRatings !== false) {
+                this.players.forEach(p => p.stats.dpwRating = 1000);
+            }
             stage.data.rounds.forEach(round => {
                 round.forEach(match => {
 
                     const p1 = this.players.find(p => p.id === match.player1?.id);
                     const p2 = this.players.find(p => p.id === match.player2?.id);
 
-                    // --- PRE-CALCULATE DPW DELTAS FOR UI (Frozen in Time) ---
+                    // --- PRE-CALCULATE DPW DELTAS FOR UI ---
                     if (stage.config.type === "dpw_swiss" && p1 && p2 && !match.isBye) {
                         const p1TS = p1.metadata?.dpwTS ?? 0;
                         const p2TS = p2.metadata?.dpwTS ?? 0;
                         
-                        const C_TS = Math.max(stage.config.C_TS ?? 1, 1);  
+                        const math = stage.config.computedMath || {};
+                        const C_TS = math.C_TS ?? 1;  
+                        const K_base = math.K_base ?? 20; 
+                        const r_ramp = math.r_ramp ?? 1;
+                        
                         const C_R = 400;
                         const beta = stage.config.beta ?? 0.7;
-                        
-                        // Engine now just reads the explicitly saved values!
-                        const K_base = stage.config.K_base ?? 20; 
-                        const r_ramp = stage.config.r_ramp ?? 1;
                         const K_r = K_base * Math.min(1, match.round / r_ramp);  
                         
                         const D = beta * ((p1TS - p2TS) / C_TS) + (1 - beta) * ((p1.stats.dpwRating - p2.stats.dpwRating) / C_R);
