@@ -368,6 +368,27 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
     // 1. Handle "Submit Score" Button
     if (e.target && e.target.classList.contains('btn-report')) {
         const matchId = e.target.getAttribute('data-matchid');
+
+        // STAGE TRANSITION GUARD (DPW Validation)
+        const activeStage = currentTournament.stages[currentTournament.stages.length - 1];
+        if (activeStage) {
+            const currentRound = activeStage.data.rounds[activeStage.data.rounds.length - 1];
+            const unfinishedMatches = currentRound.filter(m => m.winner === null && !m.isBye);
+            
+            // If this is the last unfinished match, submitting it MIGHT end the stage.
+            if (unfinishedMatches.length === 1 && unfinishedMatches[0].id === matchId) {
+                const nextConfig = currentTournament.settings.pipeline[currentTournament.stages.length];
+                
+                // If the next stage is DPW, verify all SURVIVING players have a valid Team Score!
+                if (nextConfig && nextConfig.type === "dpw_swiss") {
+                    const missingPlayer = currentTournament.players.find(p => !p.isEliminated && p.metadata?.dpwTS === undefined);
+                    if (missingPlayer) {
+                        alert(`Cannot finish stage! Surviving player '${missingPlayer.name}' is missing a DPW Team Score. Please click the Gear icon in the Tournament Stages sidebar to configure their team before submitting this final match.`);
+                        return; // Halt execution!
+                    }
+                }
+            }
+        }
         
         // Safely grab the inputs. If they don't exist in the DOM, default to '0'
         const s1Input = document.getElementById(`s1-${matchId}`);
