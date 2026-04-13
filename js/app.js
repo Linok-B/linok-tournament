@@ -21,7 +21,7 @@ if (savedData) {
 }
 
 
-// --- SETTINGS MODAL LOGIC ---
+// SETTINGS MODAL LOGIC
 
 const settingsModal = document.getElementById('settings-modal');
 
@@ -57,7 +57,7 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     document.getElementById('setting-custom-colors').style.display = (ui.theme === "custom") ? "grid" : "none";
 });
 
-// --- TIEBREAKER BUILDER LOGIC ---
+// TIEBREAKER BUILDER LOGIC
 const TB_NAMES = {
     "placement": "Tournament Placement",
     "points": "Match Points", "dpw_rating": "DPW Rating", "game_differential": "Game W-L Differential",
@@ -182,10 +182,12 @@ function renderBlueprintList() {
         list.innerHTML += `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isLocked ? 'var(--success)' : 'var(--accent)'};">
                 <span style="font-size: 13px;"><b>${index + 1}.</b> ${formatNames[stage.type]}${detailStr}</span>
-                <div>
-                    ${stage.type === 'dpw_swiss' && !isLocked ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--warning); border: none; cursor: pointer; display: flex; align-items: center; padding: 0 5px;" title="Edit Teams">${getIcon('gear', 14)}</button>` : ''}
+                
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    ${stage.type === 'dpw_swiss' && !isLocked ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Edit Teams">${getIcon('gear', 14)}</button>` : ''}
+                    
                     ${!isLocked 
-                        ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0 5px;">X</button>` 
+                        ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0;">X</button>` 
                         : '<span style="font-size:10px; color:var(--text-muted);">Locked</span>'}
                 </div>
             </div>
@@ -238,13 +240,23 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
         return;
     }
 
-    // DPW Failsafe
-    const hasDPW = currentTournament.settings.pipeline.some(s => s.type === "dpw_swiss");
-    if (hasDPW) {
-        const missingTS = currentTournament.players.find(p => p.metadata?.dpwTS === undefined);
-        if (missingTS) {
-            alert(`Wait! Player '${missingTS.name}' does not have a team weight (TS) assigned for DPW Swiss. Please click the ⚙️ icon in the Blueprint to assign their team.`);
-            return;
+    // DPW Failsafe Start Tournament
+    const firstStage = currentTournament.settings.pipeline[0];
+    if (firstStage && firstStage.type === "dpw_swiss") {
+        // If the host hasn't opened and saved the DPW modal, dpwData won't exist!
+        if (!firstStage.dpwData || Object.keys(firstStage.dpwData.playerJsons).length === 0) {
+            alert("Wait! You must configure the DPW Swiss teams before starting. Click the Gear icon in the Tournament Stages list.");
+            return; // Halt!
+        }
+        
+        // Ensure every single player has either a JSON or a Raw TS entered
+        const missingPlayer = currentTournament.players.find(p => 
+            !firstStage.dpwData.playerJsons[p.id] && firstStage.dpwData.rawTS[p.id] === undefined
+        );
+        
+        if (missingPlayer) {
+            alert(`Wait! Player '${missingPlayer.name}' does not have a Team Score assigned for DPW Swiss. Please click the Gear icon to assign their team.`);
+            return; // Halt!
         }
     }
 
@@ -377,15 +389,28 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
             
             // If this is the last unfinished match, submitting it MIGHT end the stage.
             if (unfinishedMatches.length === 1 && unfinishedMatches[0].id === matchId) {
-                const nextConfig = currentTournament.settings.pipeline[currentTournament.stages.length];
                 
-                // If the next stage is DPW, verify all SURVIVING players have a valid Team Score!
+                // STAGE TRANSITION GUARD
+                const nextConfig = currentTournament.settings.pipeline[currentTournament.stages.length];
                 if (nextConfig && nextConfig.type === "dpw_swiss") {
-                    const missingPlayer = currentTournament.players.find(p => !p.isEliminated && p.metadata?.dpwTS === undefined);
-                    if (missingPlayer) {
-                        alert(`Cannot finish stage! Surviving player '${missingPlayer.name}' is missing a DPW Team Score. Please click the Gear icon in the Tournament Stages sidebar to configure their team before submitting this final match.`);
-                        return; // Halt execution!
+                    
+                    if (!nextConfig.dpwData || Object.keys(nextConfig.dpwData.playerJsons).length === 0) {
+                        alert("Cannot finish stage! The upcoming DPW Swiss stage has not been configured. Click the Gear icon in the Tournament Stages list.");
+                        return; // Halt!
                     }
+
+                    // Check all SURVIVING players
+                    const missingPlayer = currentTournament.players.find(p => 
+                        !p.isEliminated && 
+                        !nextConfig.dpwData.playerJsons[p.id] && 
+                        nextConfig.dpwData.rawTS[p.id] === undefined
+                    );
+                    
+                    if (missingPlayer) {
+                        alert(`Cannot finish stage! Surviving player '${missingPlayer.name}' is missing a DPW Team Score. Please click the Gear icon to configure their team before submitting this final match.`);
+                        return; // Halt!
+                    }
+                }
                 }
             }
         }
@@ -555,7 +580,7 @@ document.getElementById('btn-clear-players').addEventListener('click', () => {
     }
 });
 
-// --- BLUEPRINT BUILDER EVENT LISTENERS ---
+// BLUEPRINT BUILDER EVENT LISTENERS
 
 // Add a new stage to the pipeline
 document.getElementById('btn-add-stage').addEventListener('click', () => {
@@ -587,7 +612,7 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
         return; // Halt normal execution
     }
 
-    // --- Standard Formats ---
+    // Standard Formats
     // Inject the active tiebreakers configured in the builder (cloned so they don't mutate later)
     const newStage = { type: type, tiebreakers: [...pendingTiebreakers] };
     
