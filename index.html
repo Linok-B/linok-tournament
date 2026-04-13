@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local Tournament Manager</title>
-    <link rel="icon" type="image/svg+xml" href="./LB_logo.svg">
+    <link rel="icon" type="image/svg+xml" href="./LB_tournament_favicon.svg">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -98,6 +98,10 @@
                 <button id="btn-export-data" style="background-color: var(--success); color: var(--text-on-accent); display:flex; justify-content:center; align-items:center; gap:8px;"><span data-icon="save"></span> Export to File</button>
                 <input type="file" id="file-import" accept=".json" style="display: none;">
                 <button id="btn-import-data" style="background-color: var(--warning); color: var(--text-on-accent); display:flex; justify-content:center; align-items:center; gap:8px;"><span data-icon="folder"></span> Import from File</button>
+            </div>
+            <!-- Privacy Button -->
+            <div style="margin-top: auto; text-align: center; padding-top: 20px;">
+                <button id="btn-privacy" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; font-size: 11px; text-decoration: underline;">Privacy Notice</button>
             </div>
         </aside>
 
@@ -304,6 +308,15 @@
             </div>
 
             <button id="btn-save-tb" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">Save Tiebreakers</button>
+        </div>
+    </div>
+    
+    <!-- PRIVACY MODAL -->
+    <div id="privacy-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.81); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; max-width: 400px; border: 2px solid var(--accent); text-align: center;">
+            <h2 style="color: var(--accent); margin-top: 0;">Privacy Notice</h2>
+            <p style="color: var(--text-main); font-size: 14px; line-height: 1.6;">This application runs entirely locally in your web browser. <br><br><strong>No data is collected, tracked, or sent to any external servers.</strong><br><br>All tournament data is saved strictly in your device's local storage and via the manual JSON export files.</p>
+            <button id="btn-close-privacy" style="margin-top: 20px; background: var(--accent); color: var(--text-on-accent); border: none; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold;">Close</button>
         </div>
     </div>
 
