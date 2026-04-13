@@ -147,7 +147,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 </div>
             </div>
             
-            <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
+            <div id="dpw-global-sv-container" style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; align-items:center;">
                 <label style="font-size:12px; color:var(--text-muted);">Set all unset units to:</label>
                 <input type="number" id="global-sv" min="0" style="width:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px;">
                 <button id="btn-apply-global" style="background:var(--success); color:var(--text-on-accent); border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Apply</button>
