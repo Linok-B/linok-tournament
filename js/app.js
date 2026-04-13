@@ -501,6 +501,29 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
 
     // 5. Force End Stage Early (W/ Options)
     if (e.target && e.target.id === 'btn-force-end-stage') {
+
+        // STAGE TRANSITION GUARD
+        const nextConfig = currentTournament.settings.pipeline[currentTournament.stages.length];
+        if (nextConfig && nextConfig.type === "dpw_swiss") {
+            
+            if (!nextConfig.dpwData || Object.keys(nextConfig.dpwData.playerJsons).length === 0) {
+                alert("Cannot force end stage! The upcoming DPW Swiss stage has not been configured. Click the Gear icon in the Tournament Stages list.");
+                return;
+            }
+
+            // Check all SURVIVING players
+            const missingPlayer = currentTournament.players.find(p => 
+                !p.isEliminated && 
+                !nextConfig.dpwData.playerJsons[p.id] && 
+                nextConfig.dpwData.rawTS[p.id] === undefined
+            );
+            
+            if (missingPlayer) {
+                alert(`Cannot force end stage! Surviving player '${missingPlayer.name}' is missing a DPW Team Score. Please click the Gear icon to configure their team before ending this stage.`);
+                return;
+            }
+        }
+        
         const activeStage = currentTournament.stages[currentTournament.stages.length - 1];
         const currentRound = activeStage.data.rounds[activeStage.data.rounds.length - 1];
         
