@@ -490,12 +490,12 @@ body.layout-classic #dpw-player-list > div {
 /* 7. Flatten the DPW Setup Modal (Page 2) */
 /* The "Set all unset units to" box */
 body.layout-classic #btn-apply-global { border-radius: 0 !important; }
-body.layout-classic #btn-apply-global[style*="background:rgba(0,0,0,0.3)"] {
+body.layout-classic #dpw-global-sv-container {
     background: transparent !important;
     border-radius: 0 !important;
     border-bottom: 1px dashed var(--border-main);
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
 
 /* The Units List container */
