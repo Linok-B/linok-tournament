@@ -183,7 +183,7 @@ function renderBlueprintList() {
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isLocked ? 'var(--success)' : 'var(--accent)'};">
                 <span style="font-size: 13px;"><b>${index + 1}.</b> ${formatNames[stage.type]}${detailStr}</span>
                 <div>
-                    ${stage.type === 'dpw_swiss' && !isLocked ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--warning); border: none; cursor: pointer; font-weight: bold; padding: 0 5px;" title="Edit Teams">⚙️</button>` : ''}
+                    ${stage.type === 'dpw_swiss' && !isLocked ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--warning); border: none; cursor: pointer; display: flex; align-items: center; padding: 0 5px;" title="Edit Teams">${getIcon('gear', 14)}</button>` : ''}
                     ${!isLocked 
                         ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0 5px;">X</button>` 
                         : '<span style="font-size:10px; color:var(--text-muted);">Locked</span>'}
