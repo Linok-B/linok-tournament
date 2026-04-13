@@ -411,7 +411,6 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
                         return; // Halt!
                     }
                 }
-                }
             }
         }
         
