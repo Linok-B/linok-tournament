@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="208.11" viewBox="0 0 200 208.11" fill="none" role="img">
+<title style="fill:none;stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Tournament favicon - podium hexagon</title>
+<defs>
+  <linearGradient id="grad" x1="41" y1="177" x2="165" y2="21" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#472380"/>
+    <stop offset="0.5" stop-color="#A72681"/>
+    <stop offset="1" stop-color="#E78888"/>
+  </linearGradient>
+</defs>
+
+<!-- Hexagon border -->
+<path d="M 184.68,45.7 L 101.99,2.08 C 100.61,1.29 98.93,1.26 97.52,2.01 L 15.61,45.06 C 14.37,45.74 14.01,46.81 14.06,48.52 L 14.18,52.71 L 14.11,151.94 C 14.11,153.49 14.79,155.02 16.38,155.71 L 96.98,197.56 C 98.72,198.46 100.5,198.14 101.88,197.38 L 183.79,155.08 C 185.1,154.46 185.46,153.32 185.46,151.94 L 185.19,47.91 C 185.19,47.01 185.08,46.21 184.68,45.7 Z M 173.86,146.36 L 100.09,185.61 C 99.41,186.02 98.92,185.88 98.51,185.67 L 25.68,146.61 V 52.47 L 99.12,13.08 L 173.86,52.47 V 146.36 Z" fill="url(#grad)" style="stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+<!-- Podium: total height = 58px (tallest step), bottom at y=129, top of 1st at y=71
+     Vertically centered in hex interior (~y=13 to y=186, center=99.5)
+     center - 58/2 = 70.5 → top=71, bottom=129
+     2nd step top=91, 3rd step top=105 -->
+<path d="&#10;  M 46,129&#10;  L 46,91&#10;  L 82,91&#10;  L 82,71&#10;  L 118,71&#10;  L 118,105&#10;  L 154,105&#10;  L 154,129&#10;  Z&#10;" fill="url(#grad)" style="stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+</svg>
