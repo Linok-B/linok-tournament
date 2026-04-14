@@ -826,3 +826,12 @@ document.getElementById('btn-reset-colors').addEventListener('click', () => {
     document.getElementById('color-success').value = "#a6e3a1";
     document.getElementById('color-danger').value = "#f38ba8";
 });
+
+// PRIVACY MODAL
+const privacyModal = document.getElementById('privacy-modal');
+document.getElementById('btn-privacy').addEventListener('click', () => {
+    privacyModal.style.display = 'flex';
+});
+document.getElementById('btn-close-privacy').addEventListener('click', () => {
+    privacyModal.style.display = 'none';
+});
