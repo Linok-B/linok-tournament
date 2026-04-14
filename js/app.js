@@ -840,6 +840,6 @@ document.getElementById('btn-close-privacy').addEventListener('click', () => {
 document.addEventListener('click', (e) => {
     const captureBtn = e.target.closest('#btn-capture-bracket');
     if (captureBtn) {
-        // Couldn't be implemented.
+        // Couldn't be implemented due to technical reasons. Button was to the left of the Force End Stage Early button.
     }
 });
