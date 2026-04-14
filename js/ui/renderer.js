@@ -201,11 +201,18 @@ export function renderBracket(tournament, containerId) {
     let html = `
         ${tabsHtml}
         <div class="stage-header-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: gray; font-size: 14px;">(Completed)</span>' : ''}</h2>
-            ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">${getIcon('stop', 14, "fill:currentColor;")} Force End Stage Early</button>` : ''}
+            <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: var(--text-muted); font-size: 14px;">(Completed)</span>' : ''}</h2>
+            
+            <div style="display:flex; gap:10px;">
+                <button id="btn-capture-bracket" style="background: var(--border-main); color: var(--text-main); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">
+                    ${getIcon('capture', 14)} Capture
+                </button>
+                
+                ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">${getIcon('stop', 14, "fill:currentColor;")} Force End</button>` : ''}
+            </div>
         </div>
         
-        <!-- THE NEW VIEWPORT (With the SVG Eye Button inside!) -->
+        <!-- THE VIEWPORT -->
         <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: var(--bg-bracket); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
             
             <button id="btn-streamer-mode" title="Toggle Streamer Mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
