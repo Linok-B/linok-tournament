@@ -242,11 +242,12 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     const svgLayer = document.getElementById('bracket-lines');
     
     // --- READ DYNAMIC SIZES FROM CSS ---
-   const rootStyles = getComputedStyle(document.documentElement);
+    const rootStyles = getComputedStyle(document.body);
+    
     const boxWidth = parseInt(rootStyles.getPropertyValue('--box-width')) || 280; 
     const boxHeight = parseInt(rootStyles.getPropertyValue('--box-height')) || 95;
     const gapX = parseInt(rootStyles.getPropertyValue('--gap-x')) || 60;  
-    const gapY = parseInt(rootStyles.getPropertyValue('--gap-y')) || 20;  
+    const gapY = parseInt(rootStyles.getPropertyValue('--gap-y')) || 20;
     
     const startX = 50; 
     const startY = 60;
