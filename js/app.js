@@ -817,15 +817,43 @@ document.getElementById('setting-ui-theme').addEventListener('change', (e) => {
     document.getElementById('setting-custom-colors').style.display = (e.target.value === "custom") ? "grid" : "none";
 });
 
+// --- SMART RESET COLORS BUTTON ---
 document.getElementById('btn-reset-colors').addEventListener('click', () => {
-    document.getElementById('color-bg-dark').value = "#1e1e2e";
-    document.getElementById('color-bg-panel').value = "#2a2a3e";
-    document.getElementById('color-bg-bracket').value = "#11111b";
-    document.getElementById('color-text-main').value = "#ffffff";
-    document.getElementById('color-text-muted').value = "#a6adc8";
-    document.getElementById('color-accent').value = "#89b4fa";
-    document.getElementById('color-success').value = "#a6e3a1";
-    document.getElementById('color-danger').value = "#f38ba8";
+    // 1. Check their last saved base theme (fallback to modern if null)
+    let baseTheme = "modern";
+    if (currentTournament.settings.ui && currentTournament.settings.ui.theme) {
+        baseTheme = currentTournament.settings.ui.theme;
+    }
+    
+    // If they were already in 'custom', we check what their layout preference is 
+    // to guess their preferred base palette (Modern vs Arcade)
+    if (baseTheme === "custom") {
+        const layout = currentTournament.settings.ui?.layout || "modern";
+        baseTheme = layout === "classic" ? "arcade" : "modern";
+    }
+
+    // 2. Load the exact Hex colors for the chosen base theme
+    if (baseTheme === "arcade") {
+        // Arcade Base Palette
+        document.getElementById('color-bg-dark').value = "#121212";
+        document.getElementById('color-bg-panel').value = "#1f1f1f";
+        document.getElementById('color-bg-bracket').value = "#080808";
+        document.getElementById('color-text-main').value = "#e0e0e0";
+        document.getElementById('color-text-muted').value = "#808080";
+        document.getElementById('color-accent').value = "#c238b3";
+        document.getElementById('color-success').value = "#c238b3";
+        document.getElementById('color-danger').value = "#d95a26";
+    } else {
+        // Catppuccin Modern Base Palette
+        document.getElementById('color-bg-dark').value = "#1e1e2e";
+        document.getElementById('color-bg-panel').value = "#2a2a3e";
+        document.getElementById('color-bg-bracket').value = "#11111b";
+        document.getElementById('color-text-main').value = "#ffffff";
+        document.getElementById('color-text-muted').value = "#a6adc8";
+        document.getElementById('color-accent').value = "#89b4fa";
+        document.getElementById('color-success').value = "#a6e3a1";
+        document.getElementById('color-danger').value = "#f38ba8";
+    }
 });
 
 // PRIVACY MODAL
