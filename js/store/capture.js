@@ -3,12 +3,17 @@ import { layoutState } from '../ui/renderer.js';
 export function exportBracketSVG(tournamentName) {
     if (!layoutState.stage) return;
 
-    // 1. Grab current CSS Theme variables from the DOM
-    const rs = getComputedStyle(document.documentElement);
+    // 1. Grab current CSS Theme variables from the BODY (so it catches .theme-arcade and .layout-classic)
+    const rs = getComputedStyle(document.body);
+    
     const boxWidth = parseInt(rs.getPropertyValue('--box-width')) || 280;
     const boxHeight = parseInt(rs.getPropertyValue('--box-height')) || 95;
     const gapX = parseInt(rs.getPropertyValue('--gap-x')) || 60;
     
+    // Check if the Classic Layout is active to remove border-radius
+    const isClassic = document.body.classList.contains('layout-classic');
+    const rx = isClassic ? 0 : 4; // Sharp corners for classic!
+
     const colors = {
         bgBracket: rs.getPropertyValue('--bg-bracket').trim() || '#080808',
         bgPanel: rs.getPropertyValue('--bg-panel').trim() || '#1f1f1f',
@@ -20,7 +25,7 @@ export function exportBracketSVG(tournamentName) {
         warning: rs.getPropertyValue('--warning').trim() || '#d4a017'
     };
 
-    // 2. Build the internal stylesheet (so the SVG works offline)
+    // 2. Build the internal stylesheet
     const svgStyles = `
         :root {
             --bg-bracket: ${colors.bgBracket}; --bg-panel: ${colors.bgPanel};
@@ -37,7 +42,7 @@ export function exportBracketSVG(tournamentName) {
         const xPos = 50 + (r * (boxWidth + gapX)) + (boxWidth / 2);
         headersHTML += `<text x="${xPos}" y="30" fill="var(--text-main)" font-size="18" font-weight="bold" text-anchor="middle">Round ${r + 1}</text>`;
     }
-
+    
     // 4. Draw Match Boxes
     let boxesHTML = "";
     Object.values(layoutState.matchDataMap).forEach(data => {
@@ -48,23 +53,29 @@ export function exportBracketSVG(tournamentName) {
         const isGhost = m.isSimulated || m.isGhost;
 
         // Base Box
-        boxesHTML += `<rect x="${data.leftX}" y="${topY}" width="${boxWidth}" height="${boxHeight}" fill="var(--bg-panel)" stroke="var(--border-main)" stroke-width="2" rx="4" ${isGhost ? 'stroke-dasharray="5,5" fill-opacity="0.3"' : ''} />`;
+        const dash = isGhost ? 'stroke-dasharray="5,5"' : '';
+        const opacity = isGhost ? '0.3' : (isClassic ? '0' : '1'); // Transparent background in Classic mode
+        
+        boxesHTML += `<rect x="${data.leftX}" y="${topY}" width="${boxWidth}" height="${boxHeight}" fill="var(--bg-panel)" fill-opacity="${opacity}" stroke="var(--border-main)" stroke-width="2" rx="${rx}" ${dash} />`;
 
         if (isGhost) {
-            boxesHTML += `<text x="${data.leftX + boxWidth/2}" y="${data.centerY}" fill="var(--text-muted)" font-size="14" font-style="italic" text-anchor="middle">TBD</text>`;
+            boxesHTML += `<text x="${data.leftX + boxWidth/2}" y="${data.centerY}" fill="var(--text-muted)" font-size="14" font-style="italic" text-anchor="middle" dominant-baseline="middle">TBD</text>`;
             return;
         }
 
         // Left Border Accent
         const borderColor = m.winner ? 'var(--success)' : (!layoutState.isActive ? 'var(--danger)' : 'var(--border-main)');
-        boxesHTML += `<rect x="${data.leftX}" y="${topY}" width="4" height="${boxHeight}" fill="${borderColor}" rx="2" />`;
+        boxesHTML += `<rect x="${data.leftX}" y="${topY}" width="4" height="${boxHeight}" fill="${borderColor}" rx="${rx===0 ? 0 : 2}" />`;
 
-        // Bracket Label
+        // Bracket Label (Moved INSIDE the top-right corner)
         let bLabel = ""; let bColor = "var(--text-muted)";
         if (m.bracket === "winners") { bLabel = "[W]"; bColor = "var(--success)"; }
         if (m.bracket === "losers") { bLabel = "[L]"; bColor = "var(--danger)"; }
         if (m.bracket === "grand_finals") { bLabel = m.bracketReset ? "[RESET]" : "[GF]"; bColor = "var(--warning)"; }
-        boxesHTML += `<text x="${data.leftX + boxWidth - 5}" y="${topY - 5}" fill="${bColor}" font-size="10" text-anchor="end">${bLabel}</text>`;
+        
+        if (bLabel !== "") {
+            boxesHTML += `<text x="${data.leftX + boxWidth - 8}" y="${topY + 14}" fill="${bColor}" font-size="10" text-anchor="end">${bLabel}</text>`;
+        }
 
         // Player Text Logic
         const p1Name = m.player1 ? (m.player1.originalSeed ? `[${m.player1.originalSeed}] ${m.player1.name}` : m.player1.name) : "TBD";
@@ -74,15 +85,15 @@ export function exportBracketSVG(tournamentName) {
         const p1Weight = m.winner?.id === m.player1?.id ? 'bold' : 'normal';
         const p2Weight = m.winner?.id === m.player2?.id ? 'bold' : 'normal';
 
-        // P1 & P2 Text (Y offsets calculated based on standard box height)
+        // P1 & P2 Text (Perfectly centered vertically in their respective halves of the box)
         const p1Y = topY + (boxHeight * 0.35);
         const p2Y = topY + (boxHeight * 0.70);
 
-        boxesHTML += `<text x="${data.leftX + 15}" y="${p1Y}" fill="${p1Color}" font-size="14" font-weight="${p1Weight}">${p1Name}</text>`;
-        boxesHTML += `<text x="${data.leftX + boxWidth - 10}" y="${p1Y}" fill="var(--text-main)" font-size="14" font-weight="bold" text-anchor="end">${m.score1}</text>`;
+        boxesHTML += `<text x="${data.leftX + 15}" y="${p1Y}" fill="${p1Color}" font-size="14" font-weight="${p1Weight}" dominant-baseline="middle">${p1Name}</text>`;
+        boxesHTML += `<text x="${data.leftX + boxWidth - 15}" y="${p1Y}" fill="var(--text-main)" font-size="14" font-weight="bold" text-anchor="end" dominant-baseline="middle">${m.score1}</text>`;
         
-        boxesHTML += `<text x="${data.leftX + 15}" y="${p2Y}" fill="${p2Color}" font-size="14" font-weight="${p2Weight}">${p2Name}</text>`;
-        boxesHTML += `<text x="${data.leftX + boxWidth - 10}" y="${p2Y}" fill="var(--text-main)" font-size="14" font-weight="bold" text-anchor="end">${m.score2}</text>`;
+        boxesHTML += `<text x="${data.leftX + 15}" y="${p2Y}" fill="${p2Color}" font-size="14" font-weight="${p2Weight}" dominant-baseline="middle">${p2Name}</text>`;
+        boxesHTML += `<text x="${data.leftX + boxWidth - 15}" y="${p2Y}" fill="var(--text-main)" font-size="14" font-weight="bold" text-anchor="end" dominant-baseline="middle">${m.score2}</text>`;
     });
 
     // 5. Construct Final SVG String
