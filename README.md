@@ -1,4 +1,4 @@
-# Linok's Local Tournament Manager
+# Linok-B's Local Tournament Manager
 
 A fully client-side, zero-dependency tournament management web application. Designed for privacy and customization.
 
