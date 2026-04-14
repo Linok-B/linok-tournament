@@ -452,7 +452,7 @@ body.layout-classic .match-score-input {
 }
 body.layout-classic .match-info-row { 
     height: 16px !important; 
-    /* margin: 0 !important; */
+    margin: 0 !important;
     margin-top: 3px !important
 }
 body.layout-classic .match-box-content { 
