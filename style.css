@@ -333,6 +333,7 @@ body.streamer-mode .display-panel {
     height: 18px;
     font-size: 10px;
     color: var(--text-muted);
+    margin-top: 4px; /* Pushes the Ties row down slightly */
 }
 
 .btn-match-action {
@@ -451,7 +452,8 @@ body.layout-classic .match-score-input {
 }
 body.layout-classic .match-info-row { 
     height: 16px !important; 
-    margin: 0 !important;
+    /* margin: 0 !important; */
+    margin-top: 3px !important
 }
 body.layout-classic .match-box-content { 
     gap: 2px !important; 
@@ -459,6 +461,11 @@ body.layout-classic .match-box-content {
 
 body.layout-classic .btn-match-action { 
     border-radius: 0 !important; 
+}
+
+/* Make the Ties input text explicitly smaller than the score inputs */
+body.layout-classic .match-info-row .match-score-input {
+    font-size: 9px !important;
 }
 
 /* 3. Flatten the Sidebar "Boxception" */
