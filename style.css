@@ -429,34 +429,21 @@ body.layout-classic div[style*="border-radius: 8px"] {
     border-radius: 0 !important; /* Forces modals to have sharp corners */
 }
 
-/* 2. Flatten the Match Boxes */
+/* 2. Flatten & Compress the Match Boxes */
 body.layout-classic .match-box {
-    border-radius: 0px;
-    background-color: var(--bg-panel);
-    border: 1px solid var(--border-main);
-    box-shadow: none;
+    border-radius: 0px !important;
+    background-color: var(--bg-panel) !important;
+    border: 1px solid var(--border-main) !important;
+    box-shadow: none !important;
+    padding: 4px 8px !important; /* Shrink vertical padding so the box can shrink! */
 }
 
-body.layout-classic .match-player-row {
-    height: 18px; 
-    font-size: 12px; /* Make text slightly smaller so it fits! */
-}
-
-body.layout-classic .match-score-input {
-    height: 18px;
-    font-size: 12px;
-}
-
-body.layout-classic .match-info-row {
-    height: 14px;
-    font-size: 9px;
-    margin-top: 2px;
-}
-
-body.layout-classic .match-box-content {
-    gap: 0px; /* Remove the extra vertical spacing between rows */
-}
-body.layout-classic .btn-match-action { border-radius: 0; }
+/* Squeeze the internal rows so they physically fit inside 75px */
+body.layout-classic .match-player-row { height: 18px !important; }
+body.layout-classic .match-score-input { height: 18px !important; }
+body.layout-classic .match-info-row { height: 14px !important; }
+body.layout-classic .match-box-content { gap: 1px !important; }
+body.layout-classic .btn-match-action { border-radius: 0 !important; }
 
 /* 3. Flatten the Sidebar "Boxception" */
 body.layout-classic .control-group {
