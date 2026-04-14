@@ -439,11 +439,27 @@ body.layout-classic .match-box {
 }
 
 /* Squeeze the internal rows so they physically fit inside 75px */
-body.layout-classic .match-player-row { height: 18px !important; }
-body.layout-classic .match-score-input { height: 18px !important; }
-body.layout-classic .match-info-row { height: 14px !important; }
-body.layout-classic .match-box-content { gap: 1px !important; }
-body.layout-classic .btn-match-action { border-radius: 0 !important; }
+body.layout-classic .match-player-row { 
+    height: 20px !important; 
+    margin: 0 !important;
+}
+body.layout-classic .match-score-input { 
+    height: 20px !important; 
+    padding: 0 4px !important; /* Strips browser default padding so it can shrink */
+    font-size: 11px !important;
+    margin: 0 !important;
+}
+body.layout-classic .match-info-row { 
+    height: 16px !important; 
+    margin: 0 !important;
+}
+body.layout-classic .match-box-content { 
+    gap: 2px !important; 
+}
+
+body.layout-classic .btn-match-action { 
+    border-radius: 0 !important; 
+}
 
 /* 3. Flatten the Sidebar "Boxception" */
 body.layout-classic .control-group {
