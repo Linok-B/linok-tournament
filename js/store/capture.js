@@ -1,5 +1,11 @@
 import { layoutState } from '../ui/renderer.js';
 
+// Truncates long names specifically for SVG text rendering
+function trimName(name, maxLength = 13) {
+    if (!name) return "TBD";
+    return name.length > maxLength ? name.substring(0, maxLength) + "..." : name;
+}
+
 export function exportBracketSVG(tournamentName) {
     if (!layoutState.stage) return;
 
@@ -78,8 +84,12 @@ export function exportBracketSVG(tournamentName) {
         }
 
         // Player Text Logic
-        const p1Name = m.player1 ? (m.player1.originalSeed ? `[${m.player1.originalSeed}] ${m.player1.name}` : m.player1.name) : "TBD";
-        const p2Name = m.player2 ? (m.player2.originalSeed ? `[${m.player2.originalSeed}] ${m.player2.name}` : m.player2.name) : "TBD";
+        let p1Name = m.player1 ? trimName(m.player1.name, 13) : "TBD";
+        let p2Name = m.player2 ? trimName(m.player2.name, 13) : "TBD";
+        // Add the seed to the start of the string if it exists
+        if (m.player1 && m.player1.originalSeed) p1Name = `[${m.player1.originalSeed}] ${p1Name}`;
+        if (m.player2 && m.player2.originalSeed) p2Name = `[${m.player2.originalSeed}] ${p2Name}`;
+        
         const p1Color = m.winner?.id === m.player1?.id ? 'var(--success)' : 'var(--text-main)';
         const p2Color = m.winner?.id === m.player2?.id ? 'var(--success)' : 'var(--text-main)';
         const p1Weight = m.winner?.id === m.player1?.id ? 'bold' : 'normal';
