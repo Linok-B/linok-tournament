@@ -103,6 +103,16 @@ export function exportBracketSVG(tournamentName) {
         boxesHTML += `<text x="${data.leftX + boxWidth - 15}" y="${p1Y}" fill="var(--text-main)" font-size="14" font-weight="bold" text-anchor="end" dominant-baseline="middle">${m.score1}</text>`;
         
         boxesHTML += `<text x="${data.leftX + 15}" y="${p2Y}" fill="${p2Color}" font-size="14" font-weight="${p2Weight}" dominant-baseline="middle">${p2Name}</text>`;
+        
+        let statusText = m.isThirdPlaceMatch ? '3rd Place' : (m.isBye ? 'Auto-Bye' : (m.winner ? 'Completed' : 'Pending'));
+        const bottomY = topY + boxHeight - 8; // Safely pins it to the bottom of the box
+        
+        boxesHTML += `<text x="${data.leftX + 15}" y="${bottomY}" fill="var(--text-muted)" font-size="10">${statusText}</text>`;
+        
+        if (m.draws && m.draws > 0) {
+            boxesHTML += `<text x="${data.leftX + boxWidth - 15}" y="${bottomY}" fill="var(--text-muted)" font-size="10" text-anchor="end">${m.draws} Ties</text>`;
+        }
+        
         boxesHTML += `<text x="${data.leftX + boxWidth - 15}" y="${p2Y}" fill="var(--text-main)" font-size="14" font-weight="bold" text-anchor="end" dominant-baseline="middle">${m.score2}</text>`;
     });
 
