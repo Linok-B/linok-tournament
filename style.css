@@ -436,8 +436,26 @@ body.layout-classic .match-box {
     border: 1px solid var(--border-main);
     box-shadow: none;
 }
-body.layout-classic .match-player-row { height: 18px; }
-body.layout-classic .match-score-input { height: 18px; }
+
+body.layout-classic .match-player-row {
+    height: 18px; 
+    font-size: 12px; /* Make text slightly smaller so it fits! */
+}
+
+body.layout-classic .match-score-input {
+    height: 18px;
+    font-size: 12px;
+}
+
+body.layout-classic .match-info-row {
+    height: 14px;
+    font-size: 9px;
+    margin-top: 2px;
+}
+
+body.layout-classic .match-box-content {
+    gap: 0px; /* Remove the extra vertical spacing between rows */
+}
 body.layout-classic .btn-match-action { border-radius: 0; }
 
 /* 3. Flatten the Sidebar "Boxception" */
