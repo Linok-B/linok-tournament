@@ -4,6 +4,7 @@ import { renderBracket, renderStandings } from './ui/renderer.js';
 import { exportTournamentJSON, importTournamentJSON } from './store/export.js';
 import { openDPWSetupModal } from './ui/dpwSetup.js';
 import { getIcon } from './ui/icons.js';
+import { exportBracketSVG } from './store/capture.js';
 
 // Auto-inject SVGs into the HTML
 document.querySelectorAll('[data-icon]').forEach(el => {
@@ -836,10 +837,9 @@ document.getElementById('btn-close-privacy').addEventListener('click', () => {
     privacyModal.style.display = 'none';
 });
 
-// BRACKET CAPTURE ENGINE
+// NATIVE SVG CAPTURE ENGINE
 document.addEventListener('click', (e) => {
-    const captureBtn = e.target.closest('#btn-capture-bracket');
-    if (captureBtn) {
-        // Couldn't be implemented due to technical reasons. Button was to the left of the Force End Stage Early button.
+    if (e.target && e.target.closest('#btn-capture-bracket')) {
+        exportBracketSVG(currentTournament.settings.name);
     }
 });
