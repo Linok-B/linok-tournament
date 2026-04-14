@@ -204,11 +204,7 @@ export function renderBracket(tournament, containerId) {
             <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: var(--text-muted); font-size: 14px;">(Completed)</span>' : ''}</h2>
             
             <div style="display:flex; gap:10px;">
-                <button id="btn-capture-bracket" style="background: var(--border-main); color: var(--text-main); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">
-                    ${getIcon('capture', 14)} Capture
-                </button>
-                
-                ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">${getIcon('stop', 14, "fill:currentColor;")} Force End</button>` : ''}
+                ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">${getIcon('stop', 14, "fill:currentColor;")} Force End Stage Early</button>` : ''}
             </div>
         </div>
         
