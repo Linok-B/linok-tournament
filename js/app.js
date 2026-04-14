@@ -840,48 +840,6 @@ document.getElementById('btn-close-privacy').addEventListener('click', () => {
 document.addEventListener('click', (e) => {
     const captureBtn = e.target.closest('#btn-capture-bracket');
     if (captureBtn) {
-        const board = document.getElementById('bracket-board');
-        if (!board) return;
-
-        // 1. Get true dimensions of the bracket
-        const width = parseInt(board.style.width) || 2000;
-        const height = parseInt(board.style.height) || 1000;
-        
-        // 2. Extract all CSS rules from the document so the SVG looks identical to the app
-        let cssText = '';
-        for (let sheet of document.styleSheets) {
-            try {
-                for (let rule of sheet.cssRules) {
-                    cssText += rule.cssText + '\n';
-                }
-            } catch(err) { /* Ignore CORS restricted stylesheets */ }
-        }
-
-        // 3. Force content-visibility to render everything (override the performance culling!)
-        cssText += ` .match-box { content-visibility: visible !important; } `;
-
-        // 4. Get the active theme classes to apply to the wrapper
-        const activeThemeClasses = document.body.className;
-        const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-bracket').trim() || '#11111b';
-
-        // 5. Build the standalone SVG file
-        const svgString = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-                <style>${cssText}</style>
-                <rect width="100%" height="100%" fill="${bgColor}"/>
-                <foreignObject width="100%" height="100%">
-                    <div xmlns="http://www.w3.org/1999/xhtml" class="${activeThemeClasses}" style="width:100%; height:100%; position:relative;">
-                        ${board.innerHTML}
-                    </div>
-                </foreignObject>
-            </svg>
-        `;
-
-        // 6. Trigger Download
-        const blob = new Blob([svgString], { type: "image/svg+xml" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${currentTournament.settings.name.replace(/[^a-zA-Z0-9-_]/g, '_')}_Bracket.svg`;
-        a.click();
+        // Couldn't be implemented.
     }
 });
