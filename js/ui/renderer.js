@@ -2,6 +2,9 @@ import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 import { simulatePreview } from '../engine/formats/registry.js';
 import { getIcon } from './icons.js';
 
+// Holds the mathematical layout data for the Native SVG Exporter
+export const layoutState = { matchDataMap: {}, paths: "", width: 0, height: 0, rounds: 0, stage: null, isActive: false };
+
 export function renderPlayerList(players, containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = ''; 
@@ -204,7 +207,11 @@ export function renderBracket(tournament, containerId) {
             <h2>Stage ${stageToRender.stageNumber}: ${stageToRender.config.type.replace('_', ' ').toUpperCase()} ${stageToRender.status === "completed" ? '<span style="color: var(--text-muted); font-size: 14px;">(Completed)</span>' : ''}</h2>
             
             <div style="display:flex; gap:10px;">
-                ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">${getIcon('stop', 14, "fill:currentColor;")} Force End Stage Early</button>` : ''}
+                <button id="btn-capture-bracket" style="background: var(--border-main); color: var(--text-main); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">
+                    ${getIcon('capture', 14)} Capture
+                </button>
+                
+                ${isActiveStage ? `<button id="btn-force-end-stage" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; align-items:center; gap:6px;">${getIcon('stop', 14, "fill:currentColor;")} Force End</button>` : ''}
             </div>
         </div>
         
@@ -498,6 +505,15 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     board.style.height = `${maxY + 200}px`;
     svgLayer.style.width = `${maxX + 200}px`;
     svgLayer.style.height = `${maxY + 200}px`;
+
+    // SAVE STATE FOR EXPORTER
+    layoutState.matchDataMap = matchDataMap;
+    layoutState.paths = svgPaths.join('');
+    layoutState.width = maxX + 200;
+    layoutState.height = maxY + 200;
+    layoutState.rounds = totalRoundsToDraw;
+    layoutState.stage = stage;
+    layoutState.isActive = isActiveStage;
 
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
