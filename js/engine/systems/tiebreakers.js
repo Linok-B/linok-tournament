@@ -7,13 +7,12 @@ const TB_DEFAULTS = {
 };
 
 export function calculateTiebreakers(players, stagesConfig) {
-    // 1. Gather all opponents for each player AND cache Head-to-Head results
+    // 1. Gather opponents for Buchholz AND cache H2H win counts
     players.forEach(p => {
         p.stats.buchholz = 0;
         p.stats.median_buchholz = 0;
         p.stats.opponents = [];
-        p.stats.beat = new Set();
-        p.stats.lostTo = new Set();
+        p.stats.h2hWins = new Map();
     });
 
     stagesConfig.forEach(stage => {
@@ -25,25 +24,22 @@ export function calculateTiebreakers(players, stagesConfig) {
                 const p2id = match.player2?.id;
 
                 // Cache opponents for Buchholz
-                if (p1id) {
+                if (p1id && p2id) {
                     const p1 = players.find(x => x.id === p1id);
-                    if (p1 && p2id) p1.stats.opponents.push(p2id);
-                }
-                if (p2id) {
                     const p2 = players.find(x => x.id === p2id);
-                    if (p2 && p1id) p2.stats.opponents.push(p1id);
+                    if (p1) p1.stats.opponents.push(p2id);
+                    if (p2) p2.stats.opponents.push(p1id);
                 }
 
-                // Cache Head-to-Head results
+                // Cache Head-to-Head WIN COUNTS
                 if (match.winner !== "tie" && p1id && p2id) {
                     const wId = match.winner.id;
                     const lId = (wId === p1id) ? p2id : p1id;
                     const winnerObj = players.find(p => p.id === wId);
-                    const loserObj = players.find(p => p.id === lId);
                     
-                    if (winnerObj && loserObj) {
-                        winnerObj.stats.beat.add(lId);
-                        loserObj.stats.lostTo.add(wId);
+                    if (winnerObj) {
+                        const currentWins = winnerObj.stats.h2hWins.get(lId) || 0;
+                        winnerObj.stats.h2hWins.set(lId, currentWins + 1);
                     }
                 }
             });
@@ -122,10 +118,16 @@ export function calculateTiebreakers(players, stagesConfig) {
             }
             
             if (rule === "head_to_head") {
-                const aBeatB = a.stats.beat.has(b.id);
-                const bBeatA = b.stats.beat.has(a.id);
-                if (aBeatB && !bBeatA) return -1; 
-                if (bBeatA && !aBeatB) return 1;  
+                if (!a.id || !b.id) return 0; // Safety guard
+                
+                // Compare how many times A beat B vs how many times B beat A
+                const aWinsVsB = a.stats.h2hWins.get(b.id) || 0;
+                const bWinsVsA = b.stats.h2hWins.get(a.id) || 0;
+                
+                // If they played each other and one won more times, that player is ranked higher
+                if (aWinsVsB !== bWinsVsA) {
+                    return bWinsVsA - aWinsVsB;
+                }
             }
             
             if (rule === "elo") {
