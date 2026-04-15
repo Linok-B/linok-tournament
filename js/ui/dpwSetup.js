@@ -2,7 +2,7 @@ import { getIcon } from './icons.js';
 
 export function openDPWSetupModal(players, rounds, cut, onComplete, existingConfig = null) {
     const overlay = document.createElement('div');
-    // Change background slightly (0.81) so the global app.js listener ignores it (ts should be handled better but whatever)
+    // Background of 0.81 so the global app.js listener ignores it (ts should be handled better but whatever)
     overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.81); z-index:9999; display:flex; justify-content:center; align-items:center;";
 
     const modal = document.createElement('div');
@@ -119,7 +119,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                         parsedPlayerTeams[p.id] = teamUnits;
                     } catch (e) {
                         alert(`Invalid JSON for player: ${p.name}. Please check the formatting.`);
-                        return; // Halt execution
+                        return;
                     }
                 } else {
                     delete cache.rawTS[p.id];
@@ -211,7 +211,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             });
         };
 
-        // --- EXPORT SVS ---
+        // EXPORT SVS
         document.getElementById('dpw-btn-export').onclick = () => {
             const exportData = {
                 unitSVs: {},
@@ -229,7 +229,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             a.click();
         };
 
-        // --- IMPORT SVS ---
+        // IMPORT SVS
         document.getElementById('dpw-btn-import').onclick = () => document.getElementById('dpw-file-import').click();
         document.getElementById('dpw-file-import').onchange = (e) => {
             const file = e.target.files[0];
