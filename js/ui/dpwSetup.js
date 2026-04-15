@@ -175,12 +175,16 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             
             <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <div style="flex:1;">
-                    <label style="font-size:11px; color:var(--text-muted);" title="Desired rating gap between 1st and last place">Target Spread (Default 200)</label>
+                    <label style="font-size:11px; color:var(--text-muted);" title="Desired rating gap between 1st and last place">Target Spread (Def: 200)</label>
                     <input type="number" id="dpw-spread" value="${existingConfig?.target_spread || 200}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main);">
                 </div>
                 <div style="flex:1;">
-                    <label style="font-size:11px; color:var(--text-muted);" title="0 = Pure Rating, 1 = Pure Team Score">Beta Weight (Default 0.7)</label>
+                    <label style="font-size:11px; color:var(--text-muted);" title="0 = Pure Rating, 1 = Pure Team Score">Beta Weight (Def: 0.7)</label>
                     <input type="number" step="0.1" id="dpw-beta" value="${existingConfig?.beta || 0.7}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main);">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:11px; color:var(--text-muted);" title="Scales the TS punishment. Recommended: 3 to 5">TS Multiplier (Def: 4)</label>
+                    <input type="number" step="0.1" id="dpw-ts-mult" value="${existingConfig?.ts_multiplier || 4}" style="width:100%; box-sizing:border-box; padding:5px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main);">
                 </div>
             </div>
 
