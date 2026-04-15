@@ -797,6 +797,7 @@ document.addEventListener('playerListReordered', (e) => {
     
     currentTournament.players.forEach((p, index) => {
         p.seed = index + 1;
+        p.originalSeed = index + 1;
     });
     
     // 2. Target the correct sub-list
