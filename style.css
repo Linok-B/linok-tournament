@@ -33,6 +33,11 @@ input, select, textarea {
     border: 1px solid var(--border-main);
 }
 
+input:focus, select:focus, textarea:focus {
+    outline: none !important; /* Kill the browser halo */
+    border-color: var(--accent) !important; /* Replace it with the theme accent color */
+}
+
 /* CUSTOM SCROLLBARS (Matches Dark/Arcade Themes!) */
 ::-webkit-scrollbar {
     width: 10px;
@@ -430,8 +435,13 @@ body.layout-classic textarea {
 body.layout-classic input:focus, 
 body.layout-classic select:focus, 
 body.layout-classic textarea:focus {
-    outline: 2px solid var(--accent) !important; /* Sharp, custom-colored outline */
-    outline-offset: -1px !important;            /* Keeps the outline inside the box */
+    outline: 2px solid var(--accent) !important; 
+    outline-offset: -1px !important;            
+    border-color: transparent !important;
+}
+body.layout-classic .match-info-row input:focus {
+    outline: 1px solid var(--accent) !important;
+    outline-offset: 0 !important;
 }
 
 body.layout-classic div[style*="border-radius: 8px"] {
