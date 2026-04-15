@@ -50,11 +50,11 @@ export function renderPlayerList(players, containerId) {
         container.appendChild(card);
     });
 
-    // --- NEW: BUTTERY SMOOTH MOUSE DRAG ENGINE ---
+    // MOUSE DRAG
     applyCustomDragAndDrop(container);
 }
 
-// THE MATH BEHIND PERFECT DRAG AND DROP
+// THE MATH BEHIND DRAG AND DROP
 function applyCustomDragAndDrop(container) {
     let draggingElement = null;
     let placeholder = null;
@@ -112,11 +112,11 @@ function applyCustomDragAndDrop(container) {
         }
         
         // 2. Find what card we are hovering over (excluding the ghost itself)
-        // We use elementsFromPoint to see what's directly underneath the mouse!
+        // We use elementsFromPoint to see what's directly underneath the mouse
         const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
         const hoveredCard = elementsUnderMouse.find(el => el.classList.contains('player-card') && !el.classList.contains('is-dragging'));
         
-        // 3. Move the Placeholder (The Hole) up or down the list!
+        // 3. Move the Placeholder (The Hole) up or down the list
         if (hoveredCard && hoveredCard !== placeholder) {
             const hoverRect = hoveredCard.getBoundingClientRect();
             const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
@@ -129,7 +129,7 @@ function applyCustomDragAndDrop(container) {
             }
         }
         
-        // --- AUTO SCROLLING MATH ---
+        // AUTO SCROLLING MATH
         const scrollRect = scrollParent.getBoundingClientRect();
         const edgeThreshold = 50; // Pixels from the top/bottom edge to trigger scroll
         
@@ -158,7 +158,7 @@ function applyCustomDragAndDrop(container) {
         // 2. Delete the Hole
         placeholder.remove();
         
-        // 3. Read the new physical order from the DOM and update the Engine!
+        // 3. Read the new physical order from the DOM and update the Engine
         const newOrderIds = Array.from(container.children).map(card => card.getAttribute('data-id'));
         
         // Dispatch event to app.js
@@ -231,7 +231,7 @@ export function renderBracket(tournament, containerId) {
 
     container.innerHTML = html;
     
-    // --- THE MATH ENGINE FOR DRAWING THE BRACKET ---
+    // DRAWING THE BRACKET
     drawBracketMath(stageToRender, isActiveStage, tournament);
 }
 
@@ -241,7 +241,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     board.innerHTML = '<svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>';
     const svgLayer = document.getElementById('bracket-lines');
     
-    // --- READ DYNAMIC SIZES FROM CSS ---
+    // READ DYNAMIC SIZES FROM CSS
     const rootStyles = getComputedStyle(document.body);
     
     const boxWidth = parseInt(rootStyles.getPropertyValue('--box-width')) || 280; 
@@ -261,7 +261,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     let maxX = 0;
     let maxY = 0;
 
-    // --- 1. THE SIMULATOR MERGER ---
+    // 1. THE SIMULATOR MERGER
     let visualRounds = [];
     if (showFull && (stage.config.type === "single_elimination" || stage.config.type === "double_elimination")) {
         const combinedConfig = { ...tournament.settings, ...stage.config };
@@ -289,7 +289,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         losersOffsetY = startY + (wR1Count * (boxHeight + gapY)) + 150; 
     }
 
-    // --- 2. PASS ONE: CALCULATE COORDINATES & DRAW BOXES ---
+    // 2. PASS ONE: CALCULATE COORDINATES & DRAW BOXES
     for (let roundIndex = 0; roundIndex < totalRoundsToDraw; roundIndex++) {
         if (stage.data.isComplete && !visualRounds[roundIndex]) break; 
 
@@ -396,7 +396,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     }
 
 
-    // --- 3. PASS TWO: SVG SMART ROUTING ---
+    // 3. PASS TWO: SVG SMART ROUTING
     if (stage.config.type === "single_elimination" || stage.config.type === "double_elimination") {
         Object.values(matchDataMap).forEach(childData => {
             if (!childData.isVisible) return;
@@ -409,7 +409,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 if (p1Parent) {
                     drawRoute(p1Parent, childData);
                 } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
-                    // Failsafe: If no parent found but it's a drop round (like L-R1 ghosts), draw pink drop!
+                    // Failsafe: If no parent found but it's a drop round (like L-R1 ghosts), draw pink drop
                     drawDropLine(childData);
                 }
             }
@@ -437,14 +437,14 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         return prevLosers.length === currLosers.length || prevLosers.length === 0;
     }
 
-    // Recursive back-track: Finds the last VISIBLE match a player was in!
+    // Recursive back-track: Finds the last VISIBLE match a player was in
     function findVisualParent(currentMatch, playerId) {
         // Find all past matches for this player
         const pastMatches = visualRounds.flat().filter(m => 
             m.round < currentMatch.round && (m.player1?.id === playerId || m.player2?.id === playerId)
         );
         
-        // BASE CASE: No past matches exist! They spawned in this round.
+        // BASE CASE: No past matches exist. They spawned in this round.
         if (pastMatches.length === 0) return null;
 
         // Get the very last match they played before this one
@@ -453,11 +453,11 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         
         if (!pData) return null;
         
-        // SUCCESS: The parent is visible on the screen! Connect to it!
+        // SUCCESS: The parent is visible on the screen. Connect to it
         if (pData.isVisible) return pData; 
         
-        // RECURSION: The parent is invisible (Hidden Bye). Keep searching backwards!
-        // FIXED: Pass `immediateParent` directly, NOT `immediateParent.match`!
+        // RECURSION: The parent is invisible (Hidden Bye). Keep searching backwards
+        // Pass `immediateParent` directly, NOT `immediateParent.match`
         return findVisualParent(immediateParent, playerId); 
     }
 
@@ -519,7 +519,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     applyPanAndZoom(document.getElementById('bracket-viewport'), board);
 }
 
-// --- HTML BOX GENERATOR ---
+// HTML BOX GENERATOR
 function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournament) {
     const matchBox = document.createElement('div');
     
@@ -553,7 +553,7 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
     const p1Color = (match.winner?.id === p1?.id) ? 'var(--success)' : 'var(--text-main)';
     const p2Color = (match.winner?.id === p2?.id) ? 'var(--success)' : 'var(--text-main)';
 
-    // Bracket Tags [W], [L], [GF]
+    // Bracket Tags [W], [L], [GF], [RESET]
     let bracketLabel = "";
     if (match.bracket === "winners") bracketLabel = `<span style="color:var(--success);">[W]</span>`;
     if (match.bracket === "losers") bracketLabel = `<span style="color:var(--danger);">[L]</span>`;
@@ -578,8 +578,7 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
     const iconSubmit = `<svg style="pointer-events: none; transform: scale(1.4);" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
     const iconEdit = `<svg style="pointer-events: none; transform: scale(1.25);" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
     
-    // --- RENDER LOGIC ---
-    // --- RENDER LOGIC ---
+    // RENDER LOGIC
     if (match.winner || match.isBye) {
         // COMPLETED STATE
         let statusText = match.isThirdPlaceMatch ? '3rd Place' : (match.isBye ? 'Auto-Bye' : 'Completed');
@@ -664,7 +663,7 @@ export function applyPanAndZoom(viewport, board) {
     function setTransform() {
         board.style.transform = `translate(${window.bracketCamera.x}px, ${window.bracketCamera.y}px) scale(${window.bracketCamera.scale})`;
         /*
-        // --- HYBRID RENDERING TRICK (deprecated)---
+        // --- HYBRID RENDERING TRICK (deprecated; disabled)---
         // If zoomed in (> 1.0), remove the GPU lock so text renders as crisp vectors.
         // If zoomed out (<= 1.0), apply the GPU lock so massive brackets don't lag when panning.
         if (window.bracketCamera.scale > 1.0) {
@@ -674,7 +673,7 @@ export function applyPanAndZoom(viewport, board) {
         } */
     }
 
-    // Instantly apply the saved camera position on load!
+    // Instantly apply the saved camera position on load
     setTransform();
 
     viewport.addEventListener('mousedown', (e) => {
@@ -732,7 +731,7 @@ export function renderStandings(tournament, containerId) {
     let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
     if (viewIndex < 0) viewIndex = 0;
     
-    // NEW: Check if we are viewing a DPW Swiss stage
+    // Check if viewing a DPW Swiss stage
     const isDPW = tournament.stages.length > 0 && tournament.stages[viewIndex].config.type === "dpw_swiss";
     const pointsLabel = isDPW ? "Rating" : "Points";
 
