@@ -32,7 +32,7 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     document.getElementById('setting-pts-draw').value = currentTournament.settings.pointsForDraw;
     document.getElementById('setting-pts-loss').value = currentTournament.settings.pointsForLoss;
     
-    // Fallback safely in case older save files don't have these toggles yet!
+    // Fallback safely in case older save files don't have these toggles yet
     document.getElementById('setting-randomize').checked = currentTournament.settings.randomizeSeeds || false;
     document.getElementById('setting-third-place').checked = currentTournament.settings.playThirdPlaceMatch || false;
     document.getElementById('setting-full-bracket').checked = currentTournament.settings.showFullBracket || false;
@@ -220,7 +220,7 @@ document.getElementById('btn-add-player').addEventListener('click', () => {
     // 2. Redraw
     updateUI();
     
-    // 3. Instantly restore scroll, then smoothly scroll the NEW player into view!
+    // 3. Instantly restore scroll, then smoothly scroll the NEW player into view
     sidebar.scrollTop = currentScroll;
     
     const newCard = document.querySelector(`.player-card[data-id="${added.id}"]`);
@@ -244,10 +244,10 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
     // DPW Failsafe Start Tournament
     const firstStage = currentTournament.settings.pipeline[0];
     if (firstStage && firstStage.type === "dpw_swiss") {
-        // If the host hasn't opened and saved the DPW modal, dpwData won't exist!
+        // If the host hasn't opened and saved the DPW modal, dpwData won't exist, so:
         if (!firstStage.dpwData || Object.keys(firstStage.dpwData.playerJsons).length === 0) {
             alert("Wait! You must configure the DPW Swiss teams before starting. Click the Gear icon in the Tournament Stages list.");
-            return; // Halt!
+            return;
         }
         
         // Ensure every single player has either a JSON or a Raw TS entered
@@ -257,7 +257,7 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
         
         if (missingPlayer) {
             alert(`Wait! Player '${missingPlayer.name}' does not have a Team Score assigned for DPW Swiss. Please click the Gear icon to assign their team.`);
-            return; // Halt!
+            return;
         }
     }
 
@@ -285,11 +285,11 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
     document.getElementById('modal-btn-export').onclick = () => { exportTournamentJSON(currentTournament); };
 
     document.getElementById('modal-btn-confirm').onclick = () => {
-        // Don't create a new Tournament(), just reset the arrays!
+        // Don't create a new Tournament(), just reset the arrays
         currentTournament.stages = [];
         currentTournament.status = "setup";
         
-        // Reset player stats, but keep their names, ELO, and seeds!
+        // Reset player stats, but keep their names, ELO, and seeds
         currentTournament.players.forEach(p => {
             p.isEliminated = false;
             p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
@@ -311,7 +311,7 @@ document.getElementById('btn-export-data').addEventListener('click', () => {
 
 // Import Button (Clicks the hidden file input)
 document.getElementById('btn-import-data').addEventListener('click', () => {
-    // We only allow import during the setup phase to prevent accidental overwrites mid-tournament
+    // Only allow import during the setup phase to prevent accidental overwrites mid-tournament
     if (currentTournament.status !== "setup") {
         if (!confirm("Tournament is currently active! Importing will overwrite ALL current progress. Continue?")) {
             return;
@@ -337,7 +337,7 @@ document.getElementById('file-import').addEventListener('change', (e) => {
             
             alert("Tournament successfully imported!");
         } else {
-            alert(parsedData); // Shows the error message
+            alert(parsedData);
         }
         
         // Clear the input so the same file can be selected again if needed
@@ -365,7 +365,7 @@ function updateUI() {
     if (currentTournament.status !== "setup") {
         renderStandings(currentTournament, 'standings-container');
     } else if (standingsDiv) {
-        standingsDiv.innerHTML = ''; // Kill the Ghost Leaderboard!
+        standingsDiv.innerHTML = ''; // Kill the Ghost Leaderboard
     }
 
     for (const [id, value] of Object.entries(draftScores)) {
@@ -397,7 +397,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
                     
                     if (!nextConfig.dpwData || Object.keys(nextConfig.dpwData.playerJsons).length === 0) {
                         alert("Cannot finish stage! The upcoming DPW Swiss stage has not been configured. Click the Gear icon in the Tournament Stages list.");
-                        return; // Halt!
+                        return;
                     }
 
                     // Check all SURVIVING players
@@ -409,7 +409,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
                     
                     if (missingPlayer) {
                         alert(`Cannot finish stage! Surviving player '${missingPlayer.name}' is missing a DPW Team Score. Please click the Gear icon to configure their team before submitting this final match.`);
-                        return; // Halt!
+                        return;
                     }
                 }
             }
@@ -478,7 +478,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
             };
 
             document.getElementById('modal-btn-export').onclick = () => {
-                exportTournamentJSON(currentTournament); // Downloads backup, keeps modal open!
+                exportTournamentJSON(currentTournament); // Downloads backup
             };
 
             document.getElementById('modal-btn-confirm').onclick = () => {
@@ -558,7 +558,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
             return;
         }
 
-        // Round is partial. Show the Modal!
+        // Round is partial. Show the Modal
         const modal = document.getElementById('end-stage-modal');
         modal.style.display = 'flex';
 
@@ -619,7 +619,7 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
             return;
         }
         
-        // Pass the custom tiebreakers into the setup modal via the 5th parameter (existingConfig)!
+        // Pass the custom tiebreakers into the setup modal via the 5th parameter (existingConfig)
         openDPWSetupModal(currentTournament.players, rounds, cut, (dpwConfig, playerTSMap) => {
             currentTournament.players.forEach(p => {
                 if (!p.metadata) p.metadata = {};
@@ -632,7 +632,7 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
             updateUI();
         }, { tiebreakers: [...pendingTiebreakers] }); 
         
-        return; // Halt normal execution
+        return;
     }
 
     // Standard Formats
@@ -684,7 +684,7 @@ document.getElementById('blueprint-type').addEventListener('change', (e) => {
     pendingTiebreakers = [...(TB_DEFAULTS[format] || ["points"])];
     // Update button text to notify user
     document.getElementById('btn-open-tb-builder').innerHTML = `<span data-icon="scale" data-size="16"></span> Tiebreakers: ${pendingTiebreakers.length} Rules`;
-    // Re-run the injector for this specific element so the icon renders!
+    // Re-run the injector for this specific element so the icon renders
     const span = document.getElementById('btn-open-tb-builder').querySelector('span');
     span.innerHTML = getIcon('scale', 16);
 });
@@ -697,7 +697,7 @@ function renderTBList() {
     const isDPW = document.getElementById('blueprint-type').value === "dpw_swiss";
 
     pendingTiebreakers.forEach((rule, index) => {
-        const isLocked = isDPW && rule === "dpw_rating"; // DPW Rating is mandatory for DPW Swiss!
+        const isLocked = isDPW && rule === "dpw_rating"; // DPW Rating is mandatory for DPW Swiss
 
         list.innerHTML += `
             <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:5px 10px; border:1px solid var(--border-main); border-radius:4px;">
@@ -777,7 +777,7 @@ document.addEventListener('click', (e) => {
 // GLOBAL MODAL CLOSE (Clicking the dark background)
 document.addEventListener('click', (e) => {
     // Check if what we clicked has the dark background overlay style
-    // (Our modals all use background: rgba(0,0,0,0.8))
+    // (Modals all use background: rgba(0,0,0,0.8))
     if (e.target.style.background === 'rgba(0, 0, 0, 0.8)') {
         e.target.style.display = 'none';
     }
@@ -817,7 +817,7 @@ document.getElementById('setting-ui-theme').addEventListener('change', (e) => {
     document.getElementById('setting-custom-colors').style.display = (e.target.value === "custom") ? "grid" : "none";
 });
 
-// --- SMART RESET COLORS BUTTON ---
+// SMART RESET COLORS BUTTON
 document.getElementById('btn-reset-colors').addEventListener('click', () => {
     // 1. Check their last saved base theme (fallback to modern if null)
     let baseTheme = "modern";
