@@ -333,7 +333,7 @@ body.streamer-mode .display-panel {
     height: 18px;
     font-size: 10px;
     color: var(--text-muted);
-    margin-top: 4px; /* Pushes the Ties row down slightly */
+    margin-top: 2px; /* Pushes the Ties row down slightly */
 }
 
 .btn-match-action {
