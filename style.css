@@ -38,27 +38,27 @@ input:focus, select:focus, textarea:focus {
     border-color: var(--accent) !important; /* Replace it with the theme accent color */
 }
 
-/* CUSTOM SCROLLBARS (Matches Dark/Arcade Themes!) */
+/* CUSTOM SCROLLBARS (Matches Dark/Arcade Themes) */
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-bracket); /* The deep background color */
+    background: var(--bg-bracket); /* The (supposedly) deep background color */
 }
 
 ::-webkit-scrollbar-thumb {
     background: var(--border-main); /* The lighter gray/border color */
     border-radius: 5px;
-    border: 2px solid var(--bg-bracket); /* Creates a nice padding effect */
+    border: 2px solid var(--bg-bracket); /* Padding effect */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted); /* Brightens when you hover over it */
+    background: var(--text-muted); /* Brightens when hovered */
 }
 
-/* Firefox Support */
+/* Firefox Support (Not Tested) */
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--border-main) var(--bg-bracket);
@@ -256,7 +256,7 @@ body.streamer-mode .display-panel {
     /* Tells the browser this element's children won't affect the rest of the page */
     contain: layout style; 
     /* Pre-allocates GPU memory for panning and zooming */
-    /* will-change: transform; */
+    /* will-change: transform; */ /* option exist, not used */
 }
 
 #bracket-lines {
@@ -454,7 +454,7 @@ body.layout-classic .match-box {
     background-color: var(--bg-panel) !important;
     border: 1px solid var(--border-main) !important;
     box-shadow: none !important;
-    padding: 4px 8px !important; /* Shrink vertical padding so the box can shrink! */
+    padding: 4px 8px !important; /* Shrink vertical padding so the box can shrink */
 }
 
 /* Squeeze the internal rows so they physically fit inside 75px */
@@ -488,7 +488,7 @@ body.layout-classic .match-info-row .match-score-input {
 
 
 
-/* 3. Flatten the Sidebar "Boxception" */
+/* 3. Flatten the Sidebar "Boxception"~ */
 body.layout-classic .control-group {
     background: transparent;
     border-radius: 0;
@@ -530,7 +530,7 @@ body.layout-classic #setup-blueprint-group > div:not(#blueprint-list) {
 body.layout-classic #dpw-player-list > div {
     background: transparent !important;
     border-radius: 0 !important;
-    border-bottom: 1px solid var(--border-main); /* Acts as a visual separator instead of a background box */
+    border-bottom: 1px solid var(--border-main); /* Acts as a visual separator instead of the background box */
     padding-left: 0;
     padding-right: 0;
 }
