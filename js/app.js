@@ -871,3 +871,10 @@ document.addEventListener('click', (e) => {
         exportBracketSVG(currentTournament.settings.name);
     }
 });
+
+// Close on outside click
+privacyModal.addEventListener('click', (e) => {
+    if (e.target === privacyModal) {
+        privacyModal.style.display = 'none';
+    }
+});
