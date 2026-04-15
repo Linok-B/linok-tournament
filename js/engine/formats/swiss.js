@@ -24,7 +24,7 @@ export function initStage(players, config) {
         type: "swiss",
         totalRounds: maxRounds,
         rounds: [matches],
-        pastMatchups: [], // We need to track who played who!
+        pastMatchups: [], // Track who played who
         isComplete: false
     };
 }
@@ -105,7 +105,7 @@ export function advanceStage(stageData, config, allPlayers) {
         }
 
         // Failsafe: if no unique opponent is found, play the next available person
-        // (This happens in very small tournaments with many rounds)
+        // (This may happen in very small tournaments with many rounds)
         if (!opponent) {
             opponent = playersToPair.find(p => p.id !== p1.id && !pairedIds.has(p.id));
         }
