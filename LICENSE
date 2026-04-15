@@ -1,4 +1,4 @@
-Copyright (c) 2026 Linok-B
+Copyright (c) 2026 [handle]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to use
@@ -9,21 +9,25 @@ If any modifications, additions, or derivative works are made to the Software
 the Modified Software subject to the following STRICT conditions:
 
 1. ATTRIBUTION: Clear, prominent, and visible credit MUST be given to the original 
-   author(s) in any interface, documentation, or public distribution of the Modified Software.
+   author(s) in at least, but not limited to, one of the following: the user interface, 
+   documentation, or public distribution materials of the Modified Software.
 
-2. 2. NOTIFICATION: The original author is encouraged, but not required, to be notified 
+2. NOTIFICATION: The original author is encouraged, but not required, to be notified 
    of the existence of the Modified Software and provided with a link or access 
    to it (see CONTACT below).
 
 3. INHERITANCE: Any Modified Software must be distributed under this exact same license.
    You may not re-license, close-source, or restrict access to the Modified Software or its derivatives. 
 
-4. NON-COMMERCIAL: You may not sell, monetize, or put the Software or Modified 
-   Software behind a paywall without explicit, written permission from the original author.
+4. NON-COMMERCIAL: You may not sell, sublicense, or charge a fee for the Software or 
+   Modified Software itself. You are permitted to use or integrate the Software within 
+   a larger monetized project, PROVIDED THAT the Software's functionality remains freely 
+   accessible to users and is not locked behind a paywall, microtransaction, or subscription fee.
+   (Note: Using the Software to manage commercial tournaments or events with entry fees is permitted).
 
 CONTACT:
-  GitHub Discussions: https://github.com/Linok-B/linok-tournament/discussions
-  Discord: linok1357
+  GitHub Discussions: [link]
+  Discord: [username]
 
 The original author reserves the right to update, alter, or replace this license 
 for any current or future versions of the Software at any time, at their sole discretion, 
