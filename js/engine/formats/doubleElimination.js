@@ -16,7 +16,7 @@ export function initStage(players, config) {
         winnersRound1.push({
             id: crypto.randomUUID(),
             round: 1,
-            bracket: "winners", // CRUCIAL: We must label which bracket this match belongs to :v
+            bracket: "winners", // Must label which bracket this match belongs to :v
             player1: p1,
             player2: p2,
             score1: 0, score2: 0, draws: 0,
@@ -86,7 +86,7 @@ export function advanceStage(stageData, config, allPlayers) {
     }
 
     // --- 2. ADVANCE LOSERS ---
-    // CRITICAL FIX: Do NOT filter out nulls! We must keep the exact array length to preserve the bracket shape!
+    // Do NOT filter out nulls. Must keep the exact array length to preserve the bracket shape
     const newDrops = wMatches.map(m => {
         if (m.winner?.isPhantom) return null;
         if (m.winner?.id === m.player1?.id) return m.player2 || null;
@@ -102,7 +102,7 @@ export function advanceStage(stageData, config, allPlayers) {
             newLMatches.push(createMatch(newDrops[i], newDrops[i + 1], nextRoundNum, "losers"));
         }
     } else if (newDrops.length > 0) {
-        // Phase 2: Minor Round (Drops vs Survivors) - PERFECT 1:1 MATCH NOW!
+        // Phase 2: Minor Round (Drops vs Survivors)
         for (let i = 0; i < survivingLosers.length; i++) {
             newLMatches.push(createMatch(survivingLosers[i], newDrops[i], nextRoundNum, "losers"));
         }
@@ -125,7 +125,7 @@ export function advanceStage(stageData, config, allPlayers) {
     return stageData;
 }
 
-// HELPER: Generates matches and safely handles "null vs null" Phantom Byes!
+// HELPER: Generates matches and safely handles "null vs null" Phantom Byes
 function createMatch(p1, p2, roundNum, bracket, isBracketReset = false, isGF = false) {
     p1 = p1 || null; 
     p2 = p2 || null;
@@ -135,7 +135,7 @@ function createMatch(p1, p2, roundNum, bracket, isBracketReset = false, isGF = f
     let isBye = false;
     
     if (isPhantom) {
-        winner = { id: "phantom", isPhantom: true }; // Auto-completes the match to prevent softlocks!
+        winner = { id: "phantom", isPhantom: true }; // Auto-completes the match to prevent softlocks
         isBye = true;
     } else if (p2 === null) {
         winner = p1;
