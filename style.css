@@ -426,6 +426,14 @@ body.layout-classic textarea {
     border-radius: 0 !important;
 }
 
+/* Strip native browser focus rings from Classic inputs */
+body.layout-classic input:focus, 
+body.layout-classic select:focus, 
+body.layout-classic textarea:focus {
+    outline: 2px solid var(--accent) !important; /* Sharp, custom-colored outline */
+    outline-offset: -1px !important;            /* Keeps the outline inside the box */
+}
+
 body.layout-classic div[style*="border-radius: 8px"] {
     border-radius: 0 !important; /* Forces modals to have sharp corners */
 }
@@ -467,6 +475,8 @@ body.layout-classic .btn-match-action {
 body.layout-classic .match-info-row .match-score-input {
     font-size: 9px !important;
 }
+
+
 
 /* 3. Flatten the Sidebar "Boxception" */
 body.layout-classic .control-group {
