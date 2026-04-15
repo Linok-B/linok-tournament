@@ -254,10 +254,12 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
         };
 
         document.getElementById('dpw-save').onclick = () => {
+            // 1. Save SV inputs
             document.querySelectorAll('.sv-input').forEach(input => {
                 cache.unitSVs[input.getAttribute('data-unit')] = parseFloat(input.value) || 0;
             });
 
+            // 2. Calculate every player's Team Score (TS)
             let playerTSMap = {};
             players.forEach(p => {
                 if (cache.rawTS[p.id] !== undefined) {
@@ -270,12 +272,39 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 }
             });
 
+            // MATH & MULTIPLIER LOGIC
+            // 3. Calculate Pairwise Difference for C_TS
+            const tsValues = Object.values(playerTSMap);
+            let sumDiff = 0, pairs = 0;
+            for (let i = 0; i < tsValues.length; i++) {
+                for (let j = i + 1; j < tsValues.length; j++) {
+                    sumDiff += Math.abs(tsValues[i] - tsValues[j]);
+                    pairs++;
+                }
+            }
+            const avgDiff = pairs > 0 ? (sumDiff / pairs) : 0;
+            
+            // Read the Multiplier from the UI (Defaults to 4)
+            const tsMultiplier = parseFloat(document.getElementById('dpw-ts-mult').value) || 4;
+            const computed_C_TS = Math.max(tsMultiplier * avgDiff, 1);
+
+            // 4. Freeze K_base and r_ramp so they don't corrupt if players drop out later
+            const targetSpread = parseFloat(document.getElementById('dpw-spread').value) || 200;
+            const totalRounds = rounds || Math.max(1, Math.ceil(Math.log2(players.length)));
+            const auto_r_ramp = Math.max(1, Math.floor(totalRounds / 3));
+            const auto_K_base = targetSpread / totalRounds;
+
+            // 5. Final Package
             const finalConfig = {
                 type: "dpw_swiss",
-                maxRounds: rounds || undefined,
+                maxRounds: totalRounds,
                 cutToTop: cut || undefined,
-                target_spread: parseFloat(document.getElementById('dpw-spread').value) || 200,
+                target_spread: targetSpread,
                 beta: parseFloat(document.getElementById('dpw-beta').value) || 0.7,
+                ts_multiplier: tsMultiplier, 
+                C_TS: computed_C_TS,
+                K_base: auto_K_base,
+                r_ramp: existingConfig?.r_ramp || auto_r_ramp,
                 resetRatings: document.getElementById('dpw-reset-ratings').checked,
                 tiebreakers: existingConfig?.tiebreakers || ["dpw_rating", "head_to_head", "buchholz", "seed"], 
                 dpwData: cache 
