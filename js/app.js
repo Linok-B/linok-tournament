@@ -285,20 +285,24 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
     document.getElementById('modal-btn-export').onclick = () => { exportTournamentJSON(currentTournament); };
 
     document.getElementById('modal-btn-confirm').onclick = () => {
-        // Don't create a new Tournament(), just reset the arrays
+        // 1. Reset tournament state
         currentTournament.stages = [];
         currentTournament.status = "setup";
         
-        // Reset player stats, but keep their names, ELO, and seeds
-        currentTournament.players.forEach(p => {
+        // 2. Restore true registration order
+        currentTournament.players.sort((a, b) => (a.originalSeed || a.seed) - (b.originalSeed || b.seed));
+        
+        // 3. Reset player stats and un-scramble the matchmaking seeds
+        currentTournament.players.forEach((p, index) => {
             p.isEliminated = false;
+            p.seed = p.originalSeed || index + 1; // Snap the fake seed back to the real seed
             p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
         });
 
-        // Reset camera
+        // 4. Reset camera and UI
         window.bracketCamera = { x: 0, y: 0, scale: 1 };
-        
         window.viewingStageIndex = 0; 
+        
         saveTournamentLocally(currentTournament);
         updateUI();
         modal.style.display = 'none'; 
