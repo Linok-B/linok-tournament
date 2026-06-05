@@ -54,18 +54,29 @@ export function renderPlayerList(players, containerId) {
     applyCustomDragAndDrop(container);
 }
 
-// THE MATH BEHIND DRAG AND DROP
+// PREVENT MEMORY LEAKS
+// Store references to the handlers so we can remove them on re-renders
+let _dragMousedown = null;
+let _dragMousemove = null;
+let _dragMouseup = null;
+
+// THE MATH BEHIND PERFECT DRAG AND DROP
 function applyCustomDragAndDrop(container) {
     let draggingElement = null;
     let placeholder = null;
     let offsetY = 0;
     
-    // Auto-scroll variables
     const scrollParent = document.querySelector('.controls-panel'); 
     let scrollInterval = null;
     let lastHoverCheck = 0;
 
-    container.addEventListener('mousedown', (e) => {
+    // 1. Clean up old event listeners if they exist
+    if (_dragMousedown) container.removeEventListener('mousedown', _dragMousedown);
+    if (_dragMousemove) document.removeEventListener('mousemove', _dragMousemove);
+    if (_dragMouseup) document.removeEventListener('mouseup', _dragMouseup);
+
+    // 2. Define the new handlers
+    _dragMousedown = (e) => {
         if (!e.target.classList.contains('drag-handle')) return;
         
         e.preventDefault();
@@ -79,89 +90,56 @@ function applyCustomDragAndDrop(container) {
         
         draggingElement = card;
         draggingElement.classList.add('is-dragging');
-        
-        // Dynamically set the Ghost width to perfectly match the physical card
         draggingElement.style.width = `${rect.width}px`; 
-        
         draggingElement.style.top = `${e.clientY - offsetY}px`;
         draggingElement.style.left = `${rect.left}px`;
         
         document.body.style.cursor = 'grabbing';
-    });
+    };
 
-    document.addEventListener('mousemove', (e) => {
+    _dragMousemove = (e) => {
         if (!draggingElement) return;
         
-        // 1. Move the Ghost
         draggingElement.style.top = `${e.clientY - offsetY}px`;
 
-        // 1.5 Cap the collision detection to ~60fps
         if (e.timeStamp - lastHoverCheck > 16) {
             lastHoverCheck = e.timeStamp;
-            
             const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
             const hoveredCard = elementsUnderMouse.find(el => el.classList.contains('player-card') && !el.classList.contains('is-dragging'));
             
             if (hoveredCard && hoveredCard !== placeholder) {
                 const hoverRect = hoveredCard.getBoundingClientRect();
                 const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
-                
                 if (e.clientY < hoverMiddleY) container.insertBefore(placeholder, hoveredCard);
                 else container.insertBefore(placeholder, hoveredCard.nextSibling);
             }
         }
         
-        // 2. Find what card we are hovering over (excluding the ghost itself)
-        // We use elementsFromPoint to see what's directly underneath the mouse
-        const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
-        const hoveredCard = elementsUnderMouse.find(el => el.classList.contains('player-card') && !el.classList.contains('is-dragging'));
-        
-        // 3. Move the Placeholder (The Hole) up or down the list
-        if (hoveredCard && hoveredCard !== placeholder) {
-            const hoverRect = hoveredCard.getBoundingClientRect();
-            const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
-            
-            // If mouse is above the middle of the hovered card, move the hole above it.
-            if (e.clientY < hoverMiddleY) {
-                container.insertBefore(placeholder, hoveredCard);
-            } else {
-                container.insertBefore(placeholder, hoveredCard.nextSibling);
-            }
-        }
-        
-        // AUTO SCROLLING MATH
         const scrollRect = scrollParent.getBoundingClientRect();
-        const edgeThreshold = 50; // Pixels from the top/bottom edge to trigger scroll
+        const edgeThreshold = 50; 
         
         clearInterval(scrollInterval);
         if (e.clientY < scrollRect.top + edgeThreshold) {
-            // Scroll UP
             scrollInterval = setInterval(() => scrollParent.scrollTop -= 5, 16);
         } else if (e.clientY > scrollRect.bottom - edgeThreshold) {
-            // Scroll DOWN
             scrollInterval = setInterval(() => scrollParent.scrollTop += 5, 16);
         }
-    });
+    };
 
-    document.addEventListener('mouseup', () => {
+    _dragMouseup = () => {
         if (!draggingElement) return;
         
         clearInterval(scrollInterval);
         document.body.style.cursor = 'default';
         
-        // 1. Swap the Ghost back into the Hole
         container.insertBefore(draggingElement, placeholder);
         draggingElement.classList.remove('is-dragging');
         draggingElement.style.top = '';
         draggingElement.style.left = '';
         
-        // 2. Delete the Hole
         placeholder.remove();
         
-        // 3. Read the new physical order from the DOM and update the Engine
         const newOrderIds = Array.from(container.children).map(card => card.getAttribute('data-id'));
-        
-        // Dispatch event to app.js
         container.dispatchEvent(new CustomEvent('playerListReordered', {
             bubbles: true,
             detail: { newOrderIds }
@@ -169,7 +147,12 @@ function applyCustomDragAndDrop(container) {
         
         draggingElement = null;
         placeholder = null;
-    });
+    };
+
+    // 3. Attach the fresh listeners
+    container.addEventListener('mousedown', _dragMousedown);
+    document.addEventListener('mousemove', _dragMousemove);
+    document.addEventListener('mouseup', _dragMouseup);
 }
 
 export function renderBracket(tournament, containerId) {
