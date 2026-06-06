@@ -156,6 +156,7 @@ function applyUITheme() {
         root.style.removeProperty('--success');
         root.style.removeProperty('--danger');
         root.style.removeProperty('--text-main');
+        root.style.removeProperty('--text-muted');
     }
 }
 
