@@ -74,7 +74,16 @@ const TB_DEFAULTS = {
     "dpw_swiss": ["dpw_rating", "head_to_head", "buchholz", "seed"]
 };
 
-let pendingTiebreakers = [...TB_DEFAULTS["single_elimination"]]; // Init state
+// Init state dynamically based on what the browser cached in the dropdown
+const initialFormat = document.getElementById('blueprint-type').value;
+let pendingTiebreakers = [...(TB_DEFAULTS[initialFormat] || ["points"])];
+
+const tbBtn = document.getElementById('btn-open-tb-builder');
+if (tbBtn) {
+    tbBtn.innerHTML = `<span data-icon="scale" data-size="16"></span> Tiebreakers: ${pendingTiebreakers.length} Rules`;
+    const span = tbBtn.querySelector('span');
+    if (span) span.innerHTML = getIcon('scale', 16);
+}
 
 document.getElementById('btn-close-settings').addEventListener('click', () => {
     settingsModal.style.display = 'none';
