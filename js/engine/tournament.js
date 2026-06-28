@@ -256,6 +256,26 @@ export class Tournament {
             if (stage.config.type === "dpw_swiss" && stage.config.resetRatings !== false) {
                 this.players.forEach(p => p.stats.dpwRating = 1000);
             }
+
+            // MISSED THE CUT ROUND 0 FAILSAFE
+            if (stage.config.type === "single_elimination" || stage.config.type === "double_elimination") {
+                const activePlayerIds = new Set();
+                stage.data.rounds.forEach(round => {
+                    round.forEach(match => {
+                        if (match.player1 && !match.player1.isPhantom) activePlayerIds.add(match.player1.id);
+                        if (match.player2 && !match.player2.isPhantom) activePlayerIds.add(match.player2.id);
+                    });
+                });
+
+                this.players.forEach(p => {
+                    // If they are not in the active bracket and haven't already died in a previous stage
+                    if (!activePlayerIds.has(p.id) && p.stats.eliminationScore === 9999) {
+                        p.stats.eliminationScore = 0; // Cut at Round 0
+                        p.isEliminated = true;
+                    }
+                });
+            }
+
             stage.data.rounds.forEach(round => {
                 round.forEach(match => {
 
@@ -353,7 +373,7 @@ export class Tournament {
                             }
                         }
 
-                        // Iron-clad Elimination check!
+                        // Iron-clad Elimination check
                         // FGC PLACEMENT & ELIMINATION CHECK
                         if (loserObj) {
                             let isTrueElimination = false;
@@ -363,7 +383,7 @@ export class Tournament {
                             } else if (stage.config.type === "double_elimination") {
                                 if (match.bracket === "losers") isTrueElimination = true;
                                 if (match.bracket === "grand_finals") {
-                                    // In GF1, if the Winners Champ loses, they just drop to GF2. Not eliminated yet!
+                                    // In GF1, if the Winners Champ loses, they just drop to GF2. Not eliminated yet
                                     if (!match.bracketReset && loserObj.id === match.player1?.id) {
                                         isTrueElimination = false;
                                     } else {
