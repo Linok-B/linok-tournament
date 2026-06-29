@@ -159,7 +159,7 @@ export class Tournament {
                 }
             }
             const avgDiff = pairs > 0 ? (sumDiff / pairs) : 0;
-            const C_TS = Math.max(4 * avgDiff, 1);
+            const C_TS = Math.max((config.ts_multiplier || 4) * avgDiff, 1);
 
             const totalRounds = config.maxRounds || Math.max(1, Math.ceil(Math.log2(playersForNextStage.length)));
             const r_ramp = Math.max(1, Math.floor(totalRounds / 3));
