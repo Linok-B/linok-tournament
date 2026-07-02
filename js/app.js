@@ -212,30 +212,41 @@ updateUI();
 document.getElementById('btn-add-player').addEventListener('click', () => {
     const nameInput = document.getElementById('player-name');
     const eloInput = document.getElementById('player-elo');
-    if (nameInput.value.trim() === '') return;
+    const rawNames = nameInput.value;
+    if (rawNames.trim() === '') return;
 
-    const added = currentTournament.addPlayer(nameInput.value, eloInput.value);
-    if (!added) {
-        alert("Cannot add players after tournament has started!");
-        return;
+    // Split by newlines, trim spaces, and filter out empty lines
+    const names = rawNames.split('\n').map(n => n.trim()).filter(n => n !== '');
+    
+    let lastAddedPlayer = null;
+
+    for (let name of names) {
+        const added = currentTournament.addPlayer(name, eloInput.value);
+        if (!added) {
+            alert("Cannot add players after the tournament has started!");
+            return;
+        }
+        lastAddedPlayer = added;
     }
     
     nameInput.value = '';
     saveTournamentLocally(currentTournament);
     
-    // 1. Capture scroll before redraw
+    // Capture scroll before redraw
     const sidebar = document.querySelector('.controls-panel');
     const currentScroll = sidebar.scrollTop;
     
-    // 2. Redraw
+    // Redraw
     updateUI();
     
-    // 3. Instantly restore scroll, then smoothly scroll the NEW player into view
+    // Restore scroll, then smoothly scroll the very last added player into view (will it work, or will it remain broken... who knows!)
     sidebar.scrollTop = currentScroll;
     
-    const newCard = document.querySelector(`.player-card[data-id="${added.id}"]`);
-    if (newCard) {
-        newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (lastAddedPlayer) {
+        const newCard = document.querySelector(`.player-card[data-id="${lastAddedPlayer.id}"]`);
+        if (newCard) {
+            newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     }
 });
 
