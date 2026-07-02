@@ -239,14 +239,16 @@ document.getElementById('btn-add-player').addEventListener('click', () => {
     // Redraw
     updateUI();
     
-    // Restore scroll, then smoothly scroll the very last added player into view (will it work, or will it remain broken... who knows!)
+    // Restore scroll, then smoothly scroll the very last added player into view (will it work, or will it remain broken... who knows! It might now cuz hardcoded magic number goes brr)
     sidebar.scrollTop = currentScroll;
     
     if (lastAddedPlayer) {
-        const newCard = document.querySelector(`.player-card[data-id="${lastAddedPlayer.id}"]`);
-        if (newCard) {
-            newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+        setTimeout(() => {
+            const newCard = document.querySelector(`.player-card[data-id="${lastAddedPlayer.id}"]`);
+            if (newCard) {
+                newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 50); // My 50ms hardcoded magic number and I for the win!
     }
 });
 
