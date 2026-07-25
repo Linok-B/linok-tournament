@@ -739,8 +739,8 @@ export function renderStandings(tournament, containerId) {
                     <th style="padding: 10px;">Rank</th>
                     <th style="padding: 10px;">Name</th>
                     <th style="padding: 10px;">${pointsLabel}</th>
-                    <th style="padding: 10px;">Match (${recFormat.toUpperCase()})</th>
-                    <th style="padding: 10px;">Games (${recFormat.toUpperCase()})</th> 
+                    <th style="padding: 10px;">Match (${recFormat.toUpperCase().split('').join('-')})</th>
+                    <th style="padding: 10px;">Games (${recFormat.toUpperCase().split('').join('-')})</th>
                     <th style="padding: 10px;">Buchholz</th>
                 </tr>
             </thead>
