@@ -77,6 +77,11 @@ export function calculateTiebreakers(players, stagesConfig) {
         // If undefined/null (legacy save), use format default!
         // If explicitly [] (User deleted all rules), it stays [] and everyone ties (Why would you want that)
         let activeRules = tiebreakerArray ? [...tiebreakerArray] : [...(TB_DEFAULTS[currentFormat] || ["points"])];
+
+        // Do not inject points if game_points is explicitly active
+        if (!activeRules.includes("points") && !activeRules.includes("dpw_rating") && !activeRules.includes("game_points")) {
+            activeRules.unshift("points");
+        }
         
         // 1. Loop through the custom tiebreaker waterfall
         for (let rule of activeRules) {
