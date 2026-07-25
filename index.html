@@ -170,8 +170,8 @@
             <label style="font-size: 12px; color: var(--text-muted);;">Tournament Name</label>
             <input type="text" id="setting-name" placeholder="My Custom Tournament" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 15px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
             
-            <!-- Leaderboard Points -->
-            <h4 style="margin: 0 0 5px 0; color: var(--text-main);">Leaderboard Points</h4>
+            <!-- Match Points -->
+            <h4 style="margin: 0 0 5px 0; color: var(--text-main);">Match Points</h4>
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <div style="flex: 1;">
                     <label style="font-size: 11px; color: var(--text-muted);;">Win</label>
@@ -184,6 +184,34 @@
                 <div style="flex: 1;">
                     <label style="font-size: 11px; color: var(--text-muted);;">Loss</label>
                     <input type="number" id="setting-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
+                </div>
+            </div>
+
+            <!-- Game Points -->
+            <h4 style="margin: 15px 0 5px 0; color: var(--text-main);">Game Points</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Win</label>
+                    <input type="number" id="setting-game-pts-win" value="3" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Draw</label>
+                    <input type="number" id="setting-game-pts-draw" value="1" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Loss</label>
+                    <input type="number" id="setting-game-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
+                </div>
+            </div>
+
+            <!-- Record Format -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: gray;">Record Format</label>
+                    <select id="setting-record-format" style="width: 100%; padding: 5px; background: var(--bg-dark); color: white; border: 1px solid var(--border-main);">
+                        <option value="wld">W-L-D (Standard)</option>
+                        <option value="wdl">W-D-L (TCG)</option>
+                    </select>
                 </div>
             </div>
 
@@ -317,6 +345,22 @@
             <h2 style="color: var(--accent); margin-top: 0;">Privacy Notice</h2>
             <p style="color: var(--text-main); font-size: 14px; line-height: 1.6;">This application runs entirely locally in your web browser. <br><br><strong>No data is collected, tracked, or sent to any external servers.</strong><br><br>All tournament data is saved strictly in your device's local storage and via the manual JSON export files.</p>
             <button id="btn-close-privacy" style="margin-top: 20px; background: var(--accent); color: var(--text-on-accent); border: none; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold;">Close</button>
+        </div>
+    </div>
+
+    <!-- STAGE SETTINGS MODAL -->
+    <div id="stage-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.81); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; width: 400px; border: 2px solid var(--accent); max-height: 90vh; overflow-y: auto; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 id="stage-settings-title" style="margin: 0; color: var(--accent); display:flex; align-items:center; gap:8px;"><span data-icon="gear" data-size="24"></span> Stage Settings</h2>
+                <button id="btn-close-stage-settings" style="background: transparent; border: none; color: gray; font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
+            </div>
+            
+            <div id="stage-settings-fields" style="display: flex; flex-direction: column; gap: 15px;">
+            
+            </div>
+            
+            <button id="btn-save-stage-settings" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer; margin-top: 20px;">Save Settings</button>
         </div>
     </div>
 
