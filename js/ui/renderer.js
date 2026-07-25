@@ -714,13 +714,19 @@ export function renderStandings(tournament, containerId) {
     let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
     if (viewIndex < 0) viewIndex = 0;
     
+    const stageToRender = tournament.stages[viewIndex];
     // Check if viewing a DPW Swiss stage
-    const isDPW = tournament.stages.length > 0 && tournament.stages[viewIndex].config.type === "dpw_swiss";
-    const pointsLabel = isDPW ? "Rating" : "Points";
+    const isDPW = stageToRender && stageToRender.config.type === "dpw_swiss";
+    const displayBasis = (stageToRender && stageToRender.config.pointsColumnDisplay) || "match_points";
+    const recFormat = tournament.settings.recordFormat || "wld";
+
+    let pointsLabel = "Points";
+    if (isDPW) pointsLabel = "Rating";
+    else if (displayBasis === "game_points") pointsLabel = "Game Pts";
 
     let stageTiebreakers = tournament.settings.tiebreakers; 
-    if (tournament.stages.length > 0 && tournament.stages[viewIndex].config.tiebreakers) {
-        stageTiebreakers = tournament.stages[viewIndex].config.tiebreakers;
+    if (stageToRender && stageToRender.config.tiebreakers) {
+        stageTiebreakers = stageToRender.config.tiebreakers;
     }
 
     const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, stageTiebreakers));
@@ -733,8 +739,8 @@ export function renderStandings(tournament, containerId) {
                     <th style="padding: 10px;">Rank</th>
                     <th style="padding: 10px;">Name</th>
                     <th style="padding: 10px;">${pointsLabel}</th>
-                    <th style="padding: 10px;">Match (W-L-D)</th>
-                    <th style="padding: 10px;">Games (W-L-D)</th> 
+                    <th style="padding: 10px;">Match (${recFormat.toUpperCase()})</th>
+                    <th style="padding: 10px;">Games (${recFormat.toUpperCase()})</th> 
                     <th style="padding: 10px;">Buchholz</th>
                 </tr>
             </thead>
@@ -753,15 +759,30 @@ export function renderStandings(tournament, containerId) {
             }
         }
 
-        const displayPoints = isDPW ? (player.stats.dpwRating ?? 1000) : player.stats.points;
+        // 1. Calculate record formatting based on preference (W-L-D vs W-D-L)
+        const mWins = player.stats.matchWins, mLosses = player.stats.matchLosses, mDraws = player.stats.matchDraws;
+        const gWins = player.stats.gameWins, gLosses = player.stats.gameLosses, gDraws = player.stats.gameDraws;
+        
+        const mRecord = recFormat === "wld" ? `${mWins}-${mLosses}-${mDraws}` : `${mWins}-${mDraws}-${mLosses}`;
+        const gRecord = recFormat === "wld" ? `${gWins}-${gLosses}-${gDraws}` : `${gWins}-${gDraws}-${gLosses}`;
+
+        // 2. Select which points value to display
+        let displayPoints;
+        if (isDPW) {
+            displayPoints = player.stats.dpwRating ?? 1000;
+        } else if (displayBasis === "game_points") {
+            displayPoints = player.stats.gamePoints;
+        } else {
+            displayPoints = player.stats.points;
+        }
 
         html += `
             <tr style="border-bottom: 1px solid var(--border-main);">
                 <td style="padding: 10px;"><b>${currentDisplayRank}</b></td>
                 <td style="padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${player.name}">${player.name}</td>
                 <td style="padding: 10px; font-weight: bold; color: var(--accent);">${displayPoints}</td>
-                <td style="padding: 10px;">${player.stats.matchWins}-${player.stats.matchLosses}-${player.stats.matchDraws}</td>
-                <td style="padding: 10px;">${player.stats.gameWins}-${player.stats.gameLosses}-${player.stats.gameDraws}</td>
+                <td style="padding: 10px;">${mRecord}</td>
+                <td style="padding: 10px;">${gRecord}</td>
                 <td style="padding: 10px;">${player.stats.buchholz}</td>
             </tr>
         `;
