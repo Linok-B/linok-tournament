@@ -53,7 +53,13 @@ export function advanceStage(stageData, config, allPlayers) {
     // 2. Get active players and sort by Points (Highest to Lowest)
     const activePlayerIds = lastRound.flatMap(m => [m.player1?.id, m.player2?.id]).filter(id => id);
     let playersToPair = allPlayers.filter(p => activePlayerIds.includes(p.id));
-    playersToPair.sort((a, b) => b.stats.points - a.stats.points);
+    // Sort based on pairing preference configured for this stage
+    const pairingBasis = config.swissPairingBasis || "match_points";
+    if (pairingBasis === "game_points") {
+        playersToPair.sort((a, b) => b.stats.gamePoints - a.stats.gamePoints);
+    } else { // Will need to update this when more pairing basis are added
+        playersToPair.sort((a, b) => b.stats.points - a.stats.points);
+    }
 
     let nextRoundMatches = [];
     let pairedIds = new Set();
