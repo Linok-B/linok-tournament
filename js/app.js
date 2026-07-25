@@ -5,6 +5,7 @@ import { exportTournamentJSON, importTournamentJSON } from './store/export.js';
 import { openDPWSetupModal } from './ui/dpwSetup.js';
 import { getIcon } from './ui/icons.js';
 import { exportBracketSVG } from './store/capture.js';
+import { openStageSettingsModal } from './ui/stageSettings.js';
 
 // Auto-inject SVGs into the HTML
 document.querySelectorAll('[data-icon]').forEach(el => {
@@ -31,6 +32,11 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     document.getElementById('setting-pts-win').value = currentTournament.settings.pointsForWin;
     document.getElementById('setting-pts-draw').value = currentTournament.settings.pointsForDraw;
     document.getElementById('setting-pts-loss').value = currentTournament.settings.pointsForLoss;
+    
+    document.getElementById('setting-game-pts-win').value = currentTournament.settings.pointsForGameWin || 3;
+    document.getElementById('setting-game-pts-draw').value = currentTournament.settings.pointsForGameDraw || 1;
+    document.getElementById('setting-game-pts-loss').value = currentTournament.settings.pointsForGameLoss || 0;
+    document.getElementById('setting-record-format').value = currentTournament.settings.recordFormat || "wld";
     
     // Fallback safely in case older save files don't have these toggles yet
     document.getElementById('setting-randomize').checked = currentTournament.settings.randomizeSeeds || false;
@@ -94,6 +100,11 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
     currentTournament.settings.pointsForWin = parseInt(document.getElementById('setting-pts-win').value) || 0;
     currentTournament.settings.pointsForDraw = parseInt(document.getElementById('setting-pts-draw').value) || 0;
     currentTournament.settings.pointsForLoss = parseInt(document.getElementById('setting-pts-loss').value) || 0;
+
+    currentTournament.settings.pointsForGameWin = parseInt(document.getElementById('setting-game-pts-win').value) || 0;
+    currentTournament.settings.pointsForGameDraw = parseInt(document.getElementById('setting-game-pts-draw').value) || 0;
+    currentTournament.settings.pointsForGameLoss = parseInt(document.getElementById('setting-game-pts-loss').value) || 0;
+    currentTournament.settings.recordFormat = document.getElementById('setting-record-format').value || "wld";
     
     currentTournament.settings.randomizeSeeds = document.getElementById('setting-randomize').checked;
     currentTournament.settings.playThirdPlaceMatch = document.getElementById('setting-third-place').checked;
@@ -183,23 +194,30 @@ function renderBlueprintList() {
     };
 
     currentTournament.settings.pipeline.forEach((stage, index) => {
-        const isLocked = index < currentTournament.stages.length;
+        // Status checks
+        const isStarted = index < currentTournament.stages.length;
+        const isCompleted = index < currentTournament.stages.length - 1 || currentTournament.status === "completed";
         
         let details = [];
         if (stage.maxRounds) details.push(`${stage.maxRounds} Rnds`);
         if (stage.cutToTop) details.push(`Top ${stage.cutToTop}`);
-        const detailStr = details.length > 0 ? ` <small style="color:var(--text-muted);">(${details.join(', ')})</small>` : '';
+        const detailStr = details.length > 0 ? ` <small style="color:gray;">(${details.join(', ')})</small>` : '';
         
         list.innerHTML += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isLocked ? 'var(--success)' : 'var(--accent)'};">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isStarted ? 'var(--success)' : 'var(--accent)'};">
                 <span style="font-size: 13px;"><b>${index + 1}.</b> ${formatNames[stage.type]}${detailStr}</span>
-                
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    ${stage.type === 'dpw_swiss' && !isLocked ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Edit Teams">${getIcon('gear', 14)}</button>` : ''}
                     
-                    ${!isLocked 
+                    <!-- 1. DPW Team Config. Only editable BEFORE stage starts -->
+                    ${stage.type === 'dpw_swiss' && !isStarted ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--warning); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Edit Teams">${getIcon('gear', 14)}</button>` : ''}
+                    
+                    <!-- 2. General Stage Settings. Editable until stage is fully COMPLETED -->
+                    ${!isCompleted ? `<button class="btn-edit-stage-settings" data-index="${index}" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Stage Settings">${getIcon('gear', 14)}</button>` : ''}
+                    
+                    <!-- 3. Remove Button -->
+                    ${!isStarted 
                         ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0;">X</button>` 
-                        : '<span style="font-size:10px; color:var(--text-muted);">Locked</span>'}
+                        : ''}
                 </div>
             </div>
         `;
@@ -702,6 +720,16 @@ document.getElementById('setup-blueprint-group').addEventListener('click', (e) =
             saveTournamentLocally(currentTournament);
             updateUI();
         }, stageConfig);
+    }
+
+    // Handle General Stage Settings
+    if (e.target && e.target.closest('.btn-edit-stage-settings')) {
+        const index = parseInt(e.target.closest('.btn-edit-stage-settings').getAttribute('data-index'));
+        
+        openStageSettingsModal(index, currentTournament, () => {
+            saveTournamentLocally(currentTournament);
+            updateUI();
+        });
     }
 });
 
