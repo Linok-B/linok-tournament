@@ -13,6 +13,11 @@ export class Tournament {
             pointsForWin: 3,
             pointsForDraw: 1,
             pointsForLoss: 0,
+            
+            pointsForGameWin: 3,
+            pointsForGameDraw: 1,
+            pointsForGameLoss: 0,
+            recordFormat: "wld",
 
             randomizeSeeds: false,
             playThirdPlaceMatch: false,
@@ -243,7 +248,7 @@ export class Tournament {
         // Reset everyone to zero AND revive everyone
         this.players.forEach(p => {
             p.isEliminated = false; 
-            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, gameDraws: 0, points: 0, dpwRating: 1000, eliminationScore: 9999 };
+            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, gameDraws: 0, points: 0, gamePoints: 0, dpwRating: 1000, eliminationScore: 9999, maxStageReached: -1 };
         });
 
         const ptsForWin = this.settings.pointsForWin !== undefined ? this.settings.pointsForWin : 3;
@@ -407,6 +412,15 @@ export class Tournament {
                     }
                 });
             });
+        });
+
+        // calculate game points dynamically
+        const gWin = this.settings.pointsForGameWin !== undefined ? this.settings.pointsForGameWin : 3;
+        const gDraw = this.settings.pointsForGameDraw !== undefined ? this.settings.pointsForGameDraw : 1;
+        const gLoss = this.settings.pointsForGameLoss !== undefined ? this.settings.pointsForGameLoss : 0;
+
+        this.players.forEach(p => {
+            p.stats.gamePoints = (p.stats.gameWins * gWin) + (p.stats.gameDraws * gDraw) + (p.stats.gameLosses * gLoss);
         });
     }
 
