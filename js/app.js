@@ -67,7 +67,7 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
 // TIEBREAKER BUILDER LOGIC
 const TB_NAMES = {
     "placement": "Tournament Placement",
-    "points": "Match Points", "dpw_rating": "DPW Rating", "game_differential": "Game W-L Differential",
+    "points": "Match Points", "game_points": "Game Points", "dpw_rating": "DPW Rating", "game_differential": "Game W-L Differential",
     "head_to_head": "Head-to-Head", "buchholz": "Buchholz", "median_buchholz": "Median Buchholz",
     "elo": "Starting ELO", "seed": "Registration Seed"
 };
