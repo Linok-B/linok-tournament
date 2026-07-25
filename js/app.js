@@ -767,43 +767,84 @@ function renderTBList() {
     });
 }
 
+function renderTBListOverride(targetArray) {
+    const list = document.getElementById('tb-active-list');
+    list.innerHTML = '';
+    const isDPW = document.getElementById('blueprint-type').value === "dpw_swiss";
+
+    targetArray.forEach((rule, index) => {
+        const isLocked = isDPW && rule === "dpw_rating";
+        list.innerHTML += `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:5px 10px; border:1px solid #45475a; border-radius:4px;">
+                <span style="font-size:13px; color:${isLocked ? '#f9e2af' : 'white'}"><b>${index + 1}.</b> ${TB_NAMES[rule] || rule} ${isLocked ? '(Locked)' : ''}</span>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-tb-up" data-index="${index}" ${index === 0 || isLocked || (index===1 && targetArray[0]==="dpw_rating" && isDPW) ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↑</button>
+                    <button class="btn-tb-down" data-index="${index}" ${index === targetArray.length - 1 || isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↓</button>
+                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed; color:gray;"' : 'style="color:var(--danger); cursor:pointer;"'}>X</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
 document.getElementById('btn-open-tb-builder').addEventListener('click', () => {
-    renderTBList();
+    // If editing a specific stage, load its array. Otherwise, load global pending
+    const targetArray = window.activeEditTiebreakersTarget || pendingTiebreakers;
+    
+    // Temporarily swap pendingTiebreakers reference
+    window.tempEditArray = targetArray;
+    
+    renderTBListOverride(targetArray);
     tbModal.style.display = 'flex';
 });
 
-document.getElementById('btn-close-tb-builder').addEventListener('click', () => tbModal.style.display = 'none');
-document.getElementById('btn-save-tb').addEventListener('click', () => {
-    document.getElementById('btn-open-tb-builder').innerHTML = `<span data-icon="scale" data-size="16"></span> Tiebreakers: ${pendingTiebreakers.length} Rules`;
-    const span = document.getElementById('btn-open-tb-builder').querySelector('span');
-    span.innerHTML = getIcon('scale', 16);
+document.getElementById('btn-close-tb-builder').addEventListener('click', () => {
+    window.activeEditTiebreakersTarget = null;
+    window.activeEditTiebreakersCallback = null;
     tbModal.style.display = 'none';
 });
-
+document.getElementById('btn-save-tb').addEventListener('click', () => {
+    // if overriding, fire callback
+    if (window.activeEditTiebreakersCallback) {
+        window.activeEditTiebreakersCallback(window.tempEditArray);
+        // clean up
+        window.activeEditTiebreakersTarget = null;
+        window.activeEditTiebreakersCallback = null;
+    } else {
+        pendingTiebreakers = window.tempEditArray;
+        document.getElementById('btn-open-tb-builder').innerHTML = `<span data-icon="scale" data-size="16"></span> Tiebreakers: ${pendingTiebreakers.length} Rules`;
+        const span = document.getElementById('btn-open-tb-builder').querySelector('span');
+        if (span) span.innerHTML = getIcon('scale', 16);
+    }
+    tbModal.style.display = 'none';
+});
 // Adding a rule
 document.getElementById('btn-tb-add').addEventListener('click', () => {
     const rule = document.getElementById('tb-add-select').value;
-    if (pendingTiebreakers.includes(rule)) {
+    const targetArray = window.tempEditArray || pendingTiebreakers;
+    if (targetArray.includes(rule)) {
         alert("Rule already active!");
         return;
     }
-    pendingTiebreakers.push(rule);
-    renderTBList();
+    targetArray.push(rule);
+    renderTBListOverride(targetArray);
 });
 
 // Moving / Removing rules
 document.getElementById('tb-active-list').addEventListener('click', (e) => {
     if (e.target.tagName !== 'BUTTON') return;
     const index = parseInt(e.target.getAttribute('data-index'));
+    const targetArray = window.tempEditArray || pendingTiebreakers;
     
     if (e.target.classList.contains('btn-tb-remove')) {
-        pendingTiebreakers.splice(index, 1);
+        targetArray.splice(index, 1);
     } else if (e.target.classList.contains('btn-tb-up')) {
-        [pendingTiebreakers[index - 1], pendingTiebreakers[index]] = [pendingTiebreakers[index], pendingTiebreakers[index - 1]];
+        [targetArray[index - 1], targetArray[index]] = [targetArray[index], targetArray[index - 1]];
     } else if (e.target.classList.contains('btn-tb-down')) {
-        [pendingTiebreakers[index + 1], pendingTiebreakers[index]] = [pendingTiebreakers[index], pendingTiebreakers[index + 1]];
+        [targetArray[index + 1], targetArray[index]] = [targetArray[index], targetArray[index + 1]];
     }
-    renderTBList();
+    
+    renderTBListOverride(targetArray);
 });
 
 // hamburgur :tongue:
