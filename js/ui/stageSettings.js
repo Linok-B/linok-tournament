@@ -28,7 +28,7 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
             <div>
                 <label style="font-size:11px; color:var(--text-muted);">Leaderboard Points Display</label>
                 <select id="edit-stage-display" style="width: 100%; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
-                    <option value="match_points" ${config.pointsColumnDisplay === "match_points" ? 'selected' : ''}>Match Points</option>
+                    <option value="match_points" ${config.pointsColumnDisplay !== "game_points" ? 'selected' : ''}>Match Points</option>
                     <option value="game_points" ${config.pointsColumnDisplay === "game_points" ? 'selected' : ''}>Game Points</option>
                 </select>
             </div>
@@ -39,7 +39,7 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
                 <div>
                     <label style="font-size:11px; color:var(--text-muted);">Swiss Pairing Basis</label>
                     <select id="edit-stage-pairing" ${isStarted ? 'disabled' : ''} style="width: 100%; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); ${isStarted ? 'opacity:0.5; cursor:not-allowed;' : ''}">
-                        <option value="match_points" ${config.swissPairingBasis === "match_points" ? 'selected' : ''}>Match Points</option>
+                        <option value="match_points" ${config.swissPairingBasis !== "game_points" ? 'selected' : ''}>Match Points</option>
                         <option value="game_points" ${config.swissPairingBasis === "game_points" ? 'selected' : ''}>Game Points</option>
                     </select>
                 </div>
@@ -47,7 +47,7 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         }
     }
 
-    // Top Cut (Only applicable if there's a previous stage)
+    // Top Cut (unless stage 1)
     if (stageIndex > 0) {
         html += `
             <div>
@@ -57,7 +57,28 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         `;
     }
 
+    // Add Tiebreaker configuration button inside the modal if unstarted
+    if (!isStarted) {
+        html += `
+            <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 15px;">
+                <button id="btn-stage-tb-edit" style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); cursor: pointer; font-weight: bold; display:flex; justify-content:center; align-items:center; gap:8px;">
+                    <span data-icon="scale" data-size="14"></span> Edit Stage Tiebreakers
+                </button>
+            </div>
+        `;
+    }
+
     fieldsContainer.innerHTML = html;
+    // Visually snaps the box on blur or enter
+    const roundsInput = document.getElementById('edit-stage-rounds');
+    if (roundsInput) {
+        const clamp = () => {
+            const val = parseInt(roundsInput.value) || defaultRounds;
+            roundsInput.value = Math.max(roundsPlayed, val);
+        };
+        roundsInput.onblur = clamp;
+        roundsInput.onkeydown = (e) => { if (e.key === "Enter") clamp(); };
+    }
     modal.style.display = 'flex';
 
     // 2. Close handlers
