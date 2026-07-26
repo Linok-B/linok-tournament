@@ -26,6 +26,34 @@ if (savedData) {
     currentTournament = Object.assign(new Tournament(), savedData);
 }
 
+// modal z-index stacker
+const modalObserver = new MutationObserver((mutations) => {
+    mutations.forEach(mutation => {
+        if (mutation.attributeName === 'style') {
+            const el = mutation.target;
+            
+            // Only target full-screen modal overlays
+            if (el.style.position === 'fixed' && el.style.display === 'flex') {
+                const openOverlays = Array.from(document.querySelectorAll('div[style*="position: fixed"]'))
+                    .filter(x => x !== el && x.style.display === 'flex');
+                
+                let maxZ = 1000;
+                openOverlays.forEach(x => {
+                    const z = parseInt(x.style.zIndex) || 1000;
+                    if (z > maxZ) maxZ = z;
+                });
+                
+                // Stack 10 levels above the highest open modal
+                el.style.zIndex = maxZ + 10;
+            } else if (el.style.position === 'fixed' && el.style.display === 'none') {
+                el.style.zIndex = ''; // Reset when closed
+            }
+        }
+    });
+});
+// entire document for modal style changes
+modalObserver.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] });
+
 
 // SETTINGS MODAL LOGIC
 
