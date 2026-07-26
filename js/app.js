@@ -43,10 +43,19 @@ const modalObserver = new MutationObserver((mutations) => {
                     if (z > maxZ) maxZ = z;
                 });
                 
-                // Stack 10 levels above the highest open modal
                 el.style.zIndex = maxZ + 10;
+
+                // avoid double darkening
+                if (openOverlays.length > 0) {
+                    // If a modal is already open, make stacked one transparent
+                    el.style.backgroundColor = 'transparent';
+                } else {
+                    // Otherwise, ensure it has standard dark background
+                    el.style.backgroundColor = ''; // Reverts to CSS default
+                }
             } else if (el.style.position === 'fixed' && el.style.display === 'none') {
-                el.style.zIndex = ''; // Reset when closed
+                el.style.zIndex = ''; 
+                el.style.backgroundColor = ''; // Reset when closed
             }
         }
     });
