@@ -16,6 +16,10 @@ document.querySelectorAll('[data-icon]').forEach(el => {
 
 let currentTournament = new Tournament();
 
+let _stageMousedown = null;
+let _stageMousemove = null;
+let _stageMouseup = null;
+
 const savedData = loadTournamentLocally();
 if (savedData) {
     // Restore state AND correct prototypes
@@ -975,10 +979,6 @@ privacyModal.addEventListener('click', (e) => {
 });
 
 // Stage Reordering Drag 'n' Drop
-let _stageMousedown = null;
-let _stageMousemove = null;
-let _stageMouseup = null;
-
 function applyStageDragAndDrop() {
     const container = document.getElementById('blueprint-list');
     if (!container) return;
