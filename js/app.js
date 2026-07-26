@@ -205,19 +205,16 @@ function renderBlueprintList() {
         
         list.innerHTML += `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isStarted ? 'var(--success)' : 'var(--accent)'};">
-                <span style="font-size: 13px;"><b>${index + 1}.</b> ${formatNames[stage.type]}${detailStr}</span>
+                
+                <!-- 1. Drag Handle (Only shows if stage is UNSTARTED) -->
+                ${!isStarted ? `<div class="stage-drag-handle" style="color: var(--accent); font-size: 16px; font-weight: bold; cursor: grab; padding: 5px; flex-shrink: 0; user-select:none;">⋮⋮</div>` : ''}
+                
+                <span style="font-size: 13px; flex-grow:1; margin-left:${isStarted ? '24px' : '0'};"><b>${index + 1}.</b> ${formatNames[stage.type]}${detailStr}</span>
+                
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    
-                    <!-- 1. DPW Team Config. Only editable BEFORE stage starts -->
                     ${stage.type === 'dpw_swiss' && !isStarted ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--warning); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Edit Teams">${getIcon('gear', 14)}</button>` : ''}
-                    
-                    <!-- 2. General Stage Settings. Editable until stage is fully COMPLETED -->
                     ${!isCompleted ? `<button class="btn-edit-stage-settings" data-index="${index}" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Stage Settings">${getIcon('gear', 14)}</button>` : ''}
-                    
-                    <!-- 3. Remove Button -->
-                    ${!isStarted 
-                        ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0;">X</button>` 
-                        : ''}
+                    ${!isStarted ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0;">X</button>` : ''}
                 </div>
             </div>
         `;
@@ -419,6 +416,7 @@ function updateUI() {
     }
 
     if (sidebar) sidebar.scrollTop = savedScrollTop;
+    applyStageDragAndDrop();
 }
 
 document.getElementById('player-list-container').addEventListener('click', (e) => {
@@ -975,3 +973,97 @@ privacyModal.addEventListener('click', (e) => {
         privacyModal.style.display = 'none';
     }
 });
+
+// Stage Reordering Drag 'n' Drop
+let _stageMousedown = null;
+let _stageMousemove = null;
+let _stageMouseup = null;
+
+function applyStageDragAndDrop() {
+    const container = document.getElementById('blueprint-list');
+    if (!container) return;
+
+    let draggingElement = null;
+    let placeholder = null;
+    let offsetY = 0;
+    let lastHoverCheck = 0;
+
+    // Clean up old listeners
+    if (_stageMousedown) container.removeEventListener('mousedown', _stageMousedown);
+    if (_stageMousemove) document.removeEventListener('mousemove', _stageMousemove);
+    if (_stageMouseup) document.removeEventListener('mouseup', _stageMouseup);
+
+    _stageMousedown = (e) => {
+        if (!e.target.classList.contains('stage-drag-handle')) return;
+        e.preventDefault();
+        
+        const card = e.target.closest('#blueprint-list > div');
+        const rect = card.getBoundingClientRect();
+        offsetY = e.clientY - rect.top;
+
+        placeholder = card.cloneNode(true);
+        placeholder.style.opacity = '0.3';
+        placeholder.style.border = '2px dashed var(--border-main)';
+        container.insertBefore(placeholder, card);
+
+        draggingElement = card;
+        draggingElement.style.position = 'fixed';
+        draggingElement.style.zIndex = '9999';
+        draggingElement.style.width = `${rect.width}px`;
+        draggingElement.style.top = `${e.clientY - offsetY}px`;
+        draggingElement.style.left = `${rect.left}px`;
+        draggingElement.style.pointerEvents = 'none';
+
+        document.body.style.cursor = 'grabbing';
+    };
+
+    _stageMousemove = (e) => {
+        if (!draggingElement) return;
+        draggingElement.style.top = `${e.clientY - offsetY}px`;
+
+        if (e.timeStamp - lastHoverCheck > 16) {
+            lastHoverCheck = e.timeStamp;
+            const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
+            const hoveredCard = elementsUnderMouse.find(el => el.parentNode === container && el !== draggingElement && el !== placeholder);
+
+            if (hoveredCard) {
+                // Failsafe: Cannot swap with or hover over started/locked stages
+                if (hoveredCard.innerHTML.includes('Locked') || hoveredCard.innerHTML.includes('var(--success)')) return;
+
+                const hoverRect = hoveredCard.getBoundingClientRect();
+                const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
+                if (e.clientY < hoverMiddleY) container.insertBefore(placeholder, hoveredCard);
+                else container.insertBefore(placeholder, hoveredCard.nextSibling);
+            }
+        }
+    };
+
+    _stageMouseup = () => {
+        if (!draggingElement) return;
+        document.body.style.cursor = 'default';
+
+        container.insertBefore(draggingElement, placeholder);
+        draggingElement.removeAttribute('style');
+        placeholder.remove();
+
+        // Save new order to pipeline
+        const lockedCount = currentTournament.stages.length;
+        const lockedPipeline = currentTournament.settings.pipeline.slice(0, lockedCount);
+        
+        const unlockedDOMs = Array.from(container.children).slice(lockedCount);
+        const unlockedIndices = unlockedDOMs.map(el => parseInt(el.querySelector('.btn-remove-stage').getAttribute('data-index')));
+        
+        const reorderedUnlocked = unlockedIndices.map(oldIdx => currentTournament.settings.pipeline[oldIdx]);
+        currentTournament.settings.pipeline = [...lockedPipeline, ...reorderedUnlocked];
+
+        draggingElement = null;
+        placeholder = null;
+
+        saveTournamentLocally(currentTournament);
+        updateUI();
+    };
+
+    container.addEventListener('mousedown', _stageMousedown);
+    document.addEventListener('mousemove', _stageMousemove);
+    document.addEventListener('mouseup', _stageMouseup);
+}
