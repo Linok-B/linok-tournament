@@ -28,39 +28,48 @@ if (savedData) {
 
 // modal z-index stacker
 const modalObserver = new MutationObserver((mutations) => {
+    // 1. Temporarily pause the observer so style changes don't trigger it
+    modalObserver.disconnect();
+    
     mutations.forEach(mutation => {
         if (mutation.attributeName === 'style') {
             const el = mutation.target;
             
-            // Only target full-screen modal overlays
-            if (el.style.position === 'fixed' && el.style.display === 'flex') {
-                const openOverlays = Array.from(document.querySelectorAll('div[style*="position: fixed"]'))
-                    .filter(x => x !== el && x.style.display === 'flex');
-                
-                let maxZ = 1000;
-                openOverlays.forEach(x => {
-                    const z = parseInt(x.style.zIndex) || 1000;
-                    if (z > maxZ) maxZ = z;
-                });
-                
-                el.style.zIndex = maxZ + 10;
+            // Programmatically check for fixed position
+            if (el.style.position === 'fixed') {
+                if (el.style.display === 'flex') {
+                    // Find all OTHER open fixed overlays on screen
+                    const openOverlays = Array.from(document.querySelectorAll('div'))
+                        .filter(x => x !== el && x.style.position === 'fixed' && x.style.display === 'flex');
+                    
+                    let maxZ = 1000;
+                    openOverlays.forEach(x => {
+                        const z = parseInt(x.style.zIndex) || 1000;
+                        if (z > maxZ) maxZ = z;
+                    });
+                    
+                    el.style.zIndex = maxZ + 10;
 
-                // avoid double darkening
-                if (openOverlays.length > 0) {
-                    // If a modal is already open, make stacked one transparent
-                    el.style.backgroundColor = 'transparent';
-                } else {
-                    // Otherwise, ensure it has standard dark background
-                    el.style.backgroundColor = ''; // Reverts to CSS default
+                    // no double darkening
+                    if (openOverlays.length > 0) {
+                        el.style.background = 'transparent';
+                    } else {
+                        // Explicitly restore background
+                        const isPrivacy = el.id === 'privacy-modal';
+                        el.style.background = isPrivacy ? 'rgba(0, 0, 0, 0.81)' : 'rgba(0, 0, 0, 0.8)';
+                    }
+                } else if (el.style.display === 'none') {
+                    el.style.zIndex = '';
+                    el.style.background = ''; // Reverts cleanly to HTML/CSS default
                 }
-            } else if (el.style.position === 'fixed' && el.style.display === 'none') {
-                el.style.zIndex = ''; 
-                el.style.backgroundColor = ''; // Reset when closed
             }
         }
     });
+    
+    // 2. turn the observer back on
+    modalObserver.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] });
 });
-// entire document for modal style changes
+// Initial activation
 modalObserver.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] });
 
 
