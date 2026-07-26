@@ -9,9 +9,13 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     const stage = isStarted ? tournament.stages[stageIndex] : null;
     const config = isStarted ? stage.config : tournament.settings.pipeline[stageIndex];
     
-    // Rounds Played (For dynamic clamping)
+    // Rounds Played
     const roundsPlayed = isStarted ? stage.data.rounds.length : 1;
     const defaultRounds = Math.ceil(Math.log2(tournament.players.length));
+
+    // trans state
+    // Make a tmp copy of the tiebreakers. Do not mutate the config
+    let tempTiebreakers = [...(config.tiebreakers || [])];
 
     document.getElementById('stage-settings-title').innerHTML = `${getIcon('gear', 24)} Stage ${stageIndex + 1} Settings`;
 
@@ -66,7 +70,7 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     fieldsContainer.innerHTML = html;
     modal.style.display = 'flex';
 
-    // 2. Dynamic Input Clamping (Snaps visually on blur or Enter)
+    // 2. clamp visually on blur or Enter
     const roundsInput = document.getElementById('edit-stage-rounds');
     if (roundsInput) {
         const clamp = () => {
@@ -81,30 +85,30 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         roundsInput.onkeydown = (e) => { if (e.key === "Enter") clamp(); };
     }
 
-    // 3. Open Tiebreaker Modal Handler (Safely outside the IF block!)
+    // 3. Open Tiebreaker Modal Handler (Targets the TEMP sandbox copy)
     const tbBtn = document.getElementById('btn-stage-tb-edit');
     if (tbBtn) {
         tbBtn.querySelector('span').innerHTML = getIcon('scale', 14);
         tbBtn.onclick = () => {
-            window.activeEditTiebreakersTarget = config.tiebreakers || [];
+            window.activeEditTiebreakersTarget = tempTiebreakers; 
             window.activeEditTiebreakersCallback = (newRules) => {
-                config.tiebreakers = newRules;
+                tempTiebreakers = newRules; // Update draft, NOT config like before
             };
             document.getElementById('btn-open-tb-builder').click();
         };
     }
 
-    // 4. Close handlers
+    // 4. Close handlers (Safely discards draft)
     const close = () => { modal.style.display = 'none'; };
     document.getElementById('btn-close-stage-settings').onclick = close;
     modal.onclick = (e) => { if (e.target === modal) close(); };
 
-    // 5. Save Handler (With blank-input validation)
+    // 5. Save Handler (Commits draft to config)
     document.getElementById('btn-save-stage-settings').onclick = () => {
         if (roundsInput) {
             const val = parseInt(roundsInput.value);
             if (isNaN(val)) {
-                config.maxRounds = undefined; // Blank means "Optional/No Limit"
+                config.maxRounds = undefined;
                 if (isStarted) stage.data.totalRounds = defaultRounds;
             } else {
                 config.maxRounds = Math.max(roundsPlayed, val);
@@ -124,6 +128,9 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
             const val = parseInt(document.getElementById('edit-stage-cut').value);
             config.cutToTop = (!isNaN(val) && val > 0) ? val : undefined;
         }
+
+        // commit tmp tiebreaker
+        config.tiebreakers = tempTiebreakers; 
 
         close();
         onComplete();
