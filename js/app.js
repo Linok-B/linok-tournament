@@ -1007,30 +1007,26 @@ privacyModal.addEventListener('click', (e) => {
 });
 
 // smh had to actually implement these instead of my 0.8 sloppy trick 
+// smh had to even make each thing own themselves
 // Safely close modals on outside click
 // 1. Warning Modal
-const warningModal = document.getElementById('warning-modal');
-warningModal.addEventListener('click', (e) => {
-    if (e.target === warningModal) warningModal.style.display = 'none';
+document.getElementById('warning-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.target.style.display = 'none';
 });
 
 // 2. End Stage Modal
-const endStageModal = document.getElementById('end-stage-modal');
-endStageModal.addEventListener('click', (e) => {
-    if (e.target === endStageModal) endStageModal.style.display = 'none';
+document.getElementById('end-stage-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.target.style.display = 'none';
 });
 
 // 3. Global Settings Modal
-const settingsModal = document.getElementById('settings-modal');
-settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) settingsModal.style.display = 'none';
+document.getElementById('settings-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.target.style.display = 'none';
 });
 
-// 4. Tiebreaker Modal + memory pruge
-const tbModal = document.getElementById('tiebreaker-modal');
-tbModal.addEventListener('click', (e) => {
-    if (e.target === tbModal) {
-        // Programmatically click the Close button to trigger all cleanups
+// 4. Tiebreaker Modal + mem purge
+document.getElementById('tiebreaker-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
         document.getElementById('btn-close-tb-builder').click();
     }
 });
