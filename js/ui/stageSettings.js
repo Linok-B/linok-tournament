@@ -47,17 +47,15 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         }
     }
 
-    // Top Cut (unless stage 1)
-    if (stageIndex > 0) {
-        html += `
-            <div>
-                <label style="font-size:11px; color:var(--text-muted);">Top Cut (From previous stage)</label>
-                <input type="number" id="edit-stage-cut" ${isStarted ? 'disabled' : ''} value="${config.cutToTop || ''}" placeholder="All" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); ${isStarted ? 'opacity:0.5; cursor:not-allowed;' : ''}">
-            </div>
-        `;
-    }
+    // Top Cut (always show for all stages, but disable if started)
+    html += `
+        <div>
+            <label style="font-size:11px; color:var(--text-muted);">Top Cut (From previous stage)</label>
+            <input type="number" id="edit-stage-cut" ${isStarted ? 'disabled' : ''} value="${config.cutToTop || ''}" placeholder="All" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); ${isStarted ? 'opacity:0.5; cursor:not-allowed;' : ''}">
+        </div>
+    `;
 
-    // Add Tiebreaker configuration button inside the modal if unstarted
+    // Add Tiebreaker configuration button if unstarted
     if (!isStarted) {
         html += `
             <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 15px;">
@@ -69,7 +67,9 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     }
 
     fieldsContainer.innerHTML = html;
-    // Visually snaps the box on blur or enter
+    modal.style.display = 'flex';
+
+    // 2. visually on blur or Enter
     const roundsInput = document.getElementById('edit-stage-rounds');
     if (roundsInput) {
         const clamp = () => {
@@ -79,26 +79,31 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         roundsInput.onblur = clamp;
         roundsInput.onkeydown = (e) => { if (e.key === "Enter") clamp(); };
     }
-    modal.style.display = 'flex';
 
-    // 2. Close handlers
+    // workable click handler
+    const tbBtn = document.getElementById('btn-stage-tb-edit');
+    if (tbBtn) {
+        tbBtn.querySelector('span').innerHTML = getIcon('scale', 14);
+        tbBtn.onclick = () => {
+            window.activeEditTiebreakersTarget = config.tiebreakers || [];
+            window.activeEditTiebreakersCallback = (newRules) => {
+                config.tiebreakers = newRules;
+            };
+            document.getElementById('btn-open-tb-builder').click();
+        };
+    }
+
+    // 3. Close handlers
     const close = () => { modal.style.display = 'none'; };
     document.getElementById('btn-close-stage-settings').onclick = close;
-    
-    // Close on click outside
     modal.onclick = (e) => { if (e.target === modal) close(); };
 
-    // 3. Save Handler
+    // 4. Save Handler
     document.getElementById('btn-save-stage-settings').onclick = () => {
-        // Read & Clamp rounds
-        if (document.getElementById('edit-stage-rounds')) {
-            const enteredRounds = parseInt(document.getElementById('edit-stage-rounds').value) || defaultRounds;
+        if (roundsInput) {
+            const enteredRounds = parseInt(roundsInput.value) || defaultRounds;
             config.maxRounds = Math.max(roundsPlayed, enteredRounds);
-            
-            // If stage is active, also update its live totalRounds variable
-            if (isStarted) {
-                stage.data.totalRounds = config.maxRounds;
-            }
+            if (isStarted) stage.data.totalRounds = config.maxRounds;
         }
 
         // Read Soft Display Change
@@ -106,7 +111,7 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
             config.pointsColumnDisplay = document.getElementById('edit-stage-display').value;
         }
 
-        // Read Pairing Basis (Only if unstarted)
+        // Read Pairing Basis
         if (document.getElementById('edit-stage-pairing') && !isStarted) {
             config.swissPairingBasis = document.getElementById('edit-stage-pairing').value;
         }
