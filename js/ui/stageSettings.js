@@ -57,8 +57,8 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         `;
     }
 
-    // Row 4: Stage Tiebreakers Configure Button (If unstarted)
-    if (!isStarted) {
+    // Row 4: Stage Tiebreakers Configure Button
+    if (!isCompleted) {
         html += `
             <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 15px;">
                 <button id="btn-stage-tb-edit" style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); cursor: pointer; font-weight: bold; display:flex; justify-content:center; align-items:center; gap:8px;">
@@ -86,14 +86,14 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         roundsInput.onkeydown = (e) => { if (e.key === "Enter") clamp(); };
     }
 
-    // 3. Open Tiebreaker Modal Handler (Targets the TEMP sandbox copy)
+    // 3. Open Tiebreaker Modal Handler
     const tbBtn = document.getElementById('btn-stage-tb-edit');
     if (tbBtn) {
         tbBtn.querySelector('span').innerHTML = getIcon('scale', 14);
         tbBtn.onclick = () => {
             window.activeEditTiebreakersTarget = tempTiebreakers; 
             window.activeEditTiebreakersCallback = (newRules) => {
-                tempTiebreakers = newRules; // Update draft, NOT config like before
+                tempTiebreakers = newRules; // Update draft, NOT config like before...
             };
             document.getElementById('btn-open-tb-builder').click();
         };
