@@ -4,8 +4,9 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     const modal = document.getElementById('stage-settings-modal');
     const fieldsContainer = document.getElementById('stage-settings-fields');
     
-    // Check if the stage has already started
+    // Check if the stage has already started / completed
     const isStarted = stageIndex < tournament.stages.length;
+    const isCompleted = stageIndex < tournament.stages.length - 1 || tournament.status === "completed";
     const stage = isStarted ? tournament.stages[stageIndex] : null;
     const config = isStarted ? stage.config : tournament.settings.pipeline[stageIndex];
     
