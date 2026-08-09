@@ -74,13 +74,18 @@ export function calculateTiebreakers(players, stagesConfig) {
             currentFormat = stagesConfig[stagesConfig.length - 1].config.type;
         }
 
-        // If undefined/null (legacy save), use format default!
-        // If explicitly [] (User deleted all rules), it stays [] and everyone ties (Why would you want that)
-        let activeRules = tiebreakerArray ? [...tiebreakerArray] : [...(TB_DEFAULTS[currentFormat] || ["points"])];
-
-        // Do not inject points if game_points is explicitly active
-        if (!activeRules.includes("points") && !activeRules.includes("dpw_rating") && !activeRules.includes("game_points")) {
-            activeRules.unshift("points");
+        let activeRules;
+        if (tiebreakerArray) {
+            // if user explicitly configured rules (even if empty array []), just do it™
+            activeRules = [...tiebreakerArray];
+        } else {
+            // Legacy fallback (null/undefined) so old shit doesn't break
+            activeRules = [...(TB_DEFAULTS[currentFormat] || ["points"])];
+            
+            // Only inject points as fallback if no other primary scoring rules exist
+            if (!activeRules.includes("points") && !activeRules.includes("dpw_rating") && !activeRules.includes("game_points")) {
+                activeRules.unshift("points");
+            }
         }
         
         // 1. Loop through the custom tiebreaker waterfall
@@ -89,6 +94,12 @@ export function calculateTiebreakers(players, stagesConfig) {
             if (rule === "points") {
                 const ptsA = a.stats?.points ?? 0;
                 const ptsB = b.stats?.points ?? 0;
+                if (ptsB !== ptsA) return ptsB - ptsA;
+            }
+
+            if (rule === "game_points") {
+                const ptsA = a.stats?.gamePoints ?? 0;
+                const ptsB = b.stats?.gamePoints ?? 0;
                 if (ptsB !== ptsA) return ptsB - ptsA;
             }
 
