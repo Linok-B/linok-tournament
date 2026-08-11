@@ -70,6 +70,16 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         `;
     }
 
+    // Row 5: Lock Standings Checkbox
+    html += `
+        <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 15px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="edit-stage-lock" ${config.lockStandings ? 'checked' : ''}>
+                <span style="font-size:12px; color:var(--text-main);">Lock Standings (Freeze leaderboard at stage completion)</span>
+            </label>
+        </div>
+    `;
+    
     fieldsContainer.innerHTML = html;
     modal.style.display = 'flex';
 
@@ -130,6 +140,10 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         if (document.getElementById('edit-stage-cut') && !isStarted) {
             const val = parseInt(document.getElementById('edit-stage-cut').value);
             config.cutToTop = (!isNaN(val) && val > 0) ? val : undefined;
+        }
+
+        if (document.getElementById('edit-stage-lock')) {
+            config.lockStandings = document.getElementById('edit-stage-lock').checked;
         }
 
         // commit tmp tiebreaker
