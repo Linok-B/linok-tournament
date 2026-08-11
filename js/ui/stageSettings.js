@@ -22,13 +22,15 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
 
     document.getElementById('stage-settings-title').innerHTML = `${getIcon('gear', 24)} Stage ${stageIndex + 1} Settings`;
 
-    // 1. Generate Fields
+    /// 1. Generate Fields
     let html = `
         <!-- Row 1: Rounds and Top Cut (Side-by-Side) -->
         <div style="display: flex; gap: 10px; width: 100%;">
             <div style="flex: 1; min-width: 0;">
-                <label style="font-size:11px; color:var(--text-muted); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Max Rounds ${isStarted ? `(Min: ${roundsPlayed})` : '(Opt)'}</label>
-                <input type="number" id="edit-stage-rounds" min="${roundsPlayed}" value="${config.maxRounds || ''}" placeholder="All" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                <label style="font-size:11px; color:var(--text-muted); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${isRoundsLocked ? 'Max Rounds (Locked)' : `Max Rounds ${isStarted ? `(Min: ${roundsPlayed})` : '(Opt)'}`}
+                </label>
+                <input type="number" id="edit-stage-rounds" min="${roundsPlayed}" value="${config.maxRounds || ''}" placeholder="All" ${isRoundsLocked ? 'disabled' : ''} style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); ${isRoundsLocked ? 'opacity:0.5; cursor:not-allowed;' : ''}">
             </div>
             <div style="flex: 1; min-width: 0;">
                 <label style="font-size:11px; color:var(--text-muted); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Top Cut ${isStarted ? '(Locked)' : '(Opt)'}</label>
