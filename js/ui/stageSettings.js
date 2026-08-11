@@ -9,6 +9,8 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     const isCompleted = stageIndex < tournament.stages.length - 1 || tournament.status === "completed";
     const stage = isStarted ? tournament.stages[stageIndex] : null;
     const config = isStarted ? stage.config : tournament.settings.pipeline[stageIndex];
+
+    const isRoundsLocked = isStarted && config.type === "dpw_swiss"; // cannot edit rounds in dpw due to dampening factor being based on nº of rounds
     
     // Rounds Played
     const roundsPlayed = isStarted ? stage.data.rounds.length : 1;
