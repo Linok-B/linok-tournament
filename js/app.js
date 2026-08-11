@@ -263,7 +263,7 @@ function renderBlueprintList() {
                 
                 <div style="display: flex; gap: 8px; align-items: center;">
                     ${stage.type === 'dpw_swiss' && !isStarted ? `<button class="btn-edit-dpw" data-index="${index}" style="background: transparent; color: var(--warning); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Edit Teams">${getIcon('gear', 14)}</button>` : ''}
-                    ${!isCompleted ? `<button class="btn-edit-stage-settings" data-index="${index}" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Stage Settings">${getIcon('gear', 14)}</button>` : ''}
+                    <button class="btn-edit-stage-settings" data-index="${index}" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; display: flex; align-items: center; padding: 0;" title="Stage Settings">${getIcon('gear', 14)}</button>
                     ${!isStarted ? `<button class="btn-remove-stage" data-index="${index}" style="background: transparent; color: var(--danger); border: none; cursor: pointer; font-weight: bold; padding: 0;">X</button>` : ''}
                 </div>
             </div>
