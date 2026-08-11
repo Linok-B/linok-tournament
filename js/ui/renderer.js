@@ -708,14 +708,11 @@ export function renderStandings(tournament, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const sortFunction = calculateTiebreakers(tournament.players, tournament.stages);
-    
     // Determine which tiebreaker array to use
     let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
     if (viewIndex < 0) viewIndex = 0;
     
     const stageToRender = tournament.stages[viewIndex];
-    // Check if viewing a DPW Swiss stage
     const isDPW = stageToRender && stageToRender.config.type === "dpw_swiss";
     const displayBasis = (stageToRender && stageToRender.config.pointsColumnDisplay) || "match_points";
     const recFormat = tournament.settings.recordFormat || "wld";
@@ -729,10 +726,37 @@ export function renderStandings(tournament, containerId) {
         stageTiebreakers = stageToRender.config.tiebreakers;
     }
 
-    const sortedPlayers = [...tournament.players].sort((a, b) => sortFunction(a, b, stageTiebreakers));
+    // lock standings engine
+    let playersToUse = tournament.players;
+    let stagesToUse = tournament.stages;
+
+    // only allowed to lock if completed
+    const isCompleted = viewIndex < tournament.stages.length - 1 || tournament.status === "completed";
+    const isLocked = stageToRender && stageToRender.config.lockStandings && stageToRender.data.frozenStats && isCompleted;
+
+    if (isLocked) {
+        // 1. Slice history to only evaluate matches played UP TO this stage
+        stagesToUse = tournament.stages.slice(0, viewIndex + 1);
+        
+        // 2. Clone players and overwrite their stats with the frozen ones from that stage
+        playersToUse = tournament.players.map(p => {
+            const frozen = stageToRender.data.frozenStats.find(f => f.id === p.id);
+            if (frozen) {
+                return {
+                    ...p,
+                    stats: { ...p.stats, ...frozen.stats } // Merge frozen stats
+                };
+            }
+            return p;
+        });
+    }
+
+    // Moved down here so it uses the cloned/frozen lists
+    const sortFunction = calculateTiebreakers(playersToUse, stagesToUse);
+    const sortedPlayers = [...playersToUse].sort((a, b) => sortFunction(a, b, stageTiebreakers));
 
     let html = `
-        <h2 style="margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;">Current Standings</h2>
+        <h2 style="margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;">Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
             <thead>
                 <tr style="border-bottom: 2px solid var(--accent);">
