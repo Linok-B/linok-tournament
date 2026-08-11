@@ -412,6 +412,24 @@ export class Tournament {
                     }
                 });
             });
+
+            // freeze leaderboard stats at end of stage (surely I havent forgotten about any... surely....)
+            stage.data.frozenStats = this.players.map(p => ({
+                id: p.id,
+                stats: {
+                    matchWins: p.stats.matchWins,
+                    matchLosses: p.stats.matchLosses,
+                    matchDraws: p.stats.matchDraws,
+                    gameWins: p.stats.gameWins,
+                    gameLosses: p.stats.gameLosses,
+                    gameDraws: p.stats.gameDraws,
+                    points: p.stats.points,
+                    gamePoints: p.stats.gamePoints,
+                    dpwRating: p.stats.dpwRating,
+                    eliminationScore: p.stats.eliminationScore,
+                    maxStageReached: p.stats.maxStageReached
+                }
+            }));
         });
 
         // calculate game points dynamically
