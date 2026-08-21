@@ -637,58 +637,57 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
 
 
 
-// Global object to remember camera position across redraws!
+// global object to remember camera position across redraws
 window.bracketCamera = window.bracketCamera || { x: 0, y: 0, scale: 1 };
+
+let _panMousedown = null;
+let _panMousemove = null;
+let _panMouseup = null;
+let _panWheel = null;
 
 export function applyPanAndZoom(viewport, board) {
     let panning = false, startX = 0, startY = 0;
 
     function setTransform() {
         board.style.transform = `translate(${window.bracketCamera.x}px, ${window.bracketCamera.y}px) scale(${window.bracketCamera.scale})`;
-        /*
-        // --- HYBRID RENDERING TRICK (deprecated; disabled)---
-        // If zoomed in (> 1.0), remove the GPU lock so text renders as crisp vectors.
-        // If zoomed out (<= 1.0), apply the GPU lock so massive brackets don't lag when panning.
-        if (window.bracketCamera.scale > 1.0) {
-            board.style.willChange = 'auto'; 
-        } else {
-            board.style.willChange = 'transform';
-        } */
     }
 
-    // Instantly apply the saved camera position on load
     setTransform();
 
-    viewport.addEventListener('mousedown', (e) => {
+    // 1. Clean up old listeners
+    if (_panMousedown) viewport.removeEventListener('mousedown', _panMousedown);
+    if (_panMousemove) viewport.removeEventListener('mousemove', _panMousemove);
+    if (_panMouseup) window.removeEventListener('mouseup', _panMouseup);
+    if (_panWheel) viewport.removeEventListener('wheel', _panWheel);
+
+    // 2. Define fresh handlers
+    _panMousedown = (e) => {
         if (['INPUT', 'BUTTON'].includes(e.target.tagName)) return; 
         e.preventDefault();
         panning = true;
         viewport.style.cursor = 'grabbing';
         startX = e.clientX - window.bracketCamera.x;
         startY = e.clientY - window.bracketCamera.y;
-    });
+    };
 
-    viewport.addEventListener('mousemove', (e) => {
+    _panMousemove = (e) => {
         if (!panning) return;
         window.bracketCamera.x = e.clientX - startX;
         window.bracketCamera.y = e.clientY - startY;
         setTransform();
-    });
+    };
 
-    window.addEventListener('mouseup', () => {
+    _panMouseup = () => {
         panning = false;
         viewport.style.cursor = 'grab';
-    });
+    };
 
-    viewport.addEventListener('wheel', (e) => {
+    _panWheel = (e) => {
         e.preventDefault(); 
-        
-        // NEW: Get exact position of the viewport on the screen
         const rect = viewport.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        // Calculate mouse position relative to the current zoom/pan
         let xs = (mouseX - window.bracketCamera.x) / window.bracketCamera.scale;
         let ys = (mouseY - window.bracketCamera.y) / window.bracketCamera.scale;
         
@@ -696,12 +695,17 @@ export function applyPanAndZoom(viewport, board) {
         window.bracketCamera.scale += delta;
         window.bracketCamera.scale = Math.min(Math.max(0.3, window.bracketCamera.scale), 2);
         
-        // Re-center around mouse cursor
         window.bracketCamera.x = mouseX - xs * window.bracketCamera.scale;
         window.bracketCamera.y = mouseY - ys * window.bracketCamera.scale;
         
         setTransform();
-    }, { passive: false });
+    };
+
+    // 3. Attach fresh listeners
+    viewport.addEventListener('mousedown', _panMousedown);
+    viewport.addEventListener('mousemove', _panMousemove);
+    window.addEventListener('mouseup', _panMouseup);
+    viewport.addEventListener('wheel', _panWheel, { passive: false });
 }
 
 export function renderStandings(tournament, containerId) {
