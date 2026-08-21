@@ -134,15 +134,15 @@ export function calculateTiebreakers(players, stagesConfig) {
             }
             
             if (rule === "head_to_head") {
-                if (!a.id || !b.id) return 0; // Safety guard
-                
-                // Compare how many times A beat B vs how many times B beat A
-                const aWinsVsB = a.stats.h2hWins.get(b.id) || 0;
-                const bWinsVsA = b.stats.h2hWins.get(a.id) || 0;
-                
-                // If they played each other and one won more times, that player is ranked higher
-                if (aWinsVsB !== bWinsVsA) {
-                    return bWinsVsA - aWinsVsB;
+                if (a.id && b.id) {
+                    // Compare how many times A beat B vs how many times B beat A
+                    const aWinsVsB = a.stats.h2hWins.get(b.id) || 0;
+                    const bWinsVsA = b.stats.h2hWins.get(a.id) || 0;
+                    
+                    // If they played each other and one won more times, that player is ranked higher
+                    if (aWinsVsB !== bWinsVsA) {
+                        return bWinsVsA - aWinsVsB;
+                    }
                 }
             }
             
