@@ -113,8 +113,12 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         };
     }
 
-    // 4. Close handlers (Safely discards draft)
-    const close = () => { modal.style.display = 'none'; };
+    // 4. Close handlers (Safely discards draft and purges stale globals)
+    const close = () => { 
+        window.activeEditTiebreakersTarget = null;
+        window.activeEditTiebreakersCallback = null;
+        modal.style.display = 'none'; 
+    };
     document.getElementById('btn-close-stage-settings').onclick = close;
     modal.onclick = (e) => { if (e.target === modal) close(); };
 
