@@ -3,9 +3,28 @@ import { computeSigmoidPenaltyMatrix } from '../matchmakers/sigmoidDecay.js';
 import { calculateTiebreakers } from '../systems/tiebreakers.js';
 import { openSearchFallbackModal } from '../../ui/searchFallbackModal.js';
 
-function fisherYatesShuffle(arr) {
+// Mulberry32 32-bit deterministic PRNG
+function createSeededRNG(seed) {
+    return function() {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function stringToSeed(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+    }
+    return (hash >>> 0);
+}
+
+function seededFisherYatesShuffle(arr, seed) {
+    const rng = createSeededRNG(seed);
     for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(rng() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
 }
@@ -92,18 +111,23 @@ export async function advanceStage(stageData, config, allPlayers) {
     let playersToPair = allPlayers.filter(p => activePlayerIds.includes(p.id));
 
     // 1. PIPELINE: Fisher-Yates -> Sort by Pairing Basis -> Tiebreakers
-    const isFY = config.orderMode !== "og";
-    if (isFY) fisherYatesShuffle(playersToPair);
-
-    // Determine active tiebreaker rules for matchmaking
-    let pairingRules;
-    if (config.inheritTiebreakers !== false) {
-        pairingRules = config.tiebreakers || ["points", "buchholz", "game_differential", "head_to_head", "seed"]; //will prob remove ts
-    } else {
-        pairingRules = config.pairingTiebreakers || ["points"];
+        const isFY = config.orderMode !== "og";
+    if (isFY) {
+        const roundSeed = (stringToSeed(stageData.id || "swiss_stage") + (currentRoundNum + 1) * 1398269) >>> 0;
+        seededFisherYatesShuffle(playersToPair, roundSeed);
     }
 
-    // Ensure primary basis is the first rule in the waterfall
+    // Determine active tiebreaker rules for matchmaking
+    let pairingRules = [];
+    if (config.inheritTiebreakers === true) {
+        pairingRules = [...(config.tiebreakers || [])];
+    } else if (config.pairingTiebreakers) {
+        pairingRules = [...config.pairingTiebreakers];
+    } else {
+        pairingRules = [];
+    }
+
+    // Ensure primary pairing basis is first
     const basis = config.swissPairingBasis || "match_points";
     const primaryRule = basis === "game_points" ? "game_points" : (basis === "dpw_rating" ? "dpw_rating" : "points");
     pairingRules = [primaryRule, ...pairingRules.filter(r => r !== primaryRule)];
