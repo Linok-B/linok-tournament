@@ -12,20 +12,24 @@ self.importScripts(
 );
 
 async function getEngine(engineType) {
-    if (engineType.startsWith('mrv')) {
-        if (!mrvModule) mrvModule = await createMRVModule();
+    const moduleOptions = {
+        locateFile: (path) => `./modules/${path}`
+    };
+
+    if (engineType === 'mrv') {
+        if (!mrvModule) mrvModule = await createMRVModule(moduleOptions);
         return mrvModule;
     }
-    if (engineType.startsWith('greedy') || engineType === 'plain_greedy') {
-        if (!greedyModule) greedyModule = await createGreedyModule();
+    if (engineType === 'greedy' || engineType === 'plain_greedy') {
+        if (!greedyModule) greedyModule = await createGreedyModule(moduleOptions);
         return greedyModule;
     }
-    if (engineType.startsWith('blossom') || engineType.startsWith('topk')) {
-        if (!blossomsModule) blossomsModule = await createBlossomsModule();
+    if (engineType === 'blossom' || engineType === 'topk_blossom') {
+        if (!blossomsModule) blossomsModule = await createBlossomsModule(moduleOptions);
         return blossomsModule;
     }
     if (engineType === 'dutch') {
-        if (!dutchModule) dutchModule = await createDutchModule();
+        if (!dutchModule) dutchModule = await createDutchModule(moduleOptions);
         return dutchModule;
     }
     throw new Error(`Unknown engine type: ${engineType}`);
