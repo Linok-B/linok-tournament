@@ -35,7 +35,29 @@ async function getEngine(engineType) {
     throw new Error(`Unknown engine type: ${engineType}`);
 }
 
+const preloadedSet = new Set();
+
 self.onmessage = async (e) => {
+    // 1. Handle background preloading
+    if (e.data.type === 'PRELOAD') {
+        const target = e.data.engineType;
+        try {
+            if (target === 'all') {
+                await Promise.all([
+                    getEngine('mrv'),
+                    getEngine('greedy'),
+                    getEngine('blossom'),
+                    getEngine('dutch')
+                ]);
+            } else if (!preloadedSet.has(target)) {
+                preloadedSet.add(target);
+                await getEngine(target);
+            }
+        } catch (err) {}
+        return;
+    }
+
+    // 2. Standard matchmaking dispatch
     const { id, n, engineType, isTopK, allowBacktrack, checkUpToDegree, maxCandidates, currentRound, ranks, playedMatrix, scores, colorHistory } = e.data;
 
     try {
