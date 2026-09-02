@@ -15,3 +15,12 @@ A fully client-side, zero-dependency tournament management web application. Desi
 Website live at [linok-tournament](https://linok-b.github.io/linok-tournament/index.html). No installation or local server required.
 
 <3
+
+## Acknowledgements
+
+This project utilizes code from the following open-source projects:
+
+- **[MiniSat](https://github.com/niklasso/minisat)**: A minimalistic and high-performance SAT solver.
+- **[Emscripten](https://github.com/emscripten-core/emsdk)**: An open-source compiler toolchain to WebAssembly.
+
+Portions of this software are copyright by their respective authors and are used under the MIT License. See the [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) file for full copyright and license details.
