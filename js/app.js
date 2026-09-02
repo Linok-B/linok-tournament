@@ -94,6 +94,7 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     document.getElementById('setting-full-bracket').checked = currentTournament.settings.showFullBracket || false;
     document.getElementById('setting-hide-byes').checked = currentTournament.settings.hideByes || false;
     document.getElementById('setting-show-seeds').checked = currentTournament.settings.showSeeds || false;
+    document.getElementById('setting-preload-wasm').checked = currentTournament.settings.preloadWasm || false;
     
     settingsModal.style.display = 'flex';
 
@@ -162,6 +163,13 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
     currentTournament.settings.showFullBracket = document.getElementById('setting-full-bracket').checked;
     currentTournament.settings.hideByes = document.getElementById('setting-hide-byes').checked;
     currentTournament.settings.showSeeds = document.getElementById('setting-show-seeds').checked;
+    currentTournament.settings.preloadWasm = document.getElementById('setting-preload-wasm').checked;
+    
+    if (currentTournament.settings.preloadWasm) {
+        import('./engine/matchmakers/matchmakerBridge.js').then(({ preloadAllEngines }) => {
+            preloadAllEngines();
+        });
+    }
     
     if (currentTournament.status !== "setup") {
         currentTournament.recalculateAllStats(); 
@@ -1138,4 +1146,11 @@ function applyStageDragAndDrop() {
     container.addEventListener('mousedown', _stageMousedown);
     document.addEventListener('mousemove', _stageMousemove);
     document.addEventListener('mouseup', _stageMouseup);
+}
+
+
+if (currentTournament.settings.preloadWasm) {
+    import('./engine/matchmakers/matchmakerBridge.js').then(({ preloadAllEngines }) => {
+        preloadAllEngines();
+    });
 }
