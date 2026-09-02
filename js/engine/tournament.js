@@ -150,6 +150,13 @@ export class Tournament {
     }
 
     executeTransition(playersForNextStage, config, nextStageIndex) {
+
+        if (config.type === "swiss" || config.type === "dpw_swiss") {
+            import('./matchmakers/matchmakerBridge.js').then(({ preloadEngine }) => {
+                preloadEngine(config.pairingAlgorithm || "mrv");
+            });
+        }
+        
         const formatEngine = getFormat(config.type);
 
         // DYNAMIC DPW MATH CALCULATION
