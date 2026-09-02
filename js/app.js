@@ -1019,6 +1019,31 @@ document.getElementById('btn-close-privacy').addEventListener('click', () => {
     privacyModal.style.display = 'none';
 });
 
+// Source Modal
+const licenseModal = document.getElementById('license-modal');
+const btnSourceLicense = document.getElementById('btn-source-license');
+const btnCloseLicense = document.getElementById('btn-close-license');
+
+if (btnSourceLicense) {
+    btnSourceLicense.addEventListener('click', () => {
+        licenseModal.style.display = 'flex';
+    });
+}
+
+if (btnCloseLicense) {
+    btnCloseLicense.addEventListener('click', () => {
+        licenseModal.style.display = 'none';
+    });
+}
+
+if (licenseModal) {
+    licenseModal.addEventListener('click', (e) => {
+        if (e.target === licenseModal) {
+            licenseModal.style.display = 'none';
+        }
+    });
+}
+
 // NATIVE SVG CAPTURE ENGINE
 document.addEventListener('click', (e) => {
     if (e.target && e.target.closest('#btn-capture-bracket')) {
