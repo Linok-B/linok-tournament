@@ -1,4 +1,5 @@
 import { getIcon } from './icons.js';
+import { openSwissConfigModal } from './swissConfigModal.js';
 
 export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     const modal = document.getElementById('stage-settings-modal');
@@ -51,12 +52,10 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     // Row 3: Swiss Pairing Basis (Swiss Only)
     if (config.type === "swiss" || config.type === "dpw_swiss") {
         html += `
-            <div>
-                <label style="font-size:11px; color:var(--text-muted);">Swiss Pairing Basis</label>
-                <select id="edit-stage-pairing" ${isStarted ? 'disabled' : ''} style="width: 100%; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); ${isStarted ? 'opacity:0.5; cursor:not-allowed;' : ''}">
-                    <option value="match_points" ${config.swissPairingBasis !== "game_points" ? 'selected' : ''}>Match Points</option>
-                    <option value="game_points" ${config.swissPairingBasis === "game_points" ? 'selected' : ''}>Game Points</option>
-                </select>
+            <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 12px;">
+                <button id="btn-open-swiss-pairing-config" ${isStarted ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; justify-content:center; align-items:center; gap:8px;">
+                    ${getIcon('gear', 14)} ${isStarted ? 'Swiss Pairing Engine (Locked: Stage Started)' : 'Configure Swiss Pairing Engine'}
+                </button>
             </div>
         `;
     }
@@ -81,6 +80,15 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
             </label>
         </div>
     `;
+
+    const swissCfgBtn = document.getElementById('btn-open-swiss-pairing-config');
+    if (swissCfgBtn && !isStarted) {
+        swissCfgBtn.onclick = () => {
+            openSwissConfigModal(config, config.type === "dpw_swiss", (updatedConfig) => {
+                // Configuration updated in draft
+            });
+        };
+    }
     
     fieldsContainer.innerHTML = html;
     modal.style.display = 'flex';
