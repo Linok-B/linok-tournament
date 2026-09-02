@@ -2,6 +2,7 @@ import { requestMatchmaking } from '../matchmakers/matchmakerBridge.js';
 import { computeSigmoidPenaltyMatrix } from '../matchmakers/sigmoidDecay.js';
 import { calculateTiebreakers } from '../systems/tiebreakers.js';
 import { openSearchFallbackModal } from '../../ui/searchFallbackModal.js';
+import { optimizeMatchColors } from '../systems/colorOptimizer.js';
 
 // Mulberry32 32-bit deterministic PRNG
 function createSeededRNG(seed) {
@@ -244,34 +245,33 @@ export async function advanceStage(stageData, config, allPlayers) {
     }
 
     // 6. Build next round's match objects
-    const nextRoundMatches = [];
+    const rawPairs = [];
     result.pairs.forEach(([uIdx, vIdx]) => {
         const p1 = pairingPool[uIdx];
         const p2 = pairingPool[vIdx];
 
         if (p1.isDummy || p2.isDummy) {
             const realPlayer = p1.isDummy ? p2 : p1;
-            nextRoundMatches.push({
-                id: crypto.randomUUID(),
-                round: currentRoundNum + 1,
-                player1: realPlayer,
-                player2: null,
-                score1: 0, score2: 0,
-                winner: realPlayer,
-                isBye: true
-            });
+            rawPairs.push({ p1: realPlayer, p2: null, isBye: true });
         } else {
-            nextRoundMatches.push({
-                id: crypto.randomUUID(),
-                round: currentRoundNum + 1,
-                player1: p1,
-                player2: p2,
-                score1: 0, score2: 0,
-                winner: null,
-                isBye: false
-            });
+            rawPairs.push({ p1: p1, p2: p2, isBye: false });
         }
     });
+
+    // Apply color post-pass (Dutch handles colors natively (which also makes it ass-tier), all others use the post-pass)
+    const finalPairs = (algo === "dutch")
+        ? rawPairs.map(({ p1, p2, isBye }) => ({ player1: p1, player2: p2, isBye }))
+        : optimizeMatchColors(rawPairs, stageData);
+
+    const nextRoundMatches = finalPairs.map(({ player1, player2, isBye }) => ({
+        id: crypto.randomUUID(),
+        round: currentRoundNum + 1,
+        player1: player1,
+        player2: player2,
+        score1: 0, score2: 0,
+        winner: isBye ? player1 : null,
+        isBye: isBye
+    }));
 
     stageData.rounds.push(nextRoundMatches);
     return stageData;
