@@ -306,7 +306,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
                 K_base: auto_K_base,
                 r_ramp: existingConfig?.r_ramp || auto_r_ramp,
                 resetRatings: document.getElementById('dpw-reset-ratings').checked,
-                tiebreakers: existingConfig?.tiebreakers || ["dpw_rating", "head_to_head", "buchholz", "seed"], 
+                tiebreakers: existingConfig?.tiebreakers || ["dpw_rating", "team_score", "head_to_head", "buchholz", "seed"],
                 dpwData: cache 
             };
 
