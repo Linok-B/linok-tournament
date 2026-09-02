@@ -10,12 +10,37 @@ export function initStage(players, config) {
     const seededPlayers = [...players].sort((a, b) => a.seed - b.seed);
     const defaultRounds = Math.ceil(Math.log2(seededPlayers.length));
     const maxRounds = config.maxRounds || defaultRounds;
+    const mode = config.round1Mode || "sequential";
     
-    let matches = [];
-    for (let i = 0; i < seededPlayers.length; i += 2) {
-        const p1 = seededPlayers[i];
-        const p2 = seededPlayers[i + 1] || null; 
+    const n = seededPlayers.length;
+    let pairs = [];
 
+    if (mode === "folded") {
+        // 1 vs N, 2 vs N-1, ...
+        for (let i = 0; i < Math.floor(n / 2); i++) {
+            pairs.push([seededPlayers[i], seededPlayers[n - 1 - i]]);
+        }
+        if (n % 2 !== 0) {
+            pairs.push([seededPlayers[Math.floor(n / 2)], null]); // Middle gets Bye
+        }
+    } else if (mode === "halves") {
+        // 1 vs N/2+1, 2 vs N/2+2, ...
+        const half = Math.ceil(n / 2);
+        for (let i = 0; i < Math.floor(n / 2); i++) {
+            pairs.push([seededPlayers[i], seededPlayers[half + i]]);
+        }
+        if (n % 2 !== 0) {
+            pairs.push([seededPlayers[half - 1], null]);
+        }
+    } else {
+        // Sequential (Default): 1 vs 2, 3 vs 4, ...
+        for (let i = 0; i < n; i += 2) {
+            pairs.push([seededPlayers[i], seededPlayers[i + 1] || null]);
+        }
+    }
+
+    let matches = [];
+    pairs.forEach(([p1, p2]) => {
         matches.push({
             id: crypto.randomUUID(),
             round: 1,
@@ -25,13 +50,13 @@ export function initStage(players, config) {
             winner: p2 === null ? p1 : null,
             isBye: p2 === null
         });
-    }
+    });
 
     return {
-        type: "dpw_swiss",
+        type: config.type || "swiss",
         totalRounds: maxRounds,
         rounds: [matches],
-        pastMatchups: [], 
+        pastMatchups: [],
         isComplete: false
     };
 }
