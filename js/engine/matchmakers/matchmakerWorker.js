@@ -5,10 +5,10 @@ let dutchModule = null;
 
 // Import scripts dynamically in worker
 self.importScripts(
-    './mrv_cdcl_module.js',
-    './greedy_cdcl_module.js',
-    './blossoms_cdcl_module.js',
-    './dutch_solver_module.js'
+    './modules/mrv_cdcl_module.js',
+    './modules/greedy_cdcl_module.js',
+    './modules/blossoms_cdcl_module.js',
+    './modules/dutch_solver_module.js'
 );
 
 async function getEngine(engineType) {
