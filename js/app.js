@@ -117,7 +117,8 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
 // TIEBREAKER BUILDER LOGIC
 const TB_NAMES = {
     "placement": "Tournament Placement",
-    "points": "Match Points", "game_points": "Game Points", "dpw_rating": "DPW Rating", "game_differential": "Game W-L Differential",
+    "points": "Match Points", "game_points": "Game Points", "dpw_rating": "DPW Rating", 
+    "team_score": "Team Score (TS)", "game_differential": "Game W-L Differential",
     "head_to_head": "Head-to-Head", "buchholz": "Buchholz", "median_buchholz": "Median Buchholz",
     "elo": "Starting ELO", "seed": "Registration Seed"
 };
@@ -127,7 +128,7 @@ const TB_DEFAULTS = {
     "double_elimination": ["placement", "seed"],
     "round_robin": ["points", "game_differential", "head_to_head", "seed"],
     "swiss": ["points", "buchholz", "game_differential", "head_to_head", "seed"],
-    "dpw_swiss": ["dpw_rating", "head_to_head", "buchholz", "seed"]
+    "dpw_swiss": ["dpw_rating", "team_score", "head_to_head", "buchholz", "seed"]
 };
 
 // Init state dynamically based on what the browser cached in the dropdown
