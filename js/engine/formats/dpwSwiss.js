@@ -2,8 +2,30 @@ import { requestMatchmaking } from '../matchmakers/matchmakerBridge.js';
 import { calculateTiebreakers } from '../systems/tiebreakers.js';
 import { openSearchFallbackModal } from '../../ui/searchFallbackModal.js';
 
-function fisherYatesShuffle(arr) {
-// smh I just noticed a problem
+// Mulberry32 32-bit deterministic PRNG
+function createSeededRNG(seed) {
+    return function() {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function stringToSeed(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+    }
+    return (hash >>> 0);
+}
+
+function seededFisherYatesShuffle(arr, seed) {
+    const rng = createSeededRNG(seed);
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
 }
 
 export function initStage(players, config) {
@@ -87,7 +109,10 @@ export async function advanceStage(stageData, config, allPlayers) {
 
     // 1. PIPELINE: Fisher-Yates -> Sort strictly by DPW Rating & Team Score Tiebreakers
     const isFY = config.orderMode !== "og";
-    if (isFY) fisherYatesShuffle(playersToPair);
+    if (isFY) {
+        const roundSeed = (stringToSeed(stageData.id || "swiss_stage") + (currentRoundNum + 1) * 1398269) >>> 0;
+        seededFisherYatesShuffle(playersToPair, roundSeed);
+    }
 
     let pairingRules = config.pairingTiebreakers || config.tiebreakers || ["dpw_rating", "team_score", "head_to_head", "buchholz", "seed"];
     // Ensure dpw_rating is primary
