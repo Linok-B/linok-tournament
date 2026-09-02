@@ -53,13 +53,25 @@ export function openSwissConfigModal(config, isDPW, onSave) {
             </div>
 
             <div style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:14px; padding-right:5px;">
+                
+                <!-- 1. Algorithm Selector -->
                 <div>
                     <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Pairing Algorithm</label>
                     <select id="cfg-algo" style="width:100%; padding:7px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
-                        <option value="mrv" title="Minimum Remaining Values: Prioritizes most constrained players first with least constraining partner ordering." ${isMRV ? 'selected' : ''}>MRV</option>
-                        <option value="blossom" title="Edmonds' Blossom: Maximum weight matching on general non-bipartite graphs." ${isBlossom ? 'selected' : ''}>Blossom</option>
-                        <option value="greedy" title="Greedy: Sequential top-down player index pairing scanner." ${isGreedy ? 'selected' : ''}>Greedy</option>
-                        <option value="dutch" title="Dutch System: FIDE Article C3 color preference compatibility matching." ${isDutch ? 'selected' : ''}>Dutch System</option>
+                        <option value="mrv" title="Minimum Remaining Values" ${isMRV ? 'selected' : ''}>MRV</option>
+                        <option value="blossom" title="Edmonds' Blossom" ${isBlossom ? 'selected' : ''}>Blossom</option>
+                        <option value="greedy" title="Greedy sequential index scanner" ${isGreedy ? 'selected' : ''}>Greedy</option>
+                        <option value="dutch" title="Dutch System Article C3" ${isDutch ? 'selected' : ''}>Dutch System</option>
+                    </select>
+                </div>
+            
+                <!-- 2. Pairing Method -->
+                <div>
+                    <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Round 1 Pairing Method</label>
+                    <select id="cfg-round1-mode" style="width:100%; padding:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
+                        <option value="sequential" title="Player 1 vs 2, 3 vs 4, 5 vs 6..." ${draft.round1Mode === 'sequential' ? 'selected' : ''}>Sequential Order (1v2, 3v4...)</option>
+                        <option value="folded" title="Player 1 vs N, 2 vs N-1, 3 vs N-2..." ${draft.round1Mode === 'folded' ? 'selected' : ''}>Folded Seed (1vN, 2vN-1...)</option>
+                        <option value="halves" title="Player 1 vs (N/2+1), 2 vs (N/2+2)..." ${draft.round1Mode === 'halves' ? 'selected' : ''}>Split Halves (1 vs N/2+1...)</option>
                     </select>
                 </div>
 
@@ -195,6 +207,10 @@ export function openSwissConfigModal(config, isDPW, onSave) {
             render();
         };
 
+        document.getElementById('cfg-round1-mode').onchange = (e) => {
+            draft.round1Mode = e.target.value;
+        };
+
         if (document.getElementById('btn-cfg-edit-tb')) {
             document.getElementById('btn-cfg-edit-tb').onclick = () => {
                 window.activeEditTiebreakersTarget = draft.customTiebreakers;
@@ -240,6 +256,7 @@ export function openSwissConfigModal(config, isDPW, onSave) {
             config.orderMode = draft.orderMode;
             config.cdclMode = draft.cdclMode;
             config.swissPairingBasis = draft.pairingBasis;
+            config.round1Mode = draft.round1Mode;
             config.inheritTiebreakers = draft.inheritTiebreakers;
             config.pairingTiebreakers = draft.customTiebreakers;
             config.maxCandidates = draft.maxCandidates;
