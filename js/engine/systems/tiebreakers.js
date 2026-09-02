@@ -3,7 +3,7 @@ const TB_DEFAULTS = {
     "double_elimination": ["placement", "seed"],
     "round_robin": ["points", "game_differential", "head_to_head", "seed"],
     "swiss": ["points", "buchholz", "game_differential", "head_to_head", "seed"],
-    "dpw_swiss": ["dpw_rating", "head_to_head", "buchholz", "seed"]
+    "dpw_swiss": ["dpw_rating", "team_score", "head_to_head", "buchholz", "seed"]
 };
 
 export function calculateTiebreakers(players, stagesConfig) {
@@ -113,6 +113,13 @@ export function calculateTiebreakers(players, stagesConfig) {
                 const aRat = a.stats?.dpwRating ?? 1000;
                 const bRat = b.stats?.dpwRating ?? 1000;
                 if (bRat !== aRat) return bRat - aRat;
+            }
+            
+            if (rule === "team_score") {
+                const aTS = a.metadata?.dpwTS ?? 0;
+                const bTS = b.metadata?.dpwTS ?? 0;
+                // Lower = Better
+                if (aTS !== bTS) return aTS - bTS;
             }
             
             if (rule === "game_differential") {
