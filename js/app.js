@@ -470,7 +470,7 @@ function updateUI() {
     applyStageDragAndDrop();
 }
 
-document.getElementById('player-list-container').addEventListener('click', (e) => {
+document.getElementById('player-list-container').addEventListener('click', async (e) => {
     
     // 1. Handle "Submit Score" Button
     if (e.target && e.target.classList.contains('btn-report')) {
@@ -519,7 +519,7 @@ document.getElementById('player-list-container').addEventListener('click', (e) =
         const draws = dInput ? dInput.value : 0;
 
         // Send to Engine
-        const success = currentTournament.reportMatchScore(matchId, score1, score2, draws);
+        const success = await currentTournament.reportMatchScore(matchId, score1, score2, draws);
         
         if (success) {
             saveTournamentLocally(currentTournament);
