@@ -41,3 +41,13 @@ export async function requestMatchmaking(params) {
         workerInstance.postMessage({ id: reqId, ...params });
     });
 }
+
+export function preloadEngine(engineType) {
+    const workerInstance = getWorker();
+    workerInstance.postMessage({ type: 'PRELOAD', engineType });
+}
+
+export function preloadAllEngines() {
+    const workerInstance = getWorker();
+    workerInstance.postMessage({ type: 'PRELOAD', engineType: 'all' });
+}
