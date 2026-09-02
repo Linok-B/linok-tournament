@@ -192,44 +192,44 @@ export class Tournament {
         });
     }
 
-    reportMatchScore(matchId, score1, score2, draws = 0) {
+    async reportMatchScore(matchId, score1, score2, draws = 0) {
         if (this.status !== "active") return false;
-
+    
         const activeStage = this.stages[this.stages.length - 1];
         const currentRound = activeStage.data.rounds[activeStage.data.rounds.length - 1];
         const match = currentRound.find(m => m.id === matchId);
         if (!match || match.winner) return false;
-
+    
         match.score1 = parseInt(score1) || 0;
         match.score2 = parseInt(score2) || 0;
         match.draws = parseInt(draws) || 0;
-
+    
         if ((activeStage.config.type === "single_elimination" || activeStage.config.type === "double_elimination") && match.score1 === match.score2) {
             alert("Ties are not allowed in Elimination formats!");
             return false; 
         }
-
+    
         if (match.score1 > match.score2) match.winner = match.player1;
         else if (match.score2 > match.score1) match.winner = match.player2;
         else match.winner = "tie"; 
-
+    
         this.recalculateAllStats();
-
+    
         const isRoundComplete = currentRound.every(m => m.winner !== null);
         
         if (isRoundComplete) {
             const formatEngine = getFormat(activeStage.config.type);
             
-            // Merge global settings into stage config so engines can see toggles like 3rd place match
             const combinedConfig = { 
                 ...this.settings, 
                 ...activeStage.config 
             };
-
-            activeStage.data = formatEngine.advanceStage(activeStage.data, combinedConfig, this.players);
-
+    
+            // Await async format engine advance
+            activeStage.data = await formatEngine.advanceStage(activeStage.data, combinedConfig, this.players);
+    
             this.recalculateAllStats();
-
+    
             if (activeStage.data.isComplete) {
                 activeStage.status = "completed";
                 if (this.stages.length >= this.settings.pipeline.length) {
