@@ -53,7 +53,7 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     if (config.type === "swiss" || config.type === "dpw_swiss") {
         html += `
             <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 12px;">
-                <button id="btn-open-swiss-pairing-config" ${isStarted ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; justify-content:center; align-items:center; gap:8px;">
+                <button type="button" id="btn-open-swiss-pairing-config" ${isStarted ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; justify-content:center; align-items:center; gap:8px;">
                     ${getIcon('gear', 14)} ${isStarted ? 'Swiss Pairing Engine (Locked: Stage Started)' : 'Configure Swiss Pairing Engine'}
                 </button>
             </div>
@@ -81,17 +81,18 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         </div>
     `;
 
+    fieldsContainer.innerHTML = html;
+    modal.style.display = 'flex';
+
+    // Hook up the Swiss Pairing Engine Button
     const swissCfgBtn = document.getElementById('btn-open-swiss-pairing-config');
     if (swissCfgBtn && !isStarted) {
         swissCfgBtn.onclick = () => {
             openSwissConfigModal(config, config.type === "dpw_swiss", (updatedConfig) => {
-                // Configuration updated in draft
+                // Settings saved in config draft
             });
         };
     }
-    
-    fieldsContainer.innerHTML = html;
-    modal.style.display = 'flex';
 
     // 2. clamp visually on blur or Enter
     const roundsInput = document.getElementById('edit-stage-rounds');
