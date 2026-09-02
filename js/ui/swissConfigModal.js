@@ -14,10 +14,11 @@ export function openSwissConfigModal(config, isDPW, onSave) {
         greedyMode: config.greedyMode || "backtracking",
         blossomMode: config.blossomMode || "topk",
         orderMode: config.orderMode || "fisher_yates",
+        round1Mode: config.round1Mode || "sequential", // "sequential", "folded", "halves"
         cdclMode: config.cdclMode !== undefined ? config.cdclMode : 1,
         pairingBasis: isDPW ? "dpw_rating" : (config.swissPairingBasis || "match_points"),
-        inheritTiebreakers: config.inheritTiebreakers !== false,
-        customTiebreakers: [...(config.pairingTiebreakers || config.tiebreakers || ["points"])],
+        inheritTiebreakers: false, // Default: NO inherited tiebreakers for pairing
+        customTiebreakers: isDPW ? ["team_score"] : [], // Default: empty (or TS for DPW)
         maxCandidates: config.maxCandidates || (config.pairingAlgorithm === "blossom" ? 100 : 1000),
         timeoutMs: config.timeoutMs || 5000
     };
