@@ -3,7 +3,7 @@ let greedyModule = null;
 let blossomsModule = null;
 let dutchModule = null;
 
-// Import scripts dynamically in worker
+// import scripts dynamically in worker
 self.importScripts(
     './modules/mrv_cdcl_module.js',
     './modules/greedy_cdcl_module.js',
