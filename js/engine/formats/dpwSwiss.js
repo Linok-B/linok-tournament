@@ -114,8 +114,17 @@ export async function advanceStage(stageData, config, allPlayers) {
         seededFisherYatesShuffle(playersToPair, roundSeed);
     }
 
-    let pairingRules = config.pairingTiebreakers || config.tiebreakers || ["dpw_rating", "team_score", "head_to_head", "buchholz", "seed"];
-    // Ensure dpw_rating is primary
+    // Determine active tiebreaker rules for DPW matchmaking
+    let pairingRules = [];
+    if (config.inheritTiebreakers === true) {
+        pairingRules = [...(config.tiebreakers || [])];
+    } else if (config.pairingTiebreakers) {
+        pairingRules = [...config.pairingTiebreakers];
+    } else {
+        pairingRules = ["team_score"]; // Default w/ TS breaks ties in DPW rating
+    }
+
+    // Ensure DPW rating is strictly primary
     pairingRules = ["dpw_rating", ...pairingRules.filter(r => r !== "dpw_rating")];
 
     const sortFn = calculateTiebreakers(allPlayers, [ { data: stageData, config: config } ]);
