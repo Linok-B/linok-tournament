@@ -62,36 +62,63 @@ self.onmessage = async (e) => {
 
     try {
         const wasm = await getEngine(engineType);
+        
+        // 1. Prepare dynamic buffers for exact N
+        wasm._prepare_buffers(n);
+
         const buffer = wasm.HEAPU8.buffer;
         const view = new DataView(buffer);
+        const W = Math.ceil(n / 64);
 
-        // 1. Write input ranks and played matric
         const ranksPtr = wasm._get_in_ranks();
         const playedPtr = wasm._get_in_played();
 
         for (let i = 0; i < n; i++) view.setInt32(ranksPtr + i * 4, ranks[i], true);
-        for (let i = 0; i < n; i++) view.setBigUint64(playedPtr + i * 8, BigInt(playedMatrix[i] || 0), true);
+        for (let i = 0; i < n; i++) {
+            for (let w = 0; w < W; w++) {
+                const val = (playedMatrix[i] && playedMatrix[i][w]) ? BigInt(playedMatrix[i][w]) : 0n;
+                view.setBigUint64(playedPtr + (i * W + w) * 8, val, true);
+            }
+        }
 
-        // 2. Extra inputs for (ass) Dutch
+        // 2. extra slop for (ass) Dutch
         if (engineType === 'dutch') {
             const scoresPtr = wasm._get_in_scores();
             const historyPtr = wasm._get_in_color_history();
             for (let i = 0; i < n; i++) {
                 view.setInt32(scoresPtr + i * 4, scores[i] || 0, true);
-                for (let r = 0; r < 64; r++) {
-                    const c = (colorHistory && colorHistory[i] && colorHistory[i][r]) ? colorHistory[i][r] : 0;
-                    view.setInt32(historyPtr + (i * 64 + r) * 4, c, true);
+
+                const hist = (colorHistory && colorHistory[i]) ? colorHistory[i] : [];
+                let w_cnt = 0, b_cnt = 0;
+                for (let c of hist) {
+                    if (c === 1) w_cnt++;
+                    else if (c === 2) b_cnt++;
                 }
+
+                let streak = 0;
+                let last_color = 0;
+                if (hist.length > 0) {
+                    last_color = hist[hist.length - 1];
+                    for (let r = hist.length - 1; r >= 0; r--) {
+                        if (hist[r] === last_color) streak++;
+                        else break;
+                    }
+                }
+
+                view.setInt32(historyPtr + (i * 4 + 0) * 4, w_cnt, true);
+                view.setInt32(historyPtr + (i * 4 + 1) * 4, b_cnt, true);
+                view.setInt32(historyPtr + (i * 4 + 2) * 4, streak, true);
+                view.setInt32(historyPtr + (i * 4 + 3) * 4, last_color, true);
             }
         }
 
-        // 3. Dispatch WASM function
+        // 3. Dispatch WASM
         let returnStatus = 0;
-        if (engineType.startsWith('mrv')) {
+        if (engineType === 'mrv') {
             returnStatus = wasm._run_mrv_matchmaker(n, checkUpToDegree, maxCandidates, currentRound);
-        } else if (engineType.startsWith('greedy') || engineType === 'plain_greedy') {
+        } else if (engineType === 'greedy' || engineType === 'plain_greedy') {
             returnStatus = wasm._run_greedy_matchmaker(n, allowBacktrack ? 1 : 0, checkUpToDegree, maxCandidates, currentRound);
-        } else if (engineType.startsWith('blossom') || engineType.startsWith('topk')) {
+        } else if (engineType === 'blossom' || engineType === 'topk_blossom') {
             returnStatus = wasm._run_blossoms_matchmaker(n, isTopK ? 1 : 0, checkUpToDegree, maxCandidates, currentRound);
         } else if (engineType === 'dutch') {
             const isFinal = (currentRound === n - 1) ? 1 : 0;
@@ -99,7 +126,7 @@ self.onmessage = async (e) => {
             returnStatus = wasm._run_dutch_matchmaker(n, currentRound, isFinal, topThreshold);
         }
 
-        // 4. Read Output Buffer
+        // 4. Read Output
         const outPtr = wasm._get_out_buffer();
         const outView = new DataView(wasm.HEAPU8.buffer);
         const status = outView.getInt32(outPtr, true);
