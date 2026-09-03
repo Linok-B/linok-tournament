@@ -20,7 +20,7 @@ Website live at [linok-tournament](https://linok-b.github.io/linok-tournament/in
 
 This project utilizes code from the following open-source projects:
 
-- **[MiniSat](https://github.com/niklasso/minisat)**: A minimalistic and high-performance SAT solver.
-- **[Emscripten](https://github.com/emscripten-core/emsdk)**: An open-source compiler toolchain to WebAssembly.
+- **[MiniSat](https://github.com/niklasso/minisat)**: A minimalistic and high-performance SAT solver. MiniSat-derived code is included in three of the four WebAssembly (.wasm) modules and their corresponding JavaScript (.js) files located in ./js/engine/matchmakers/modules/.
+- **[Emscripten](https://github.com/emscripten-core/emsdk)**: An open-source compiler toolchain for compiling C/C++ to WebAssembly. Emscripten-generated code is included in the WebAssembly (.wasm) modules and their corresponding JavaScript (.js) files located in ./js/engine/matchmakers/modules/.
 
-Portions of this software are copyright by their respective authors and are used under the MIT License. See the [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) file for full copyright and license details.
+Portions of this software are copyright by their respective authors and are used under the MIT License. See the [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) file for the applicable copyright notices and license details.
