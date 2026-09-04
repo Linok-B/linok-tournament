@@ -21,7 +21,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 ---
 
 ## Emscripten
-**Copyright:** Copyright (c) 2018 Emscripten authors (see AUTHORS in Emscripten)
+**Copyright:** Copyright (c) 2018 Emscripten authors (see AUTHORS in [Emscripten](https://github.com/emscripten-core/emsdk))
 
 **License:** MIT License
 
