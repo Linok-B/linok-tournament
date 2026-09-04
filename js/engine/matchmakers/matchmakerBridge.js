@@ -54,7 +54,26 @@ export async function requestMatchmaking(params) {
         const d = params.n - params.currentRound;
         const midThresh = params.midDegreeThreshold !== undefined ? params.midDegreeThreshold : 6;
 
+        // Outer Watchdoggo: Terminates worker if C++ completely hangs (please never do)
+        const totalTimeout = (params.timeoutMs || 5000) + 1500;
+        let watchdogTimer = setTimeout(() => {
+            console.warn(`[MatchmakerBridge] WASM worker timed out after ${totalTimeout}ms. Forcing termination.`);
+            
+            // 1. Forcibly kill hung workers
+            if (worker1) { worker1.terminate(); worker1 = null; }
+            if (worker2) { worker2.terminate(); worker2 = null; }
+            
+            cleanup();
+            
+            // 2. Return timeout status (5) so searchFallbackModal.js triggers
+            resolve({ status: 5, pairCount: 0, pairs: [] });
+        }, totalTimeout);
+
         const cleanup = () => {
+            if (watchdogTimer) {
+                clearTimeout(watchdogTimer);
+                watchdogTimer = null;
+            }
             pendingRequests.delete(reqId);
             stopLoading();
         };
@@ -83,11 +102,9 @@ export async function requestMatchmaking(params) {
                 const proverStatus = await proverPromise;
 
                 if (proverStatus === 0) {
-                    // SAT Confirmed -> Accept pairing
                     cleanup();
                     resolve({ status: 0, pairCount: res.pairCount, pairs: res.pairs });
                 } else {
-                    // UNSAT or Inconclusive -> Tell Worker 1 to advance to the next candidate
                     candidateOffset++;
                     w1.postMessage({ id: reqId, ...params, candidateOffset });
                 }
