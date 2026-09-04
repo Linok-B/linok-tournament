@@ -14,11 +14,13 @@ export function openSwissConfigModal(config, isDPW, onSave) {
         greedyMode: config.greedyMode || "backtracking",
         blossomMode: config.blossomMode || "topk",
         orderMode: config.orderMode || "fisher_yates",
-        round1Mode: config.round1Mode || "sequential", // "sequential", "folded", "halves"
+        round1Mode: config.round1Mode || "sequential",
         cdclMode: config.cdclMode !== undefined ? config.cdclMode : 1,
+        midDegreeThreshold: config.midDegreeThreshold !== undefined ? config.midDegreeThreshold : 6,
+        microHuntBudget: config.microHuntBudget || 8000,
         pairingBasis: isDPW ? "dpw_rating" : (config.swissPairingBasis || "match_points"),
-        inheritTiebreakers: false, // Default: NO inherited tiebreakers for pairing
-        customTiebreakers: isDPW ? ["team_score"] : [], // Default: empty (or TS for DPW)
+        inheritTiebreakers: false,
+        customTiebreakers: isDPW ? ["team_score"] : [],
         maxCandidates: config.maxCandidates || (config.pairingAlgorithm === "blossom" ? 100 : 1000),
         timeoutMs: config.timeoutMs || 5000
     };
@@ -255,6 +257,8 @@ export function openSwissConfigModal(config, isDPW, onSave) {
             config.blossomMode = draft.blossomMode;
             config.orderMode = draft.orderMode;
             config.cdclMode = draft.cdclMode;
+            config.midDegreeThreshold = draft.midDegreeThreshold;
+            config.microHuntBudget = draft.microHuntBudget;
             config.swissPairingBasis = draft.pairingBasis;
             config.round1Mode = draft.round1Mode;
             config.inheritTiebreakers = draft.inheritTiebreakers;
