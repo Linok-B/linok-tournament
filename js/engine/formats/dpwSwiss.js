@@ -182,19 +182,23 @@ export async function advanceStage(stageData, config, allPlayers) {
         engineType: algo,
         isTopK: isTopK,
         allowBacktrack: allowBacktrack,
-        checkUpToDegree: (stageData.passiveCDCL || cdclMode === 0) ? 0 : (cdclMode === 2 ? Math.floor(N / 2) : 6),
+        checkUpToDegree: (stageData.passiveCDCL || cdclMode === 0) ? 0 : (cdclMode === 2 ? Math.ceil(N / 2) : (config.midDegreeThreshold || 6)),
+        midDegreeThreshold: config.midDegreeThreshold || 6,
+        microHuntBudget: config.microHuntBudget || 8000,
         maxCandidates: maxCand,
         currentRound: currentRoundNum + 1,
         ranks: ranks,
-        playedMatrix: playedMatrix.map(row => row.map(w => w.toString()))
+        playedMatrix: playedMatrix.map(row => row.map(w => w.toString())),
+        timeoutMs: config.timeoutMs || 5000
     };
 
     let result = await requestMatchmaking(matchmakerParams);
 
-    if (result.status === 1 || result.status === 2) {
+    // 5. Handle Search Limit Hit / Timeout (Status 4 = Candidates, Status 5 = Timeout, Status 1 = Fallback)
+    if (result.status === 1 || result.status === 4 || result.status === 5) {
         result = await new Promise((resolve) => {
             openSearchFallbackModal({
-                limitType: result.status === 2 ? "timeout" : "candidates",
+                limitType: result.status === 5 ? "timeout" : "candidates",
                 n: N,
                 players: pairingPool,
                 candidatePairs: result.pairs,
@@ -204,6 +208,7 @@ export async function advanceStage(stageData, config, allPlayers) {
                     const resumeParams = {
                         ...matchmakerParams,
                         maxCandidates: maxCand + extraBudget.extraCandidates,
+                        timeoutMs: (config.timeoutMs || 5000) + extraBudget.extraTimeoutMs
                     };
                     const res = await requestMatchmaking(resumeParams);
                     resolve(res);
