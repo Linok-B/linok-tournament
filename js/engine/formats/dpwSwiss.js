@@ -1,4 +1,5 @@
 import { requestMatchmaking } from '../matchmakers/matchmakerBridge.js';
+import { computeSigmoidPenaltyMatrix } from '../matchmakers/sigmoidDecay.js';
 import { calculateTiebreakers } from '../systems/tiebreakers.js';
 import { openSearchFallbackModal } from '../../ui/searchFallbackModal.js';
 import { optimizeMatchColors } from '../systems/colorOptimizer.js';
@@ -146,6 +147,30 @@ export async function advanceStage(stageData, config, allPlayers) {
     const ranks = Array.from({ length: N }, (_, i) => i);
     const playedMatrix = Array.from({ length: N }, () => new Array(W).fill(0n));
 
+    // Phased Swiss Architecture
+    const phaseLength = N - 1;
+    const currentPhase = Math.floor(currentRoundNum / phaseLength) + 1;
+    const phaseStartRound = (currentPhase - 1) * phaseLength + 1; // 1-based start round of current phase
+
+    // Identify byes 'n' matches played within the CURRENT phase (Hard Constraints)
+    const currentPhaseByes = new Set();
+    const currentPhaseMatchups = new Set();
+
+    stageData.rounds.forEach((roundMatches, roundIdx) => {
+        const rNum = roundIdx + 1;
+        if (rNum >= phaseStartRound) {
+            roundMatches.forEach(m => {
+                if (m.isBye && m.player1) {
+                    currentPhaseByes.add(m.player1.id);
+                } else if (m.player1 && m.player2) {
+                    currentPhaseMatchups.add(`${m.player1.id}-${m.player2.id}`);
+                    currentPhaseMatchups.add(`${m.player2.id}-${m.player1.id}`);
+                }
+            });
+        }
+    });
+
+    // Populate hard-constraint played bitmasks
     for (let i = 0; i < N; i++) {
         for (let j = i + 1; j < N; j++) {
             const p1 = pairingPool[i];
@@ -153,11 +178,11 @@ export async function advanceStage(stageData, config, allPlayers) {
 
             let alreadyPlayed = false;
             if (p1.isDummy) {
-                alreadyPlayed = stageData.playersWithByes.includes(p2.id);
+                alreadyPlayed = currentPhaseByes.has(p2.id);
             } else if (p2.isDummy) {
-                alreadyPlayed = stageData.playersWithByes.includes(p1.id);
+                alreadyPlayed = currentPhaseByes.has(p1.id);
             } else {
-                alreadyPlayed = stageData.pastMatchups.includes(`${p1.id}-${p2.id}`);
+                alreadyPlayed = currentPhaseMatchups.has(`${p1.id}-${p2.id}`);
             }
 
             if (alreadyPlayed) {
@@ -171,6 +196,9 @@ export async function advanceStage(stageData, config, allPlayers) {
             }
         }
     }
+
+    // Compute inter-phase sliding sigmoid penalty matrix for Phase >= 2
+    const sigmoidPenalties = computeSigmoidPenaltyMatrix(pairingPool, stageData.rounds, currentRoundNum + 1, N);
 
     const algo = config.pairingAlgorithm || "mrv";
     const allowBacktrack = config.greedyMode !== "plain";
