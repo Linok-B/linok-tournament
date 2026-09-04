@@ -2,9 +2,8 @@ import { getIcon } from './icons.js';
 
 export function openDPWSetupModal(players, rounds, cut, onComplete, existingConfig = null) {
     const overlay = document.createElement('div');
-    // Background of 0.81 so the global app.js listener ignores it (ts should be handled better but whatever)
-    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.81); z-index:9999; display:flex; justify-content:center; align-items:center;";
-
+    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center;";
+    
     const modal = document.createElement('div');
     modal.style.cssText = "background:var(--bg-panel); border:2px solid var(--accent); border-radius:8px; width:700px; max-width:90vw; padding:20px; display:flex; flex-direction:column; max-height:90vh;";
     overlay.appendChild(modal);
