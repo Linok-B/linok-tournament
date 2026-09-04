@@ -26,51 +26,37 @@ if (savedData) {
     currentTournament = Object.assign(new Tournament(), savedData);
 }
 
-// modal z-index stacker
-const modalObserver = new MutationObserver((mutations) => {
-    // 1. Temporarily pause the observer so style changes don't trigger it
+// modal z-index & backdrop stacker
+function updateModalStacking() {
     modalObserver.disconnect();
-    
-    mutations.forEach(mutation => {
-        if (mutation.attributeName === 'style') {
-            const el = mutation.target;
-            
-            // Programmatically check for fixed position
-            if (el.style.position === 'fixed') {
-                if (el.style.display === 'flex') {
-                    // Find all OTHER open fixed overlays on screen
-                    const openOverlays = Array.from(document.querySelectorAll('div'))
-                        .filter(x => x !== el && x.style.position === 'fixed' && x.style.display === 'flex');
-                    
-                    let maxZ = 1000;
-                    openOverlays.forEach(x => {
-                        const z = parseInt(x.style.zIndex) || 1000;
-                        if (z > maxZ) maxZ = z;
-                    });
-                    
-                    el.style.zIndex = maxZ + 10;
 
-                    // no double darkening
-                    if (openOverlays.length > 0) {
-                        el.style.background = 'transparent';
-                    } else {
-                        // Explicitly restore background
-                        const isPrivacy = el.id === 'privacy-modal';
-                        el.style.background = isPrivacy ? 'rgba(0, 0, 0, 0.81)' : 'rgba(0, 0, 0, 0.8)';
-                    }
-                } else if (el.style.display === 'none') {
-                    el.style.zIndex = '';
-                    el.style.background = ''; // Reverts cleanly to HTML/CSS default
-                }
-            }
+    const openOverlays = Array.from(document.querySelectorAll('div')).filter(el => {
+        if (el.style.position !== 'fixed') return false;
+        if (el.style.display !== 'flex') return false;
+        // Target fullscreen backdrop overlays
+        return el.style.width === '100vw' || el.style.width === '100%' || (el.style.top === '0px' && el.style.left === '0px');
+    });
+
+    openOverlays.forEach((el, index) => {
+        el.style.zIndex = (1000 + index * 10).toString();
+        if (index === 0) {
+            // First (bottom-most) modal gets the dark backdrop
+            const isPrivacy = el.id === 'privacy-modal';
+            el.style.background = isPrivacy ? 'rgba(0, 0, 0, 0.81)' : 'rgba(0, 0, 0, 0.8)';
+        } else {
+            // All stacked child modals are transparent (zero double-darkening)
+            el.style.background = 'transparent';
         }
     });
-    
-    // 2. turn the observer back on
-    modalObserver.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] });
+
+    modalObserver.observe(document.body, { attributes: true, childList: true, subtree: true, attributeFilter: ['style'] });
+}
+
+const modalObserver = new MutationObserver(() => {
+    updateModalStacking();
 });
-// Initial activation
-modalObserver.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] });
+
+modalObserver.observe(document.body, { attributes: true, childList: true, subtree: true, attributeFilter: ['style'] });
 
 
 // SETTINGS MODAL LOGIC
