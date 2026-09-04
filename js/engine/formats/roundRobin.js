@@ -5,7 +5,7 @@ export function initStage(players, config) {
 
     const totalPossibleRounds = rrPlayers.length - 1;
     // Allow the host to set custom round limits (e.g. only play 3 rounds of RR instead of everyone)
-    const roundsToPlay = config.maxRounds ? Math.min(config.maxRounds, totalPossibleRounds) : totalPossibleRounds;
+    const roundsToPlay = config.maxRounds || totalPossibleRounds;
 
     const matches = [];
     
