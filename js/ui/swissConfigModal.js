@@ -71,9 +71,9 @@ export function openSwissConfigModal(config, isDPW, onSave) {
                 <div>
                     <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Round 1 Pairing Method</label>
                     <select id="cfg-round1-mode" style="width:100%; padding:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
-                        <option value="sequential" title="Player 1 vs 2, 3 vs 4, 5 vs 6..." ${draft.round1Mode === 'sequential' ? 'selected' : ''}>Sequential Order (1v2, 3v4...)</option>
-                        <option value="folded" title="Player 1 vs N, 2 vs N-1, 3 vs N-2..." ${draft.round1Mode === 'folded' ? 'selected' : ''}>Folded Seed (1vN, 2vN-1...)</option>
-                        <option value="halves" title="Player 1 vs (N/2+1), 2 vs (N/2+2)..." ${draft.round1Mode === 'halves' ? 'selected' : ''}>Split Halves (1 vs N/2+1...)</option>
+                        <option value="sequential" title="Sequential Order (1v2, 3v4, 5v6...)" ${draft.round1Mode === 'sequential' ? 'selected' : ''}>Sequential Order</option>
+                        <option value="folded" title="Folded Seed (1vN, 2vN-1, 3vN-2...)" ${draft.round1Mode === 'folded' ? 'selected' : ''}>Folded Seed</option>
+                        <option value="halves" title="Split Halves (1 vs N/2+1, 2 vs N/2+2...)" ${draft.round1Mode === 'halves' ? 'selected' : ''}>Split Halves</option>
                     </select>
                 </div>
 
@@ -82,8 +82,8 @@ export function openSwissConfigModal(config, isDPW, onSave) {
                         <div>
                             <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Greedy Mode</label>
                             <select id="cfg-greedy-mode" style="width:100%; padding:6px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
-                                <option value="backtracking" title="Explores alternate branches when dead ends occur." ${draft.greedyMode === 'backtracking' ? 'selected' : ''}>Backtracking</option>
-                                <option value="plain" title="Single forward scan without branch exploration." ${draft.greedyMode === 'plain' ? 'selected' : ''}>Plain (Forward Scan Only)</option>
+                                <option value="backtracking" title="Backtracking search: explores alternate branches when dead ends occur." ${draft.greedyMode === 'backtracking' ? 'selected' : ''}>Backtracking</option>
+                                <option value="plain" title="Plain forward scan only: single-pass scanner without branch exploration." ${draft.greedyMode === 'plain' ? 'selected' : ''}>Plain</option>
                             </select>
                         </div>
                     </div>
@@ -94,7 +94,7 @@ export function openSwissConfigModal(config, isDPW, onSave) {
                         <div>
                             <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Blossom Mode</label>
                             <select id="cfg-blossom-mode" style="width:100%; padding:6px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
-                                <option value="topk" title="Murty's K-best partition enumeration with residual CDCL safety lookahead." ${draft.blossomMode === 'topk' ? 'selected' : ''}>Top-K Blossom (Murty)</option>
+                                <option value="topk" title="Murty's K-best partition enumeration with residual CDCL safety lookahead." ${draft.blossomMode === 'topk' ? 'selected' : ''}>Top-K Blossom</option>
                                 <option value="standard" title="Single-pass maximum weight matching without candidate lookahead." ${draft.blossomMode === 'standard' ? 'selected' : ''}>Standard Blossom</option>
                             </select>
                         </div>
@@ -105,8 +105,8 @@ export function openSwissConfigModal(config, isDPW, onSave) {
                     <div>
                         <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Tie Group Pre-Shuffle</label>
                         <select id="cfg-order-mode" style="width:100%; padding:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
-                            <option value="fisher_yates" title="Randomized shuffle of tied score groups prior to sorting." ${draft.orderMode === 'fisher_yates' ? 'selected' : ''}>Fisher-Yates (Recommended)</option>
-                            <option value="og" title="Preserves previous round player sequence on tied scores." ${draft.orderMode === 'og' ? 'selected' : ''}>OG Mode (Preserve Order)</option>
+                            <option value="fisher_yates" title="Recommended: Randomized shuffle of tied score groups prior to sorting." ${draft.orderMode === 'fisher_yates' ? 'selected' : ''}>Fisher-Yates</option>
+                            <option value="og" title="Preserve Order: Preserves previous round player sequence on tied scores." ${draft.orderMode === 'og' ? 'selected' : ''}>OG Mode</option>
                         </select>
                     </div>
                 ` : ''}
@@ -115,8 +115,8 @@ export function openSwissConfigModal(config, isDPW, onSave) {
                     <div>
                         <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">CDCL 1-Factor Safety Lookahead</label>
                         <select id="cfg-cdcl-mode" style="width:100%; padding:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
-                            <option value="1" title="Runs SAT factorability verification on residual degrees 3 to 6." ${draft.cdclMode === 1 ? 'selected' : ''}>Mid Mode (Degree 3 to 6 - Default)</option>
-                            <option value="2" title="Runs SAT verification on residual degrees 3 to N/2 (mathematical guarantee)." ${draft.cdclMode === 2 ? 'selected' : ''}>Max Mode (Degree 3 to N/2)</option>
+                            <option value="1" title="Default: Runs SAT factorability verification on residual degrees 3 to 6." ${draft.cdclMode === 1 ? 'selected' : ''}>Mid Mode</option>
+                            <option value="2" title="Mathematical guarantee: Runs SAT verification on residual degrees 3 to N/2." ${draft.cdclMode === 2 ? 'selected' : ''}>Max Mode</option>
                             <option value="0" title="Disables SAT lookahead verification." ${draft.cdclMode === 0 ? 'selected' : ''}>Disabled</option>
                         </select>
                     </div>
