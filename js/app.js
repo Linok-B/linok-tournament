@@ -40,11 +40,10 @@ function refreshModalStack() {
     modalStack.forEach((el, index) => {
         el.style.zIndex = (1000 + index * 20).toString();
         if (index === 0) {
-            // First (bottom-most) modal gets the dark backdrop
-            const isPrivacy = el.id === 'privacy-modal';
-            el.style.background = isPrivacy ? 'rgba(0, 0, 0, 0.81)' : 'rgba(0, 0, 0, 0.8)';
+            // Bottom-most modal provides the unified backdrop
+            el.style.background = 'rgba(0, 0, 0, 0.8)';
         } else {
-            // All child/stacked modals are transparent (no double-darkening)
+            // All stacked modals are transparent (zero double-darkening)
             el.style.background = 'transparent';
         }
     });
