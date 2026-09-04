@@ -43,12 +43,7 @@ self.onmessage = async (e) => {
         const target = e.data.engineType;
         try {
             if (target === 'all') {
-                await Promise.all([
-                    getEngine('mrv'),
-                    getEngine('greedy'),
-                    getEngine('blossom'),
-                    getEngine('dutch')
-                ]);
+                await Promise.all([getEngine('mrv'), getEngine('greedy'), getEngine('blossom'), getEngine('dutch')]);
             } else if (!preloadedSet.has(target)) {
                 preloadedSet.add(target);
                 await getEngine(target);
@@ -58,18 +53,24 @@ self.onmessage = async (e) => {
     }
 
     // 2. Standard matchmaking dispatch
-    const { id, n, engineType, isTopK, allowBacktrack, checkUpToDegree, maxCandidates, currentRound, ranks, playedMatrix, scores, colorHistory } = e.data;
-
+    const {
+        id, n, engineType, isTopK, allowBacktrack, checkUpToDegree, midDegreeThreshold,
+        maxCandidates, currentRound, microHuntBudget, candidateOffset, ranks,
+        playedMatrix, scores, colorHistory, maxSearchNodes, timeoutMs
+    } = e.data;
+    
     try {
         const wasm = await getEngine(engineType);
         
-        // 1. Prepare dynamic buffers for exact N
-        wasm._prepare_buffers(n);
+        // Dynamic buffer allocation
+        if (engineType === 'dutch') {
+            wasm._configure(n, currentRound);
+        } else {
+            wasm._configure(n);
+        }
 
-        const buffer = wasm.HEAPU8.buffer;
-        const view = new DataView(buffer);
-        const W = Math.ceil(n / 64);
-
+        const view = new DataView(wasm.HEAPU8.buffer);
+        const W = wasm._get_words_per_row(n);
         const ranksPtr = wasm._get_in_ranks();
         const playedPtr = wasm._get_in_played();
 
@@ -81,52 +82,46 @@ self.onmessage = async (e) => {
             }
         }
 
-        // 2. extra slop for (ass) Dutch
+        // extra slop for (ass) Dutch
         if (engineType === 'dutch') {
             const scoresPtr = wasm._get_in_scores();
             const historyPtr = wasm._get_in_color_history();
             for (let i = 0; i < n; i++) {
-                view.setInt32(scoresPtr + i * 4, scores[i] || 0, true);
-
+                view.setInt32(scoresPtr + i * 4, scores ? (scores[i] || 0) : 0, true);
                 const hist = (colorHistory && colorHistory[i]) ? colorHistory[i] : [];
-                let w_cnt = 0, b_cnt = 0;
-                for (let c of hist) {
-                    if (c === 1) w_cnt++;
-                    else if (c === 2) b_cnt++;
+                for (let r = 0; r < hist.length; r++) {
+                    view.setInt32(historyPtr + (i * currentRound + r) * 4, hist[r] || 0, true);
                 }
-
-                let streak = 0;
-                let last_color = 0;
-                if (hist.length > 0) {
-                    last_color = hist[hist.length - 1];
-                    for (let r = hist.length - 1; r >= 0; r--) {
-                        if (hist[r] === last_color) streak++;
-                        else break;
-                    }
-                }
-
-                view.setInt32(historyPtr + (i * 4 + 0) * 4, w_cnt, true);
-                view.setInt32(historyPtr + (i * 4 + 1) * 4, b_cnt, true);
-                view.setInt32(historyPtr + (i * 4 + 2) * 4, streak, true);
-                view.setInt32(historyPtr + (i * 4 + 3) * 4, last_color, true);
             }
         }
 
-        // 3. Dispatch WASM
+        // WASM Dispatch with parameterized thresholds
         let returnStatus = 0;
+        const midThresh = midDegreeThreshold !== undefined ? midDegreeThreshold : 6;
+        const microBudget = microHuntBudget !== undefined ? microHuntBudget : 8000;
+        const offset = candidateOffset || 0;
+
         if (engineType === 'mrv') {
-            returnStatus = wasm._run_mrv_matchmaker(n, checkUpToDegree, maxCandidates, currentRound);
+            returnStatus = wasm._run_mrv_matchmaker(
+                n, checkUpToDegree, midThresh, maxCandidates, currentRound,
+                microBudget, offset, maxSearchNodes || 0n, timeoutMs || 0.0
+            );
         } else if (engineType === 'greedy' || engineType === 'plain_greedy') {
-            returnStatus = wasm._run_greedy_matchmaker(n, allowBacktrack ? 1 : 0, checkUpToDegree, maxCandidates, currentRound);
+            returnStatus = wasm._run_greedy_matchmaker(
+                n, allowBacktrack ? 1 : 0, checkUpToDegree, midThresh, maxCandidates,
+                currentRound, microBudget, offset, maxSearchNodes || 0n, timeoutMs || 0.0
+            );
         } else if (engineType === 'blossom' || engineType === 'topk_blossom') {
-            returnStatus = wasm._run_blossoms_matchmaker(n, isTopK ? 1 : 0, checkUpToDegree, maxCandidates, currentRound);
+            returnStatus = wasm._run_blossoms_matchmaker(
+                n, isTopK ? 1 : 0, checkUpToDegree, midThresh, maxCandidates,
+                currentRound, microBudget, offset
+            );
         } else if (engineType === 'dutch') {
             const isFinal = (currentRound === n - 1) ? 1 : 0;
             const topThreshold = (2 * (currentRound - 1)) / 2;
             returnStatus = wasm._run_dutch_matchmaker(n, currentRound, isFinal, topThreshold);
         }
 
-        // 4. Read Output
         const outPtr = wasm._get_out_buffer();
         const outView = new DataView(wasm.HEAPU8.buffer);
         const status = outView.getInt32(outPtr, true);
