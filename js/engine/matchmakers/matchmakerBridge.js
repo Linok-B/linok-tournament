@@ -7,6 +7,20 @@ let proverRequestId = 0;
 const pendingRequests = new Map();
 const pendingProverRequests = new Map();
 
+function killWorker1() {
+    if (worker1) {
+        worker1.terminate();
+        worker1 = null;
+    }
+}
+
+function killWorker2() {
+    if (worker2) {
+        worker2.terminate();
+        worker2 = null;
+    }
+}
+
 function getWorker1() {
     if (!worker1) {
         worker1 = new Worker('./js/engine/matchmakers/matchmakerWorker.js');
@@ -60,8 +74,8 @@ export async function requestMatchmaking(params) {
             console.warn(`[MatchmakerBridge] WASM worker timed out after ${totalTimeout}ms. Forcing termination.`);
             
             // 1. Forcibly kill hung workers
-            if (worker1) { worker1.terminate(); worker1 = null; }
-            if (worker2) { worker2.terminate(); worker2 = null; }
+            killWorker1();
+            killWorker2();
             
             cleanup();
             
@@ -74,6 +88,7 @@ export async function requestMatchmaking(params) {
                 clearTimeout(watchdogTimer);
                 watchdogTimer = null;
             }
+            killWorker2();
             pendingRequests.delete(reqId);
             stopLoading();
         };
@@ -105,6 +120,7 @@ export async function requestMatchmaking(params) {
                     cleanup();
                     resolve({ status: 0, pairCount: res.pairCount, pairs: res.pairs });
                 } else {
+                    killWorker2();
                     candidateOffset++;
                     w1.postMessage({ id: reqId, ...params, candidateOffset });
                 }
