@@ -97,7 +97,10 @@ export async function requestMatchmaking(params) {
             // Status 6: Candidate needs dual check by Worker 2
             if (res.status === 6) {
                 const proverId = ++proverRequestId;
-                const checkType = d > midThresh ? 'SAT_HUNT' : 'CDCL_PROVE';
+                // Worker 2 is the exact complement of Worker 1:
+                // High d: Worker 1 hunts SAT  -> Worker 2 proves UNSAT ('CDCL_PROVE')
+                // Low d:  Worker 1 runs CDCL  -> Worker 2 hunts SAT  ('SAT_HUNT')
+                const checkType = d > midThresh ? 'CDCL_PROVE' : 'SAT_HUNT';
 
                 const proverPromise = new Promise((pRes, pRej) => {
                     pendingProverRequests.set(proverId, { resolve: pRes, reject: pRej });
@@ -117,9 +120,19 @@ export async function requestMatchmaking(params) {
                 const proverStatus = await proverPromise;
 
                 if (proverStatus === 0) {
+                    // SAT confirmed
+                    if (d <= midThresh) {
+                        killWorker1(); // Interrupt Worker 1's heavy CDCL
+                    }
                     cleanup();
                     resolve({ status: 0, pairCount: res.pairCount, pairs: res.pairs });
+                } else if (proverStatus === 1) {
+                    // UNSAT proven by Worker 2 (Candidate is trapped) -> Advance to next candidate
+                    killWorker2();
+                    candidateOffset++;
+                    w1.postMessage({ id: reqId, ...params, candidateOffset });
                 } else {
+                    // Inconclusive (2) -> Advance to next candidate
                     killWorker2();
                     candidateOffset++;
                     w1.postMessage({ id: reqId, ...params, candidateOffset });
