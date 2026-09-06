@@ -49,12 +49,12 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         </div>
     `;
 
-    // Row 3: Swiss Pairing Basis (Swiss Only)
+    // Row 3: Swiss Pairing Basis (Swiss Only) ok why the fuck did I write that in the parentheses???
     if (config.type === "swiss" || config.type === "dpw_swiss") {
         html += `
             <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 12px;">
-                <button type="button" id="btn-open-swiss-pairing-config" ${isStarted ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; justify-content:center; align-items:center; gap:8px;">
-                    ${getIcon('gear', 14)} ${isStarted ? 'Swiss Pairing Engine (Locked: Stage Started)' : 'Configure Swiss Pairing Engine'}
+                <button type="button" id="btn-open-swiss-pairing-config" ${isStarted ? 'disabled' : ''} style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 4px; font-weight: bold; display: flex; justify-content: center; align-items: center; gap: 8px; ${isStarted ? 'opacity: 0.5; cursor: not-allowed;' : 'cursor: pointer;'}">
+                    ${getIcon('gear', 14)} Configure Swiss Pairing Engine
                 </button>
             </div>
         `;
