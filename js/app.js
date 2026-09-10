@@ -1,11 +1,12 @@
 import { Tournament } from './engine/tournament.js';
-import { saveTournamentLocally, loadTournamentLocally, clearLocalData } from './store/localData.js';
 import { renderBracket, renderStandings } from './ui/renderer.js';
-import { exportTournamentJSON, importTournamentJSON } from './store/export.js';
 import { openDPWSetupModal } from './ui/dpwSetup.js';
 import { getIcon } from './ui/icons.js';
 import { exportBracketSVG } from './store/capture.js';
 import { openStageSettingsModal } from './ui/stageSettings.js';
+import { saveTournamentLocally, loadTournamentLocally, getAppMeta, setAppMeta } from './store/localData.js';
+import { exportTournamentJSON, parseTournamentImportJSON } from './store/export.js';
+import { openTournamentLibraryModal } from './ui/libraryModal.js';
 
 // Auto-inject SVGs into the HTML
 document.querySelectorAll('[data-icon]').forEach(el => {
@@ -16,15 +17,14 @@ document.querySelectorAll('[data-icon]').forEach(el => {
 
 let currentTournament = new Tournament();
 
+const savedData = await loadTournamentLocally();
+if (savedData) {
+    currentTournament = Object.assign(new Tournament(), savedData);
+}
+
 let _stageMousedown = null;
 let _stageMousemove = null;
 let _stageMouseup = null;
-
-const savedData = loadTournamentLocally();
-if (savedData) {
-    // Restore state AND correct prototypes
-    currentTournament = Object.assign(new Tournament(), savedData);
-}
 
 // good \:D modal z-index & backdrop stacker
 let modalStack = [];
@@ -120,6 +120,8 @@ document.getElementById('btn-open-settings').addEventListener('click', () => {
     document.getElementById('setting-hide-byes').checked = currentTournament.settings.hideByes || false;
     document.getElementById('setting-show-seeds').checked = currentTournament.settings.showSeeds || false;
     document.getElementById('setting-preload-wasm').checked = currentTournament.settings.preloadWasm || false;
+    const autoSaveLib = await getAppMeta('autoSaveToLibrary');
+    document.getElementById('setting-autosave-library').checked = autoSaveLib === true;
     
     settingsModal.style.display = 'flex';
 
@@ -189,6 +191,7 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
     currentTournament.settings.hideByes = document.getElementById('setting-hide-byes').checked;
     currentTournament.settings.showSeeds = document.getElementById('setting-show-seeds').checked;
     currentTournament.settings.preloadWasm = document.getElementById('setting-preload-wasm').checked;
+    await setAppMeta('autoSaveToLibrary', document.getElementById('setting-autosave-library').checked);
     
     if (currentTournament.settings.preloadWasm) {
         import('./engine/matchmakers/matchmakerBridge.js').then(({ preloadAllEngines }) => {
@@ -451,19 +454,20 @@ document.getElementById('file-import').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    importTournamentJSON(file, (success, parsedData) => {
-        if (success) {
-            // Restore state AND ensure it adopts the Tournament class methods
-            currentTournament = Object.assign(new Tournament(), parsedData);
-            saveTournamentLocally(currentTournament);
-            
-            // Reset the tab view to the latest stage
-            window.viewingStageIndex = currentTournament.stages.length - 1;
+    parseTournamentImportJSON(file, async (success, result) => {
+        if (!success) {
+            alert(result);
+            return;
+        }
+
+        if (result.type === 'single') {
+            currentTournament = Object.assign(new Tournament(), result.tournament);
+            await saveTournamentLocally(currentTournament);
+            window.viewingStageIndex = currentTournament.stages.length > 0 ? currentTournament.stages.length - 1 : 0;
             updateUI();
-            
             alert("Tournament successfully imported!");
-        } else {
-            alert(parsedData);
+        } else if (result.type === 'bundle') {
+            alert(`This file contains a bundle of ${result.tournaments.length} tournaments. Please open the Tournament Library to import bundles.`);
         }
         
         // Clear the input so the same file can be selected again if needed
@@ -1106,6 +1110,15 @@ document.getElementById('tiebreaker-modal').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) {
         document.getElementById('btn-close-tb-builder').click();
     }
+});
+
+// Lib Modal thing
+document.getElementById('btn-open-library').addEventListener('click', () => {
+    openTournamentLibraryModal(currentTournament, (loadedTournament) => {
+        currentTournament = Object.assign(new Tournament(), loadedTournament);
+        window.viewingStageIndex = currentTournament.stages.length > 0 ? currentTournament.stages.length - 1 : 0;
+        updateUI();
+    });
 });
 
 // Stage Reordering Drag 'n' Drop
