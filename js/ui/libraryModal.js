@@ -62,7 +62,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             </div>
 
             <!-- Selection Bar -->
-            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); min-height:42px; padding:6px 12px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-main); box-sizing:border-box;">
+            <div id="library-select-bar" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); min-height:42px; padding:6px 12px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-main); box-sizing:border-box;">
                 <label class="custom-checkbox-label">
                     <input type="checkbox" id="chk-select-all" ${allSelected ? 'checked' : ''} ${!hasTournaments ? 'disabled' : ''}>
                     <span style="font-size:12px; font-weight:bold;">Select All (${selectedIds.size}/${tournaments.length} selected)</span>
