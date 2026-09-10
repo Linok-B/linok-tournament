@@ -1,5 +1,3 @@
-// js/ui/libraryModal.js
-
 import { getLibraryTournaments, getTournamentFromLibrary, saveTournamentToLibrary, deleteTournamentFromLibrary, saveTournamentLocally, updateLibraryOrder } from '../store/localData.js';
 import { exportTournamentJSON, exportTournamentBundleJSON, parseTournamentImportJSON } from '../store/export.js';
 import { getIcon } from './icons.js';
@@ -69,7 +67,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
                     <input type="checkbox" id="chk-select-all" ${allSelected ? 'checked' : ''} ${!hasTournaments ? 'disabled' : ''}>
                     <span style="font-size:12px; font-weight:bold;">Select All (${selectedIds.size}/${tournaments.length} selected)</span>
                 </label>
-                <button id="btn-export-selected" ${selectedIds.size === 0 ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} style="background:var(--success); color:var(--text-on-accent); border:none; height:28px; padding:0 12px; border-radius:3px; font-size:11px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; box-sizing:border-box;">
+                <button id="btn-export-selected" ${selectedIds.size === 0 ? 'disabled' : ''} style="background:var(--success); color:var(--text-on-accent); border:none; height:28px; padding:0 12px; border-radius:3px; font-size:11px; font-weight:bold; cursor:${selectedIds.size === 0 ? 'not-allowed' : 'pointer'}; opacity:${selectedIds.size === 0 ? '0.4' : '1'}; display:inline-flex; align-items:center; box-sizing:border-box;">
                     Export Selected (${selectedIds.size})
                 </button>
             </div>
@@ -191,19 +189,30 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             if (!draggingElement) return;
             document.body.style.cursor = 'default';
 
-            container.insertBefore(draggingElement, placeholder);
-            draggingElement.removeAttribute('style');
-            placeholder.remove();
+            try {
+                if (placeholder && placeholder.parentNode === container) {
+                    container.insertBefore(draggingElement, placeholder);
+                    placeholder.remove();
+                }
 
-            const orderedIds = Array.from(container.querySelectorAll('.library-tourney-row')).map(el => el.getAttribute('data-id'));
-            
-            // Re-order active memory
-            tournaments.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
+                // Reset ONLY drag positioning, do NOT destroy inline row styles (fixed issue where css died and got default (non-)formatting)
+                draggingElement.style.position = '';
+                draggingElement.style.zIndex = '';
+                draggingElement.style.width = '';
+                draggingElement.style.top = '';
+                draggingElement.style.left = '';
+                draggingElement.style.pointerEvents = '';
 
-            draggingElement = null;
-            placeholder = null;
+                const orderedIds = Array.from(container.querySelectorAll('.library-tourney-row')).map(el => el.getAttribute('data-id'));
+                tournaments.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
 
-            await updateLibraryOrder(orderedIds);
+                await updateLibraryOrder(orderedIds);
+            } catch (err) {
+                console.error("Library reorder failed:", err);
+            } finally {
+                draggingElement = null;
+                placeholder = null;
+            }
         };
 
         container.addEventListener('mousedown', _libMousedown);
