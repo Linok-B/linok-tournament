@@ -291,7 +291,7 @@ function renderBlueprintList() {
         const detailStr = details.length > 0 ? ` <small style="color:gray;">(${details.join(', ')})</small>` : '';
         
         list.innerHTML += `
-            <div class="blueprint-stage-card" data-index="${index}" data-locked="${isStarted}" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isStarted ? 'var(--success)' : 'var(--accent)'};">
+            <div class="blueprint-stage-card" data-index="${index}" data-locked="${isStarted}" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isStarted ? 'var(--success)' : 'var(--accent)'}; box-sizing: border-box; width: 100%;">
                 
                 <!-- 1. Drag Handle (Only shows if stage is UNSTARTED) -->
                 ${!isStarted ? `<div class="stage-drag-handle" style="color: var(--accent); font-size: 16px; font-weight: bold; cursor: grab; padding: 5px; flex-shrink: 0; user-select:none;">⋮⋮</div>` : ''}
@@ -1147,17 +1147,17 @@ function applyStageDragAndDrop() {
         offsetY = e.clientY - rect.top;
 
         placeholder = card.cloneNode(true);
-        placeholder.style.opacity = '0.3';
-        placeholder.style.border = '2px dashed var(--border-main)';
+        placeholder.className = 'blueprint-stage-card drag-placeholder';
+        placeholder.style.height = `${rect.height}px`;
+        placeholder.style.width = `${rect.width}px`;
         container.insertBefore(placeholder, card);
 
         draggingElement = card;
-        draggingElement.style.position = 'fixed';
-        draggingElement.style.zIndex = '9999';
+        draggingElement.classList.add('drag-active-element');
         draggingElement.style.width = `${rect.width}px`;
+        draggingElement.style.height = `${rect.height}px`;
         draggingElement.style.top = `${e.clientY - offsetY}px`;
         draggingElement.style.left = `${rect.left}px`;
-        draggingElement.style.pointerEvents = 'none';
 
         document.body.style.cursor = 'grabbing';
     };
@@ -1194,9 +1194,11 @@ function applyStageDragAndDrop() {
             }
 
             // Reset ONLY drag positioning, do NOT destroy inline row styles
+            draggingElement.classList.remove('drag-active-element');
             draggingElement.style.position = '';
             draggingElement.style.zIndex = '';
             draggingElement.style.width = '';
+            draggingElement.style.height = '';
             draggingElement.style.top = '';
             draggingElement.style.left = '';
             draggingElement.style.pointerEvents = '';
