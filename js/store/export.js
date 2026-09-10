@@ -2,7 +2,7 @@ export function exportTournamentJSON(tournamentObj) {
     // 1. Convert the active tournament object to a formatted JSON string
     const dataStr = JSON.stringify(tournamentObj, null, 2);
     
-    // 2. Create a hidden, temporary Blob (a file-like object in memory)
+    // 2. Create a hidden, temporary Blob
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     
@@ -29,7 +29,6 @@ export function exportTournamentJSON(tournamentObj) {
     
     // Final Output Example: My_Custom_Tournament_25-10-2023_14-30.json
     a.download = `${safeName}_${dateStr}_${timeStr}.json`;
-    // -----------------------------------
     
     document.body.appendChild(a);
     a.click();
@@ -55,5 +54,71 @@ export function importTournamentJSON(file, callback) {
         }
     };
     
+    reader.readAsText(file);
+}
+
+export function exportTournamentBundleJSON(tournamentsArray, bundleName = "Tournament_Backup") {
+    const bundle = {
+        bundleVersion: 1,
+        exportedAt: new Date().toISOString(),
+        tournaments: tournamentsArray.map(t => {
+            const copy = JSON.parse(JSON.stringify(t));
+            if (!copy.id) copy.id = crypto.randomUUID();
+            return copy;
+        })
+    };
+
+    const dataStr = JSON.stringify(bundle, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+
+    const safeName = bundleName.replace(/[^a-zA-Z0-9-_]/g, '_') || "Tournament_Backup";
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const time = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
+
+    a.download = `${safeName}_Bundle_${dd}-${mm}-${yyyy}_${time}.json`;
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 0);
+}
+
+// Universal parser for all relevant slop
+export function parseTournamentImportJSON(file, callback) {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        try {
+            const parsed = JSON.parse(e.target.result);
+
+            // multi-tourney bundle spotted :o:
+            if (parsed && Array.isArray(parsed.tournaments)) {
+                const normalized = parsed.tournaments.map(t => {
+                    if (!t.id) t.id = crypto.randomUUID();
+                    return t;
+                });
+                return callback(true, { type: 'bundle', tournaments: normalized });
+            }
+
+            // Single tourney (old or new)
+            if (parsed && (parsed.stages !== undefined || parsed.players !== undefined || parsed.settings !== undefined)) {
+                if (!parsed.id) parsed.id = crypto.randomUUID();
+                return callback(true, { type: 'single', tournament: parsed });
+            }
+
+            callback(false, "Unrecognized format. Please provide a valid single tournament or bundle JSON export.");
+        } catch (err) {
+            callback(false, "Invalid JSON file.");
+        }
+    };
+
     reader.readAsText(file);
 }
