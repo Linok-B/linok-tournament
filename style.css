@@ -650,3 +650,8 @@ body.layout-classic #library-select-bar {
 body.layout-classic .library-tourney-row {
     background: transparent !important;
 }
+
+/* Flatten link to repo button */
+body.layout-classic #link-repo {
+    border-radius: 0 !important;
+}
