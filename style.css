@@ -572,6 +572,22 @@ body.layout-classic #tb-active-list > div:last-child {
     border-bottom: none !important;
 }
 
+/* 9. Flatten Tournament Library Modal */
+body.layout-classic #library-modal-overlay div,
+body.layout-classic #library-modal-overlay span,
+body.layout-classic #library-modal-overlay button,
+body.layout-classic #library-modal-overlay input {
+    border-radius: 0 !important;
+}
+
+body.layout-classic #library-select-bar {
+    background: transparent !important;
+}
+
+body.layout-classic .library-tourney-row {
+    background: transparent !important;
+}
+
 /* custom checkbox slop that surely works one-shot w/o looking ass or breaking */
 .custom-checkbox-label {
     display: inline-flex;
