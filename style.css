@@ -1,3 +1,5 @@
+/* ROOT VARIABLES & GLOBAL RESETS */
+
 :root {
     --bg-dark: #1e1e2e;
     --bg-panel: #2a2a3e;
@@ -27,18 +29,8 @@ body, html {
     height: 100vh;
 }
 
-input, select, textarea {
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    border: 1px solid var(--border-main);
-}
-
-input:focus, select:focus, textarea:focus {
-    outline: none !important; /* Kill the browser halo */
-    border-color: var(--accent) !important; /* Replace it with the theme accent color */
-}
-
 /* CUSTOM SCROLLBARS (Matches Dark/Arcade Themes) */
+
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -63,6 +55,8 @@ input:focus, select:focus, textarea:focus {
     scrollbar-width: thin;
     scrollbar-color: var(--border-main) var(--bg-bracket);
 }
+
+/* APP LAYOUT CONTAINERS */
 
 .app-container {
     display: flex;
@@ -96,6 +90,19 @@ input:focus, select:focus, textarea:focus {
     border-radius: 8px;
 }
 
+/* INPUTS, BUTTONS & FORM ELEMENTS */
+
+input, select, textarea {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid var(--border-main);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none !important; /* Kill the browser halo */
+    border-color: var(--accent) !important; /* Replace it with the theme accent color */
+}
+
 input, button {
     padding: 10px;
     border-radius: 4px;
@@ -125,6 +132,82 @@ button.danger {
     background-color: var(--danger);
 }
 
+/* Color Picker Wrapper (Forces border-radius on stubborn inputs) */
+.color-picker-wrapper {
+    width: 100%;
+    height: 30px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border-main);
+}
+
+/* Strip the ugly native borders off the input inside the wrapper */
+input[type="color"] {
+    border: none;
+    padding: 0;
+    width: 150%; /* Stretch it slightly so native borders bleed off-screen */
+    height: 200%;
+    transform: translate(-25%, -25%);
+    cursor: pointer;
+    background: none;
+}
+
+/* custom checkbox slop that surely works one-shot w/o looking ass or breaking */
+.custom-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    color: var(--text-main);
+}
+
+.custom-checkbox-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    border: 2px solid var(--border-main);
+    border-radius: 4px;
+    background-color: var(--bg-dark);
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: 0.15s ease-in-out;
+    margin: 0;
+    padding: 0;
+}
+
+.custom-checkbox-label input[type="checkbox"]:hover {
+    border-color: var(--accent);
+}
+
+.custom-checkbox-label input[type="checkbox"]:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.custom-checkbox-label input[type="checkbox"]::before {
+    content: "";
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid var(--text-on-accent);
+    border-bottom: 2px solid var(--text-on-accent);
+    transform: rotate(-45deg) translate(1px, -1px);
+    opacity: 0;
+    transition: 0.15s ease-in-out;
+}
+
+.custom-checkbox-label input[type="checkbox"]:checked::before {
+    opacity: 1;
+}
+
+/* PLAYER CARDS & LIST COMPONENTS */
+
 .player-card {
     background-color: var(--bg-panel);
     padding: 10px 15px;
@@ -135,55 +218,50 @@ button.danger {
     border-left: 4px solid var(--accent);
 }
 
-/* STREAMER MODE TOGGLE */
-
-/* Hamburger Button */
-#btn-hamburger {
-    background: transparent;
-    color: var(--text-main);
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 10px;
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 1000;
+.player-card strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Sidebar Hidden Mode (Hamburger) */
-body.sidebar-hidden .controls-panel { display: none !important; }
+/* UNIFIED DRAG-AND-DROP SYSTEM */
 
-/* Streamer Mode (Eye Icon) */
-body.streamer-mode .controls-panel,
-body.streamer-mode #tournament-header,
-body.streamer-mode #btn-hamburger,
-body.streamer-mode #standings-container,
-body.streamer-mode .stage-header-info,
-body.streamer-mode .stage-tabs-container {
-    display: none !important;
+.drag-placeholder,
+.player-card.is-placeholder {
+    background: transparent !important;
+    border: 2px dashed var(--border-main) !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
 }
 
-body.streamer-mode .display-panel,
-body.streamer-mode #player-list-container { 
-    padding: 0 !important; 
-    overflow: hidden; 
-    width: 100vw !important;
-    margin: 0 !important;
+/* The empty space left behind in the list */
+.drag-placeholder *,
+.player-card.is-placeholder * {
+    visibility: hidden !important; /* Hide the text inside the hole */
 }
 
-/* The Viewport expansions */
-body.streamer-mode #bracket-viewport {
-    height: 100vh !important;
-    border: none !important;
-    border-radius: 0 !important;
+.drag-active-element,
+.player-card.is-dragging {
+    position: fixed !important; 
+    z-index: 10001 !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important;
+    opacity: 0.92 !important;
+    pointer-events: none !important; 
+    box-sizing: border-box !important;
 }
 
-body.streamer-mode .display-panel { 
-    padding: 0 !important; 
-    overflow: hidden; 
-    width: 100vw !important; /* Force it to ignore Flexbox and take the whole screen */
-    margin: 0 !important;
+/* BRACKET BOARD & MATCH BOXES */
+
+#bracket-board {
+    /* Tells the browser this element's children won't affect the rest of the page */
+    contain: layout style; 
+    /* Pre-allocates GPU memory for panning and zooming */
+    /* will-change: transform; */ /* option exist, not used */
+}
+
+#bracket-lines {
+    /* Optimizes SVG anti-aliasing for large maps */
+    shape-rendering: geometricPrecision;
 }
 
 /* Make the column take up the full height of the board */
@@ -222,55 +300,6 @@ body.streamer-mode .display-panel {
     flex-direction: column;
     justify-content: center;
     content-visibility: auto; /* testing */
-}
-
-
-.player-card.is-dragging {
-    position: fixed; 
-    z-index: 9999;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-    opacity: 0.9;
-    pointer-events: none; 
-    box-sizing: border-box;
-    
-}
-
-.player-card strong {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* The empty space left behind in the list */
-.player-card.is-placeholder {
-    background: transparent !important;
-    border: 2px dashed var(--border-main) !important;
-    box-shadow: none !important;
-}
-.player-card.is-placeholder * {
-    visibility: hidden; /* Hide the text inside the hole */
-}
-
-
-#bracket-board {
-    /* Tells the browser this element's children won't affect the rest of the page */
-    contain: layout style; 
-    /* Pre-allocates GPU memory for panning and zooming */
-    /* will-change: transform; */ /* option exist, not used */
-}
-
-#bracket-lines {
-    /* Optimizes SVG anti-aliasing for large maps */
-    shape-rendering: geometricPrecision;
-}
-
-
-/* --- BRACKET GRID VARIABLES --- */
-:root {
-    --box-width: 280px;
-    --box-height: 95px;
-    --gap-x: 60px;
-    --gap-y: 20px;
 }
 
 /* --- BASE MATCH BOX STRUCTURE --- */
@@ -356,35 +385,52 @@ body.streamer-mode .display-panel {
     cursor: pointer;
 }
 
-/* Color Picker Wrapper (Forces border-radius on stubborn inputs) */
-.color-picker-wrapper {
-    width: 100%;
-    height: 30px;
-    box-sizing: border-box;
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid var(--border-main);
+/* STREAMER MODE TOGGLE */
+
+/* Hamburger Button */
+#btn-hamburger {
+    background: transparent;
+    color: var(--text-main);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 10px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
 }
 
-/* Sharp edges for Classic Theme */
-body.layout-classic .color-picker-wrapper {
+/* Sidebar Hidden Mode (Hamburger) */
+body.sidebar-hidden .controls-panel { display: none !important; }
+
+/* Streamer Mode (Eye Icon) */
+body.streamer-mode .controls-panel,
+body.streamer-mode #tournament-header,
+body.streamer-mode #btn-hamburger,
+body.streamer-mode #standings-container,
+body.streamer-mode .stage-header-info,
+body.streamer-mode .stage-tabs-container {
+    display: none !important;
+}
+
+body.streamer-mode .display-panel,
+body.streamer-mode #player-list-container { 
+    padding: 0 !important; 
+    overflow: hidden; 
+    width: 100vw !important;
+    margin: 0 !important;
+}
+
+/* The Viewport expansions */
+body.streamer-mode #bracket-viewport {
+    height: 100vh !important;
+    border: none !important;
     border-radius: 0 !important;
 }
 
-/* Strip the ugly native borders off the input inside the wrapper */
-input[type="color"] {
-    border: none;
-    padding: 0;
-    width: 150%; /* Stretch it slightly so native borders bleed off-screen */
-    height: 200%;
-    transform: translate(-25%, -25%);
-    cursor: pointer;
-    background: none;
-}
+/* THEME: ARCADE */
 
-/* =============
-   THEME: ARCADE
-   ============= */
 body.theme-arcade {
     --bg-dark: #121212;
     --bg-panel: #1f1f1f;
@@ -401,9 +447,7 @@ body.theme-arcade {
     --accent: #c238b3;
 }
 
-/* ===============
-   LAYOUT: CLASSIC
-   =============== */
+/* LAYOUT: CLASSIC */
 body.layout-classic {
     --box-height: 75px;
     --gap-y: 10px;
@@ -448,6 +492,27 @@ body.layout-classic div[style*="border-radius: 8px"] {
     border-radius: 0 !important; /* Forces modals to have sharp corners */
 }
 
+/* Sharp edges for Classic Theme */
+body.layout-classic .color-picker-wrapper {
+    border-radius: 0 !important;
+}
+
+body.layout-classic .custom-checkbox-label input[type="checkbox"] {
+    border-radius: 0 !important;
+}
+
+body.layout-classic .tourney-active-badge {
+    border-radius: 0 !important;
+}
+
+body.layout-classic .drag-placeholder,
+body.layout-classic .player-card.is-placeholder,
+body.layout-classic .drag-active-element,
+body.layout-classic .player-card.is-dragging {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
 /* 2. Flatten & Compress the Match Boxes */
 body.layout-classic .match-box {
     border-radius: 0px !important;
@@ -485,8 +550,6 @@ body.layout-classic .btn-match-action {
 body.layout-classic .match-info-row .match-score-input {
     font-size: 9px !important;
 }
-
-
 
 /* 3. Flatten the Sidebar "Boxception"~ */
 body.layout-classic .control-group {
@@ -586,66 +649,4 @@ body.layout-classic #library-select-bar {
 
 body.layout-classic .library-tourney-row {
     background: transparent !important;
-}
-
-/* custom checkbox slop that surely works one-shot w/o looking ass or breaking */
-.custom-checkbox-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    user-select: none;
-    font-size: 13px;
-    color: var(--text-main);
-}
-
-.custom-checkbox-label input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
-    min-height: 18px;
-    border: 2px solid var(--border-main);
-    border-radius: 4px;
-    background-color: var(--bg-dark);
-    cursor: pointer;
-    display: grid;
-    place-content: center;
-    transition: 0.15s ease-in-out;
-    margin: 0;
-    padding: 0;
-}
-
-.custom-checkbox-label input[type="checkbox"]:hover {
-    border-color: var(--accent);
-}
-
-.custom-checkbox-label input[type="checkbox"]:checked {
-    background-color: var(--accent);
-    border-color: var(--accent);
-}
-
-.custom-checkbox-label input[type="checkbox"]::before {
-    content: "";
-    width: 10px;
-    height: 6px;
-    border-left: 2px solid var(--text-on-accent);
-    border-bottom: 2px solid var(--text-on-accent);
-    transform: rotate(-45deg) translate(1px, -1px);
-    opacity: 0;
-    transition: 0.15s ease-in-out;
-}
-
-.custom-checkbox-label input[type="checkbox"]:checked::before {
-    opacity: 1;
-}
-
-body.layout-classic .custom-checkbox-label input[type="checkbox"] {
-    border-radius: 0 !important;
-}
-
-
-body.layout-classic .tourney-active-badge {
-    border-radius: 0 !important;
 }
