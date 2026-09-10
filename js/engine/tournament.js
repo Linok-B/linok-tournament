@@ -9,7 +9,7 @@ export class Tournament {
         this.status = "setup"; 
         
         this.settings = { 
-            name: "My Custom Tournament",
+            name: "Untitled Tournament",
             pointsForWin: 3,
             pointsForDraw: 1,
             pointsForLoss: 0,
