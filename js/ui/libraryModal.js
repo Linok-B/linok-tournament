@@ -2,6 +2,16 @@ import { getLibraryTournaments, getTournamentFromLibrary, saveTournamentToLibrar
 import { exportTournamentJSON, exportTournamentBundleJSON, parseTournamentImportJSON } from '../store/export.js';
 import { getIcon } from './icons.js';
 
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 let activeModalOverlay = null;
 
 let _libMousedown = null;
@@ -84,7 +94,8 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
                     const dateStr = t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() + ' ' + new Date(t.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown';
                     const playerCount = t.players?.length || 0;
                     const stagesCount = t.stages?.length || 0;
-                    const tourneyName = t.settings?.name || 'Untitled Tournament';
+                    const rawName = t.settings?.name || 'Untitled Tournament';
+                    const tourneyName = escapeHTML(rawName);
 
                     return `
                         <div class="library-tourney-row" data-id="${t.id}" style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.25); border:1px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; border-left:4px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; padding:8px 10px; border-radius:4px; gap:8px;">
