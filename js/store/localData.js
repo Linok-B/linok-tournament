@@ -103,7 +103,12 @@ export async function getLibraryTournaments() {
             const req = store.getAll();
             req.onsuccess = () => {
                 const list = req.result || [];
-                list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                list.sort((a, b) => {
+                    if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+                    if (a.order !== undefined) return -1;
+                    if (b.order !== undefined) return 1;
+                    return (b.updatedAt || 0) - (a.updatedAt || 0);
+                });
                 resolve(list);
             };
             req.onerror = () => reject(req.error);
@@ -129,4 +134,23 @@ export async function getAppMeta(key) {
 
 export async function setAppMeta(key, value) {
     return performTransaction('app_meta', 'readwrite', (store) => store.put({ key, value }));
+}
+
+export async function updateLibraryOrder(orderedIds) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('library', 'readwrite');
+        const store = tx.objectStore('library');
+        orderedIds.forEach((id, index) => {
+            const req = store.get(id);
+            req.onsuccess = () => {
+                if (req.result) {
+                    req.result.order = index;
+                    store.put(req.result);
+                }
+            };
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
 }
