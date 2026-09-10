@@ -74,7 +74,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             </div>
 
             <!-- Tournament List -->
-            <div id="library-list-container" style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:8px; max-height:50vh; padding-right:4px;">
+            <div id="library-list-container" style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:8px; max-height:50vh; padding-right:6px; box-sizing:border-box;">
                 ${!hasTournaments ? `
                     <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">
                         No tournaments saved in the library yet. Click <strong>"Save Current to Library"</strong> above or import a backup file.
@@ -89,7 +89,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
                     const tourneyName = escapeHTML(rawName);
 
                     return `
-                        <div class="library-tourney-row" data-id="${t.id}" style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.25); border:1px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; border-left:4px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; padding:8px 10px; border-radius:4px; gap:8px;">
+                        <div class="library-tourney-row" data-id="${t.id}" style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.25); border:1px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; border-left:4px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; padding:8px 10px; border-radius:4px; gap:8px; box-sizing:border-box; width:100%;">
                             
                             <!-- Drag Handle -->
                             <div class="tourney-drag-handle" style="color:var(--accent); font-size:16px; font-weight:bold; cursor:grab; padding:0 4px; user-select:none; flex-shrink:0;">⋮⋮</div>
@@ -130,6 +130,10 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
         if (list && _libMousedown) list.removeEventListener('mousedown', _libMousedown);
         if (_libMousemove) document.removeEventListener('mousemove', _libMousemove);
         if (_libMouseup) document.removeEventListener('mouseup', _libMouseup);
+        window.removeEventListener('blur', _libMouseup);
+        _libMousedown = null;
+        _libMousemove = null;
+        _libMouseup = null;
     }
 
     function applyLibraryDragAndDrop() {
@@ -144,6 +148,8 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
         let lastHoverCheck = 0;
 
         _libMousedown = (e) => {
+            if (e.button !== 0) return; // Left click only
+            if (draggingElement) return; // Prevent double-drag race condition so no more fun ghost duplication glitch
             if (!e.target.classList.contains('tourney-drag-handle')) return;
             e.preventDefault();
 
@@ -156,11 +162,14 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             placeholder = row.cloneNode(true);
             placeholder.style.opacity = '0.3';
             placeholder.style.border = '2px dashed var(--border-main)';
+            placeholder.style.boxSizing = 'border-box';
+            placeholder.style.width = `${rect.width}px`;
             container.insertBefore(placeholder, row);
 
             draggingElement = row;
             draggingElement.style.position = 'fixed';
             draggingElement.style.zIndex = '10001';
+            draggingElement.style.boxSizing = 'border-box';
             draggingElement.style.width = `${rect.width}px`;
             draggingElement.style.top = `${e.clientY - offsetY}px`;
             draggingElement.style.left = `${rect.left}px`;
@@ -191,35 +200,41 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             if (!draggingElement) return;
             document.body.style.cursor = 'default';
 
+            const el = draggingElement;
+            const ph = placeholder;
+
+            // clear active drag pointers to prevent the ghost glitch
+            draggingElement = null;
+            placeholder = null;
+
             try {
-                if (placeholder && placeholder.parentNode === container) {
-                    container.insertBefore(draggingElement, placeholder);
-                    placeholder.remove();
+                if (ph && ph.parentNode === container) {
+                    container.insertBefore(el, ph);
+                    ph.remove();
                 }
 
-                // Reset ONLY drag positioning, do NOT destroy inline row styles (fixed issue where css died and got default (non-)formatting)
-                draggingElement.style.position = '';
-                draggingElement.style.zIndex = '';
-                draggingElement.style.width = '';
-                draggingElement.style.top = '';
-                draggingElement.style.left = '';
-                draggingElement.style.pointerEvents = '';
+                // Reset ONLY drag positioning NOT inline row styles
+                el.style.position = '';
+                el.style.zIndex = '';
+                el.style.width = '';
+                el.style.top = '';
+                el.style.left = '';
+                el.style.pointerEvents = '';
+                el.style.boxSizing = '';
 
-                const orderedIds = Array.from(container.querySelectorAll('.library-tourney-row')).map(el => el.getAttribute('data-id'));
+                const orderedIds = Array.from(container.querySelectorAll('.library-tourney-row')).map(item => item.getAttribute('data-id'));
                 tournaments.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
 
                 await updateLibraryOrder(orderedIds);
             } catch (err) {
                 console.error("Library reorder failed:", err);
-            } finally {
-                draggingElement = null;
-                placeholder = null;
             }
         };
 
         container.addEventListener('mousedown', _libMousedown);
         document.addEventListener('mousemove', _libMousemove);
         document.addEventListener('mouseup', _libMouseup);
+        window.addEventListener('blur', _libMouseup);
     }
 
     function bindEvents() {
