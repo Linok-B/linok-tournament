@@ -628,3 +628,8 @@ body.layout-classic #tb-active-list > div:last-child {
 body.layout-classic .custom-checkbox-label input[type="checkbox"] {
     border-radius: 0 !important;
 }
+
+
+body.layout-classic .tourney-active-badge {
+    border-radius: 0 !important;
+}
