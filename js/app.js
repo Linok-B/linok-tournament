@@ -175,7 +175,7 @@ document.getElementById('btn-close-settings').addEventListener('click', () => {
 });
 
 document.getElementById('btn-save-settings').addEventListener('click', async () => {
-    currentTournament.settings.name = document.getElementById('setting-name').value || "Untitled Tournament";
+    currentTournament.settings.name = document.getElementById('setting-name').value ?? "Untitled Tournament";
     currentTournament.settings.pointsForWin = parseInt(document.getElementById('setting-pts-win').value) || 0;
     currentTournament.settings.pointsForDraw = parseInt(document.getElementById('setting-pts-draw').value) || 0;
     currentTournament.settings.pointsForLoss = parseInt(document.getElementById('setting-pts-loss').value) || 0;
