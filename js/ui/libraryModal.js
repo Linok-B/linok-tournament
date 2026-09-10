@@ -94,7 +94,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
                     const dateStr = t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() + ' ' + new Date(t.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown';
                     const playerCount = t.players?.length || 0;
                     const stagesCount = t.stages?.length || 0;
-                    const rawName = t.settings?.name || 'Untitled Tournament';
+                    const rawName = t.settings?.name ?? 'Untitled Tournament';
                     const tourneyName = escapeHTML(rawName);
 
                     return `
