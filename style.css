@@ -571,3 +571,60 @@ body.layout-classic #tb-active-list > div {
 body.layout-classic #tb-active-list > div:last-child {
     border-bottom: none !important;
 }
+
+/* custom checkbox slop that surely works one-shot w/o looking ass or breaking */
+.custom-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    color: var(--text-main);
+}
+
+.custom-checkbox-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    border: 2px solid var(--border-main);
+    border-radius: 4px;
+    background-color: var(--bg-dark);
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: 0.15s ease-in-out;
+    margin: 0;
+    padding: 0;
+}
+
+.custom-checkbox-label input[type="checkbox"]:hover {
+    border-color: var(--accent);
+}
+
+.custom-checkbox-label input[type="checkbox"]:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.custom-checkbox-label input[type="checkbox"]::before {
+    content: "";
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid var(--text-on-accent);
+    border-bottom: 2px solid var(--text-on-accent);
+    transform: rotate(-45deg) translate(1px, -1px);
+    opacity: 0;
+    transition: 0.15s ease-in-out;
+}
+
+.custom-checkbox-label input[type="checkbox"]:checked::before {
+    opacity: 1;
+}
+
+body.layout-classic .custom-checkbox-label input[type="checkbox"] {
+    border-radius: 0 !important;
+}
