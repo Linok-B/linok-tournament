@@ -102,7 +102,7 @@ modalObserver.observe(document.body, { attributes: true, childList: true, subtre
 
 const settingsModal = document.getElementById('settings-modal');
 
-document.getElementById('btn-open-settings').addEventListener('click', () => {
+document.getElementById('btn-open-settings').addEventListener('click', async () => {
     document.getElementById('setting-name').value = currentTournament.settings.name;
     document.getElementById('setting-pts-win').value = currentTournament.settings.pointsForWin;
     document.getElementById('setting-pts-draw').value = currentTournament.settings.pointsForDraw;
@@ -174,7 +174,7 @@ document.getElementById('btn-close-settings').addEventListener('click', () => {
     settingsModal.style.display = 'none';
 });
 
-document.getElementById('btn-save-settings').addEventListener('click', () => {
+document.getElementById('btn-save-settings').addEventListener('click', async () => {
     currentTournament.settings.name = document.getElementById('setting-name').value || "Untitled Tournament";
     currentTournament.settings.pointsForWin = parseInt(document.getElementById('setting-pts-win').value) || 0;
     currentTournament.settings.pointsForDraw = parseInt(document.getElementById('setting-pts-draw').value) || 0;
