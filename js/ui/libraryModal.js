@@ -1,8 +1,14 @@
-import { getLibraryTournaments, getTournamentFromLibrary, saveTournamentToLibrary, deleteTournamentFromLibrary, saveTournamentLocally } from '../store/localData.js';
+// js/ui/libraryModal.js
+
+import { getLibraryTournaments, getTournamentFromLibrary, saveTournamentToLibrary, deleteTournamentFromLibrary, saveTournamentLocally, updateLibraryOrder } from '../store/localData.js';
 import { exportTournamentJSON, exportTournamentBundleJSON, parseTournamentImportJSON } from '../store/export.js';
 import { getIcon } from './icons.js';
 
 let activeModalOverlay = null;
+
+let _libMousedown = null;
+let _libMousemove = null;
+let _libMouseup = null;
 
 export async function openTournamentLibraryModal(currentTournament, onSwitchTournament) {
     if (activeModalOverlay) activeModalOverlay.remove();
@@ -19,6 +25,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
 
     overlay.onclick = (e) => {
         if (e.target === overlay) {
+            cleanupDragListeners();
             overlay.remove();
             activeModalOverlay = null;
         }
@@ -34,35 +41,35 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
         modal.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:var(--accent); display:flex; align-items:center; gap:8px;">
-                    <span data-icon="folderOpen"></span> Tournament Library
+                    ${getIcon('folderOpen', 22)} Tournament Library
                 </h2>
                 <button id="btn-close-library" style="background:transparent; color:var(--text-muted); border:none; cursor:pointer; font-weight:bold; font-size:18px;">X</button>
             </div>
 
             <!-- Top Actions -->
             <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
-                <button id="btn-save-current-to-library" style="background:var(--accent); color:var(--text-on-accent); border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px;">
+                <button id="btn-save-current-to-library" style="background:var(--accent); color:var(--text-on-accent); border:none; height:32px; padding:0 14px; border-radius:4px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-size:12px; box-sizing:border-box;">
                     ${getIcon('save', 14)} Save Current to Library
                 </button>
 
                 <div style="display:flex; gap:8px;">
                     <input type="file" id="library-file-import" accept=".json" style="display:none;">
-                    <button id="btn-library-import" style="background:var(--warning); color:var(--text-on-accent); border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:11px; display:flex; align-items:center; gap:6px;">
+                    <button id="btn-library-import" style="background:var(--warning); color:var(--text-on-accent); border:none; height:32px; padding:0 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; box-sizing:border-box;">
                         ${getIcon('folder', 14)} Import (Single / Bundle)
                     </button>
-                    <button id="btn-export-all-library" ${!hasTournaments ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="background:var(--success); color:var(--text-on-accent); border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:11px; display:flex; align-items:center; gap:6px;">
+                    <button id="btn-export-all-library" ${!hasTournaments ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="background:var(--success); color:var(--text-on-accent); border:none; height:32px; padding:0 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; box-sizing:border-box;">
                         ${getIcon('save', 14)} Export All (${tournaments.length})
                     </button>
                 </div>
             </div>
 
             <!-- Selection Bar -->
-            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:8px 12px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-main);">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); min-height:42px; padding:6px 12px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-main); box-sizing:border-box;">
                 <label class="custom-checkbox-label">
                     <input type="checkbox" id="chk-select-all" ${allSelected ? 'checked' : ''} ${!hasTournaments ? 'disabled' : ''}>
                     <span style="font-size:12px; font-weight:bold;">Select All (${selectedIds.size}/${tournaments.length} selected)</span>
                 </label>
-                <button id="btn-export-selected" ${selectedIds.size === 0 ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} style="background:var(--success); color:var(--text-on-accent); border:none; padding:4px 10px; border-radius:3px; font-size:11px; font-weight:bold; cursor:pointer;">
+                <button id="btn-export-selected" ${selectedIds.size === 0 ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} style="background:var(--success); color:var(--text-on-accent); border:none; height:28px; padding:0 12px; border-radius:3px; font-size:11px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; box-sizing:border-box;">
                     Export Selected (${selectedIds.size})
                 </button>
             </div>
@@ -79,27 +86,33 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
                     const dateStr = t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() + ' ' + new Date(t.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown';
                     const playerCount = t.players?.length || 0;
                     const stagesCount = t.stages?.length || 0;
+                    const tourneyName = t.settings?.name || 'Untitled Tournament';
 
                     return `
-                        <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.25); border:1px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; border-left:4px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; padding:10px; border-radius:4px;">
-                            <div style="display:flex; align-items:center; gap:10px; min-width:0; flex-grow:1;">
-                                <label class="custom-checkbox-label">
-                                    <input type="checkbox" class="chk-tournament-item" data-id="${t.id}" ${isChecked ? 'checked' : ''}>
-                                </label>
-                                <div style="min-width:0; flex-grow:1;">
-                                    <div style="display:flex; align-items:center; gap:6px;">
-                                        <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; color:var(--text-main);">${t.settings?.name || 'Untitled Tournament'}</strong>
-                                        ${isCurrent ? `<span style="font-size:10px; background:var(--accent); color:var(--text-on-accent); padding:1px 6px; border-radius:3px; font-weight:bold;">Active</span>` : ''}
-                                    </div>
-                                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-                                        ${playerCount} Players &bull; ${stagesCount} Stages &bull; ${t.status || 'setup'} &bull; <small>${dateStr}</small>
-                                    </div>
+                        <div class="library-tourney-row" data-id="${t.id}" style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.25); border:1px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; border-left:4px solid ${isCurrent ? 'var(--accent)' : 'var(--border-main)'}; padding:8px 10px; border-radius:4px; gap:8px;">
+                            
+                            <!-- Drag Handle -->
+                            <div class="tourney-drag-handle" style="color:var(--accent); font-size:16px; font-weight:bold; cursor:grab; padding:0 4px; user-select:none; flex-shrink:0;">⋮⋮</div>
+
+                            <label class="custom-checkbox-label" style="flex-shrink:0;">
+                                <input type="checkbox" class="chk-tournament-item" data-id="${t.id}" ${isChecked ? 'checked' : ''}>
+                            </label>
+
+                            <div style="min-width:0; flex-grow:1;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <strong title="${tourneyName}" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; color:var(--text-main); display:block; max-width:320px;">
+                                        ${tourneyName}
+                                    </strong>
+                                    ${isCurrent ? `<span class="tourney-active-badge" style="font-size:10px; background:var(--accent); color:var(--text-on-accent); padding:1px 6px; border-radius:3px; font-weight:bold; flex-shrink:0;">Active</span>` : ''}
+                                </div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                                    ${playerCount} Players &bull; ${stagesCount} Stages &bull; ${t.status || 'setup'} &bull; <small>${dateStr}</small>
                                 </div>
                             </div>
 
-                            <div style="display:flex; gap:6px; flex-shrink:0; margin-left:10px;">
+                            <div style="display:flex; gap:6px; flex-shrink:0;">
                                 <button class="btn-load-tourney" data-id="${t.id}" style="background:var(--accent); color:var(--text-on-accent); border:none; padding:4px 8px; border-radius:3px; font-size:11px; font-weight:bold; cursor:pointer;">Load</button>
-                                <button class="btn-export-single" data-id="${t.id}" style="background:var(--border-main); color:var(--text-main); border:none; padding:4px 8px; border-radius:3px; font-size:11px; cursor:pointer;" title="Export Single JSON">${getIcon('save', 12)}</button>
+                                <button class="btn-export-single" data-id="${t.id}" style="background:var(--success); color:var(--text-on-accent); border:none; padding:4px 8px; border-radius:3px; font-size:11px; cursor:pointer; display:inline-flex; align-items:center;" title="Export to File">${getIcon('save', 12)}</button>
                                 <button class="btn-delete-tourney" data-id="${t.id}" style="background:var(--danger); color:var(--text-on-accent); border:none; padding:4px 8px; border-radius:3px; font-size:11px; font-weight:bold; cursor:pointer;" title="Delete">X</button>
                             </div>
                         </div>
@@ -109,15 +122,102 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
         `;
 
         bindEvents();
+        applyLibraryDragAndDrop();
+    }
+
+    function cleanupDragListeners() {
+        const list = document.getElementById('library-list-container');
+        if (list && _libMousedown) list.removeEventListener('mousedown', _libMousedown);
+        if (_libMousemove) document.removeEventListener('mousemove', _libMousemove);
+        if (_libMouseup) document.removeEventListener('mouseup', _libMouseup);
+    }
+
+    function applyLibraryDragAndDrop() {
+        const container = document.getElementById('library-list-container');
+        if (!container) return;
+
+        cleanupDragListeners();
+
+        let draggingElement = null;
+        let placeholder = null;
+        let offsetY = 0;
+        let lastHoverCheck = 0;
+
+        _libMousedown = (e) => {
+            if (!e.target.classList.contains('tourney-drag-handle')) return;
+            e.preventDefault();
+
+            const row = e.target.closest('.library-tourney-row');
+            if (!row) return;
+
+            const rect = row.getBoundingClientRect();
+            offsetY = e.clientY - rect.top;
+
+            placeholder = row.cloneNode(true);
+            placeholder.style.opacity = '0.3';
+            placeholder.style.border = '2px dashed var(--border-main)';
+            container.insertBefore(placeholder, row);
+
+            draggingElement = row;
+            draggingElement.style.position = 'fixed';
+            draggingElement.style.zIndex = '10001';
+            draggingElement.style.width = `${rect.width}px`;
+            draggingElement.style.top = `${e.clientY - offsetY}px`;
+            draggingElement.style.left = `${rect.left}px`;
+            draggingElement.style.pointerEvents = 'none';
+
+            document.body.style.cursor = 'grabbing';
+        };
+
+        _libMousemove = (e) => {
+            if (!draggingElement) return;
+            draggingElement.style.top = `${e.clientY - offsetY}px`;
+
+            if (e.timeStamp - lastHoverCheck > 16) {
+                lastHoverCheck = e.timeStamp;
+                const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
+                const hoveredRow = elementsUnderMouse.find(el => el.classList && el.classList.contains('library-tourney-row') && el !== draggingElement && el !== placeholder);
+
+                if (hoveredRow && hoveredRow.parentNode === container) {
+                    const hoverRect = hoveredRow.getBoundingClientRect();
+                    const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
+                    if (e.clientY < hoverMiddleY) container.insertBefore(placeholder, hoveredRow);
+                    else container.insertBefore(placeholder, hoveredRow.nextSibling);
+                }
+            }
+        };
+
+        _libMouseup = async () => {
+            if (!draggingElement) return;
+            document.body.style.cursor = 'default';
+
+            container.insertBefore(draggingElement, placeholder);
+            draggingElement.removeAttribute('style');
+            placeholder.remove();
+
+            const orderedIds = Array.from(container.querySelectorAll('.library-tourney-row')).map(el => el.getAttribute('data-id'));
+            
+            // Re-order active memory
+            tournaments.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
+
+            draggingElement = null;
+            placeholder = null;
+
+            await updateLibraryOrder(orderedIds);
+        };
+
+        container.addEventListener('mousedown', _libMousedown);
+        document.addEventListener('mousemove', _libMousemove);
+        document.addEventListener('mouseup', _libMouseup);
     }
 
     function bindEvents() {
         document.getElementById('btn-close-library').onclick = () => {
+            cleanupDragListeners();
             overlay.remove();
             activeModalOverlay = null;
         };
 
-        // Select all / Deselect all
         const chkAll = document.getElementById('chk-select-all');
         if (chkAll) {
             chkAll.onchange = (e) => {
@@ -127,7 +227,6 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             };
         }
 
-        // item checkbox toggles
         document.querySelectorAll('.chk-tournament-item').forEach(chk => {
             chk.onchange = (e) => {
                 const id = e.target.getAttribute('data-id');
@@ -137,20 +236,19 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             };
         });
 
-        // Save Current to Library™
         document.getElementById('btn-save-current-to-library').onclick = async () => {
             await saveTournamentToLibrary(currentTournament);
             tournaments = await getLibraryTournaments();
             render();
         };
 
-        // Load tournament
         document.querySelectorAll('.btn-load-tourney').forEach(btn => {
             btn.onclick = async () => {
                 const id = btn.getAttribute('data-id');
                 const target = await getTournamentFromLibrary(id);
                 if (target) {
                     await saveTournamentLocally(target);
+                    cleanupDragListeners();
                     overlay.remove();
                     activeModalOverlay = null;
                     onSwitchTournament(target);
@@ -158,7 +256,6 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             };
         });
 
-        // Delete tournament
         document.querySelectorAll('.btn-delete-tourney').forEach(btn => {
             btn.onclick = async () => {
                 const id = btn.getAttribute('data-id');
@@ -171,7 +268,6 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             };
         });
 
-        // Export Single
         document.querySelectorAll('.btn-export-single').forEach(btn => {
             btn.onclick = async () => {
                 const id = btn.getAttribute('data-id');
@@ -180,14 +276,12 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             };
         });
 
-        // Export All
         document.getElementById('btn-export-all-library').onclick = () => {
             if (tournaments.length > 0) {
                 exportTournamentBundleJSON(tournaments, "Tournament_Library_All");
             }
         };
 
-        // Export Selected
         document.getElementById('btn-export-selected').onclick = () => {
             const selected = tournaments.filter(t => selectedIds.has(t.id));
             if (selected.length > 0) {
@@ -195,7 +289,6 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             }
         };
 
-        // Import Button
         const fileIn = document.getElementById('library-file-import');
         document.getElementById('btn-library-import').onclick = () => fileIn.click();
 
