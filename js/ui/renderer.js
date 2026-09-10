@@ -1,6 +1,7 @@
 import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 import { simulatePreview } from '../engine/formats/registry.js';
 import { getIcon } from './icons.js';
+import { escapeHTML } from '../utils/helpers.js';
 
 // Holds the mathematical layout data for the Native SVG Exporter
 export const layoutState = { matchDataMap: {}, paths: "", width: 0, height: 0, rounds: 0, stage: null, isActive: false };
@@ -37,9 +38,9 @@ export function renderPlayerList(players, containerId) {
             
             <!-- This container GROWS to fill all available space! -->
             <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0;">
-                <strong title="${player.name}" style="color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                <strong title="${escapeHTML(player.name)}" style="color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     <!-- ONLY THE NUMBER GOES IN THIS SPAN! -->
-                    <span class="seed-number" style="color: var(--text-muted); margin-right: 5px;">${player.seed}</span>. ${player.name}
+                    <span class="seed-number" style="color: var(--text-muted); margin-right: 5px;">${player.seed}</span>. ${escapeHTML(player.name)}
                 </strong>
                 <span style="font-size: 12px; color: var(--text-muted); flex-shrink: 0;">(ELO: ${player.elo})</span>
             </div>
@@ -572,13 +573,13 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                 
                 <div class="match-player-row">
                     ${p1SeedStr}
-                    <div class="match-player-name" title="${p1Name}" style="color:${p1Color}; font-weight:${match.winner?.id === p1?.id ? 'bold' : 'normal'};">${p1Name}</div>
+                    <div class="match-player-name" title="${escapeHTML(p1Name)}" style="color:${p1Color}; font-weight:${match.winner?.id === p1?.id ? 'bold' : 'normal'};">${escapeHTML(p1Name)}</div>
                     <div class="match-score">${match.score1}</div>
                 </div>
 
                 <div class="match-player-row">
                     ${p2SeedStr}
-                    <div class="match-player-name" title="${p2Name}" style="color:${p2Color}; font-weight:${match.winner?.id === p2?.id ? 'bold' : 'normal'};">${p2Name}</div>
+                    <div class="match-player-name" title="${escapeHTML(p2Name)}" style="color:${p2Color}; font-weight:${match.winner?.id === p2?.id ? 'bold' : 'normal'};">${escapeHTML(p2Name)}</div>
                     <div class="match-score">${match.score2}</div>
                 </div>
 
@@ -599,14 +600,14 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
                 
                 <div class="match-player-row">
                     ${p1SeedStr}
-                    <div class="match-player-name" title="${p1Name}">${p1Name}</div>
+                    <div class="match-player-name" title="${escapeHTML(p1Name)}">${escapeHTML(p1Name)}</div>
                     ${p1WinStr}
                     <input type="number" id="s1-${match.id}" class="match-score-input" value="${match.score1}">
                 </div>
 
                 <div class="match-player-row">
                     ${p2SeedStr}
-                    <div class="match-player-name" title="${p2Name}">${p2Name}</div>
+                    <div class="match-player-name" title="${escapeHTML(p2Name)}">${escapeHTML(p2Name)}</div>
                     ${p2WinStr}
                     <input type="number" id="s2-${match.id}" class="match-score-input" value="${match.score2}">
                 </div>
@@ -625,8 +626,8 @@ function createMatchBoxHTML(match, x, y, width, height, isActiveStage, tournamen
         matchBox.innerHTML = `
             <div style="position:absolute; top:5px; right: 5px; font-size:10px;">${bracketLabel}</div>
             <div style="display:flex; flex-direction:column; justify-content:center; gap:5px; height:100%;">
-                <div title="${p1Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1SeedStr}${p1Name}</div>
-                <div title="${p2Name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2SeedStr}${p2Name}</div>
+                <div title="${escapeHTML(p1Name)}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p1SeedStr}${escapeHTML(p1Name)}</div>
+                <div title="${escapeHTML(p2Name)}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2SeedStr}${escapeHTML(p2Name)}</div>
                 <small style="color:var(--text-muted);">Pending</small>
             </div>
         `;
@@ -807,7 +808,7 @@ export function renderStandings(tournament, containerId) {
         html += `
             <tr style="border-bottom: 1px solid var(--border-main);">
                 <td style="padding: 10px;"><b>${currentDisplayRank}</b></td>
-                <td style="padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${player.name}">${player.name}</td>
+                <td style="padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</td>
                 <td style="padding: 10px; font-weight: bold; color: var(--accent);">${displayPoints}</td>
                 <td style="padding: 10px;">${mRecord}</td>
                 <td style="padding: 10px;">${gRecord}</td>
