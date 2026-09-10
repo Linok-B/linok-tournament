@@ -1,4 +1,5 @@
 import { getIcon } from './icons.js';
+import { escapeHTML } from '../utils/helpers.js';
 
 export function openDPWSetupModal(players, rounds, cut, onComplete, existingConfig = null) {
     const overlay = document.createElement('div');
@@ -34,7 +35,7 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
             
             html += `
                 <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:4px; display:flex; gap:10px; align-items:center;">
-                    <strong style="width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.name}">${p.name}</strong>
+                    <strong style="width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(p.name)}">${escapeHTML(p.name)}</strong>
                     
                     <div style="display:flex; flex-direction:column; flex-grow:1; gap:5px;">
                         <textarea id="json-${p.id}" placeholder="Paste JSON here..." style="height:35px; resize:none; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:5px; font-family:monospace; font-size:11px;">${savedJson}</textarea>
