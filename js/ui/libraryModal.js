@@ -74,7 +74,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             </div>
 
             <!-- Tournament List -->
-            <div id="library-list-container" style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:8px; max-height:50vh; padding-right:6px; box-sizing:border-box;">
+            <div id="library-list-container" style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:8px; max-height:50vh; box-sizing:border-box;">
                 ${!hasTournaments ? `
                     <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">
                         No tournaments saved in the library yet. Click <strong>"Save Current to Library"</strong> above or import a backup file.
@@ -148,8 +148,8 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
         let lastHoverCheck = 0;
 
         _libMousedown = (e) => {
-            if (e.button !== 0) return; // Left click only
-            if (draggingElement) return; // Prevent double-drag race condition so no more fun ghost duplication glitch
+            if (e.button !== 0) return;
+            if (draggingElement) return;
             if (!e.target.classList.contains('tourney-drag-handle')) return;
             e.preventDefault();
 
@@ -160,20 +160,17 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             offsetY = e.clientY - rect.top;
 
             placeholder = row.cloneNode(true);
-            placeholder.style.opacity = '0.3';
-            placeholder.style.border = '2px dashed var(--border-main)';
-            placeholder.style.boxSizing = 'border-box';
+            placeholder.className = 'library-tourney-row drag-placeholder';
+            placeholder.style.height = `${rect.height}px`;
             placeholder.style.width = `${rect.width}px`;
             container.insertBefore(placeholder, row);
 
             draggingElement = row;
-            draggingElement.style.position = 'fixed';
-            draggingElement.style.zIndex = '10001';
-            draggingElement.style.boxSizing = 'border-box';
+            draggingElement.classList.add('drag-active-element');
             draggingElement.style.width = `${rect.width}px`;
+            draggingElement.style.height = `${rect.height}px`;
             draggingElement.style.top = `${e.clientY - offsetY}px`;
             draggingElement.style.left = `${rect.left}px`;
-            draggingElement.style.pointerEvents = 'none';
 
             document.body.style.cursor = 'grabbing';
         };
@@ -203,7 +200,6 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
             const el = draggingElement;
             const ph = placeholder;
 
-            // clear active drag pointers to prevent the ghost glitch
             draggingElement = null;
             placeholder = null;
 
@@ -213,10 +209,11 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
                     ph.remove();
                 }
 
-                // Reset ONLY drag positioning NOT inline row styles
+                el.classList.remove('drag-active-element');
                 el.style.position = '';
                 el.style.zIndex = '';
                 el.style.width = '';
+                el.style.height = '';
                 el.style.top = '';
                 el.style.left = '';
                 el.style.pointerEvents = '';
