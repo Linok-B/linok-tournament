@@ -291,7 +291,7 @@ function renderBlueprintList() {
         const detailStr = details.length > 0 ? ` <small style="color:gray;">(${details.join(', ')})</small>` : '';
         
         list.innerHTML += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isStarted ? 'var(--success)' : 'var(--accent)'};">
+            <div class="blueprint-stage-card" data-index="${index}" data-locked="${isStarted}" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; border-left: 3px solid ${isStarted ? 'var(--success)' : 'var(--accent)'};">
                 
                 <!-- 1. Drag Handle (Only shows if stage is UNSTARTED) -->
                 ${!isStarted ? `<div class="stage-drag-handle" style="color: var(--accent); font-size: 16px; font-weight: bold; cursor: grab; padding: 5px; flex-shrink: 0; user-select:none;">⋮⋮</div>` : ''}
@@ -1140,7 +1140,9 @@ function applyStageDragAndDrop() {
         if (!e.target.classList.contains('stage-drag-handle')) return;
         e.preventDefault();
         
-        const card = e.target.closest('#blueprint-list > div');
+        const card = e.target.closest('.blueprint-stage-card');
+        if (!card || card.getAttribute('data-locked') === 'true') return;
+
         const rect = card.getBoundingClientRect();
         offsetY = e.clientY - rect.top;
 
@@ -1167,11 +1169,11 @@ function applyStageDragAndDrop() {
         if (e.timeStamp - lastHoverCheck > 16) {
             lastHoverCheck = e.timeStamp;
             const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
-            const hoveredCard = elementsUnderMouse.find(el => el.parentNode === container && el !== draggingElement && el !== placeholder);
+            const hoveredCard = elementsUnderMouse.find(el => el.classList && el.classList.contains('blueprint-stage-card') && el !== draggingElement && el !== placeholder);
 
-            if (hoveredCard) {
-                // Failsafe: Cannot swap with or hover over started/locked stages
-                if (hoveredCard.innerHTML.includes('Locked') || hoveredCard.innerHTML.includes('var(--success)')) return;
+            if (hoveredCard && hoveredCard.parentNode === container) {
+                // failsafe cuz cannot swap with or position above locked/started stages
+                if (hoveredCard.getAttribute('data-locked') === 'true') return;
 
                 const hoverRect = hoveredCard.getBoundingClientRect();
                 const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
@@ -1185,25 +1187,39 @@ function applyStageDragAndDrop() {
         if (!draggingElement) return;
         document.body.style.cursor = 'default';
 
-        container.insertBefore(draggingElement, placeholder);
-        draggingElement.removeAttribute('style');
-        placeholder.remove();
+        try {
+            if (placeholder && placeholder.parentNode === container) {
+                container.insertBefore(draggingElement, placeholder);
+                placeholder.remove();
+            }
 
-        // Save new order to pipeline
-        const lockedCount = currentTournament.stages.length;
-        const lockedPipeline = currentTournament.settings.pipeline.slice(0, lockedCount);
-        
-        const unlockedDOMs = Array.from(container.children).slice(lockedCount);
-        const unlockedIndices = unlockedDOMs.map(el => parseInt(el.querySelector('.btn-remove-stage').getAttribute('data-index')));
-        
-        const reorderedUnlocked = unlockedIndices.map(oldIdx => currentTournament.settings.pipeline[oldIdx]);
-        currentTournament.settings.pipeline = [...lockedPipeline, ...reorderedUnlocked];
+            // Reset ONLY drag positioning, do NOT destroy inline row styles
+            draggingElement.style.position = '';
+            draggingElement.style.zIndex = '';
+            draggingElement.style.width = '';
+            draggingElement.style.top = '';
+            draggingElement.style.left = '';
+            draggingElement.style.pointerEvents = '';
 
-        draggingElement = null;
-        placeholder = null;
+            // Save new order to pipeline (only reorders unlocked stages)
+            const lockedCount = currentTournament.stages.length;
+            const lockedPipeline = currentTournament.settings.pipeline.slice(0, lockedCount);
+            
+            const unlockedDOMs = Array.from(container.querySelectorAll('.blueprint-stage-card[data-locked="false"]'));
+            const unlockedIndices = unlockedDOMs.map(el => parseInt(el.getAttribute('data-index')));
+            
+            const reorderedUnlocked = unlockedIndices.map(oldIdx => currentTournament.settings.pipeline[oldIdx]);
+            currentTournament.settings.pipeline = [...lockedPipeline, ...reorderedUnlocked];
 
-        saveTournamentLocally(currentTournament);
-        updateUI();
+            saveTournamentLocally(currentTournament);
+            updateUI();
+        } catch (err) {
+            console.error("Stage reorder failed:", err);
+            updateUI();
+        } finally {
+            draggingElement = null;
+            placeholder = null;
+        }
     };
 
     container.addEventListener('mousedown', _stageMousedown);
