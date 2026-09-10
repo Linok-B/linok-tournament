@@ -88,10 +88,36 @@ export async function saveTournamentToLibrary(tournamentObject) {
     if (!clone.id) clone.id = crypto.randomUUID();
     clone.updatedAt = Date.now();
 
-    await performTransaction('library', 'readwrite', (store) => {
-        return store.put(clone);
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('library', 'readwrite');
+        const store = tx.objectStore('library');
+
+        const getReq = store.get(clone.id);
+        getReq.onsuccess = () => {
+            const existing = getReq.result;
+            if (existing && existing.order !== undefined) {
+                // retain existing position
+                clone.order = existing.order;
+                store.put(clone);
+            } else {
+                // place new tourneys at the top
+                const allReq = store.getAll();
+                allReq.onsuccess = () => {
+                    const all = allReq.result || [];
+                    all.forEach(t => {
+                        t.order = (t.order !== undefined ? t.order : 0) + 1;
+                        store.put(t);
+                    });
+                    clone.order = 0;
+                    store.put(clone);
+                };
+            }
+        };
+
+        tx.oncomplete = () => resolve(clone.id);
+        tx.onerror = () => reject(tx.error);
     });
-    return clone.id;
 }
 
 export async function getLibraryTournaments() {
