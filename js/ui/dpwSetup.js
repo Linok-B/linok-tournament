@@ -317,3 +317,40 @@ export function openDPWSetupModal(players, rounds, cut, onComplete, existingConf
 
     renderPage1();
 }
+
+
+// DPW Stage Validation Guard
+export function validateDPWStageReadiness(stageConfig, players, context = 'start') {
+    if (!stageConfig || stageConfig.type !== 'dpw_swiss') return true;
+
+    const actionPrefix = {
+        'start': 'Wait! You must configure the DPW Swiss teams before starting.',
+        'report': 'Cannot finish stage! The upcoming DPW Swiss stage has not been configured.',
+        'force_end': 'Cannot force end stage! The upcoming DPW Swiss stage has not been configured.'
+    }[context] || 'Wait! The DPW Swiss stage has not been configured.';
+
+    // Ensure DPW setup modal was opened and saved
+    if (!stageConfig.dpwData || Object.keys(stageConfig.dpwData.playerJsons).length === 0) {
+        alert(`${actionPrefix} Click the Gear icon in the Tournament Stages list.`);
+        return false;
+    }
+
+    // Ensure players have team data (only surviving players for transitions)
+    const missingPlayer = players.find(p => {
+        const isApplicable = context === 'start' ? true : !p.isEliminated;
+        return isApplicable && !stageConfig.dpwData.playerJsons[p.id] && stageConfig.dpwData.rawTS[p.id] === undefined;
+    });
+
+    if (missingPlayer) {
+        const playerMsg = {
+            'start': `Wait! Player '${missingPlayer.name}' does not have a Team Score assigned for DPW Swiss.`,
+            'report': `Cannot finish stage! Surviving player '${missingPlayer.name}' is missing a DPW Team Score.`,
+            'force_end': `Cannot force end stage! Surviving player '${missingPlayer.name}' is missing a DPW Team Score.`
+        }[context] || `Player '${missingPlayer.name}' is missing a DPW Team Score.`;
+
+        alert(`${playerMsg} Please click the Gear icon to configure their team.`);
+        return false;
+    }
+
+    return true;
+}
