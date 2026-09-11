@@ -532,19 +532,21 @@ document.getElementById('player-list-container').addEventListener('click', async
 
     // 5. Force End Stage Early (W/ Options)
     if (e.target && e.target.id === 'btn-force-end-stage') {
+        const activeStage = currentTournament.stages[currentTournament.stages.length - 1];
+        if (!activeStage || !activeStage.data.rounds || activeStage.data.rounds.length === 0) return;
 
-        // STAGE TRANSITION GUARD
+        // STAGE TRANSITION GUARD (DPW Validation)
         const nextConfig = currentTournament.settings.pipeline[currentTournament.stages.length];
         if (!validateDPWStageReadiness(nextConfig, currentTournament.players, 'force_end')) return;
-        
-        const activeStage = currentTournament.stages[currentTournament.stages.length - 1];
-        const currentRound = activeStage.data.rounds[activeStage.data.rounds.length - 1];
+
+        const currentRoundIndex = activeStage.data.rounds.length - 1;
+        const currentRound = activeStage.data.rounds[currentRoundIndex];
         
         // Are there actually unfinished matches?
         const isRoundUnfinished = currentRound.some(m => m.winner === null && !m.isBye);
         const matchesSubmitted = currentRound.filter(m => m.winner !== null || m.isBye).length;
         
-        // Helper function to finalize
+        // Helper function to finalize and cleanly advance view
         function executeEndStage() {
             currentTournament.recalculateAllStats(); 
             activeStage.status = "completed";
@@ -555,17 +557,28 @@ document.getElementById('player-list-container').addEventListener('click', async
             } else {
                 currentTournament.transitionToNextStage(currentTournament.players);
             }
+
+            // Always snap the camera and viewing tab to the newly active stage
+            window.viewingStageIndex = currentTournament.stages.length - 1;
+            window.bracketCamera = { x: 0, y: 0, scale: 1 };
+
             saveTournamentLocally(currentTournament);
             updateUI();
         }
 
+        // If the round is already 100% complete, end immediately
         if (!isRoundUnfinished) {
             executeEndStage(); 
             return;
         }
 
+        // If not a single real match has been scored yet
         if (matchesSubmitted === 0) {
-            activeStage.data.rounds.pop(); // Silent Rollback
+            if (activeStage.data.rounds.length <= 1) {
+                alert("Cannot end stage on Round 1 with zero matches played. To cancel this tournament, click 'Restart Tournament' instead.");
+                return;
+            }
+            activeStage.data.rounds.pop(); // Silent rollback of empty subsequent round
             executeEndStage();
             return;
         }
@@ -575,9 +588,14 @@ document.getElementById('player-list-container').addEventListener('click', async
         modal.style.display = 'flex';
 
         document.getElementById('modal-btn-end-rollback').onclick = () => {
+            // Cannot rollback Round 1 (no previous rounds exist to determine standings)
+            if (activeStage.data.rounds.length <= 1) {
+                alert("Cannot rollback Round 1 because there are no previous rounds to determine standings. Choose 'Force Ties' or click 'Restart Tournament' in the sidebar.");
+                return;
+            }
+            modal.style.display = 'none';
             activeStage.data.rounds.pop(); 
             executeEndStage();
-            modal.style.display = 'none';
         };
 
         document.getElementById('modal-btn-end-tie').onclick = () => {
@@ -585,13 +603,13 @@ document.getElementById('player-list-container').addEventListener('click', async
                 alert("You cannot force ties in an Elimination bracket. Please Rollback instead.");
                 return;
             }
+            modal.style.display = 'none';
             currentRound.forEach(m => {
                 if (m.winner === null && !m.isBye) {
                     m.score1 = 0; m.score2 = 0; m.draws = 0; m.winner = "tie";
                 }
             });
             executeEndStage();
-            modal.style.display = 'none';
         };
 
         document.getElementById('modal-btn-end-cancel').onclick = () => {
