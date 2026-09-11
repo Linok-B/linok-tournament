@@ -18,9 +18,20 @@ document.querySelectorAll('[data-icon]').forEach(el => {
 
 let currentTournament = new Tournament();
 
-const savedData = await loadTournamentLocally();
-if (savedData) {
-    currentTournament = Object.assign(new Tournament(), savedData);
+try {
+    const savedData = await loadTournamentLocally();
+    if (savedData) {
+        currentTournament = Object.assign(new Tournament(), savedData);
+
+        // Failsafe sanitization for corrupted state
+        if (!Array.isArray(currentTournament.players)) currentTournament.players = [];
+        if (!Array.isArray(currentTournament.stages)) currentTournament.stages = [];
+        if (!currentTournament.settings) currentTournament.settings = new Tournament().settings;
+    }
+} catch (err) {
+    console.error("Corrupted tournament state detected on load. Resetting workspace:", err);
+    currentTournament = new Tournament();
+    await saveTournamentLocally(currentTournament);
 }
 
 let _stageMousedown = null;
@@ -309,14 +320,24 @@ document.getElementById('btn-start-elim').addEventListener('click', () => {
     }
 });
 
-// Reset Button Event
-document.getElementById('btn-clear-data').addEventListener('click', () => {
-    if (currentTournament.status === "setup") {
-        alert("The tournament hasn't started yet! You are still in the Setup phase.");
+// Reset Button Event (With Failsafe & Emergency reset)
+document.getElementById('btn-clear-data').addEventListener('click', async (e) => {
+    // Emergency Reset: Shift + Click on the button to completely wipe active workspace
+    if (e.shiftKey) {
+        if (confirm("EMERGENCY HARD RESET:\n\nThis will completely purge the active workspace and start 100% fresh. Continue?")) {
+            await saveTournamentLocally(new Tournament());
+            window.location.reload();
+        }
         return;
     }
+
+    // Normal reset guard (allows reset if stages exist, even if status is confused)
+    if (currentTournament.status === "setup" && currentTournament.stages.length === 0) {
+        alert("The tournament hasn't started yet! You are already in the Setup phase.\n\n(Tip: Hold Shift + Click this button if you need an emergency hard reset).");
+        return;
+    }
+
     const modal = document.getElementById('warning-modal');
-    
     document.getElementById('warning-modal-title').innerHTML = `${getIcon('warning', 28)} RESTART TOURNAMENT`;
     document.getElementById('warning-modal-text').innerText = "This will delete all match history and return to the Setup phase. All players and settings will be KEPT. Are you sure?";
     document.getElementById('modal-btn-confirm').innerText = "Restart & Keep Players";
@@ -326,28 +347,42 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
     document.getElementById('modal-btn-cancel').onclick = () => { modal.style.display = 'none'; };
     document.getElementById('modal-btn-export').onclick = () => { exportTournamentJSON(currentTournament); };
 
-    document.getElementById('modal-btn-confirm').onclick = () => {
-        // 1. Reset tournament state
-        currentTournament.stages = [];
-        currentTournament.status = "setup";
-        
-        // 2. Restore true registration order
-        currentTournament.players.sort((a, b) => (a.originalSeed || a.seed) - (b.originalSeed || b.seed));
-        
-        // 3. Reset player stats and un-scramble the matchmaking seeds
-        currentTournament.players.forEach((p, index) => {
-            p.isEliminated = false;
-            p.seed = p.originalSeed || index + 1; // Snap the fake seed back to the real seed
-            p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
-        });
+    document.getElementById('modal-btn-confirm').onclick = async () => {
+        try {
+            // 1. Reset tournament state
+            currentTournament.stages = [];
+            currentTournament.status = "setup";
+            
+            // 2. Safely filter and restore true registration order
+            if (Array.isArray(currentTournament.players)) {
+                currentTournament.players = currentTournament.players.filter(Boolean);
+                currentTournament.players.sort((a, b) => (a.originalSeed || a.seed || 0) - (b.originalSeed || b.seed || 0));
+                
+                // 3. Reset player stats and un-scramble matchmaking seeds
+                currentTournament.players.forEach((p, index) => {
+                    p.isEliminated = false;
+                    p.seed = p.originalSeed || index + 1;
+                    p.stats = { matchWins: 0, matchLosses: 0, matchDraws: 0, gameWins: 0, gameLosses: 0, points: 0 };
+                });
+            } else {
+                currentTournament.players = [];
+            }
 
-        // 4. Reset camera and UI
-        window.bracketCamera = { x: 0, y: 0, scale: 1 };
-        window.viewingStageIndex = 0; 
-        
-        saveTournamentLocally(currentTournament);
-        updateUI();
-        modal.style.display = 'none'; 
+            // 4. Reset camera and UI view index
+            window.bracketCamera = { x: 0, y: 0, scale: 1 };
+            window.viewingStageIndex = 0; 
+            
+            await saveTournamentLocally(currentTournament);
+            updateUI();
+        } catch (err) {
+            console.error("Error during restart:", err);
+            // If even restart throws, fall back to clean tournament object
+            currentTournament = new Tournament();
+            await saveTournamentLocally(currentTournament);
+            updateUI();
+        } finally {
+            modal.style.display = 'none'; 
+        }
     };
 });
 
