@@ -2,7 +2,7 @@ import { Tournament } from './engine/tournament.js';
 import { renderBracket, renderStandings } from './ui/renderer.js';
 import { openDPWSetupModal } from './ui/dpwSetup.js';
 import { getIcon } from './ui/icons.js';
-import { exportBracketSVG } from './store/capture.js';
+import { initStaticModals } from './ui/staticModals.js';
 import { openStageSettingsModal } from './ui/stageSettings.js';
 import { saveTournamentLocally, loadTournamentLocally, getAppMeta, setAppMeta } from './store/localData.js';
 import { exportTournamentJSON, parseTournamentImportJSON } from './store/export.js';
@@ -28,6 +28,7 @@ let _stageMousemove = null;
 let _stageMouseup = null;
 
 initModalStacker();
+initStaticModals(() => currentTournament.settings.name);
 
 
 // SETTINGS MODAL LOGIC
@@ -865,28 +866,6 @@ document.getElementById('tb-active-list').addEventListener('click', (e) => {
     renderTBListOverride(targetArray);
 });
 
-// hamburgur :tongue:
-// Sidebar Toggle
-document.getElementById('btn-hamburger').addEventListener('click', () => {
-    document.body.classList.toggle('sidebar-hidden');
-});
-
-// Eye Icon (Streamer Mode Toggle)
-document.addEventListener('click', (e) => {
-    if (e.target && e.target.id === 'btn-streamer-mode') {
-        document.body.classList.toggle('streamer-mode');
-        
-        // Change icon based on state
-        if (document.body.classList.contains('streamer-mode')) {
-            e.target.innerHTML = getIcon('openEye', 20);
-        } else {
-            e.target.innerHTML = getIcon('closedEye', 20);
-        }
-        // Ensure background always matches the panel
-        e.target.style.background = "var(--bg-panel)";
-        e.target.style.color = "var(--text-main)";
-    }
-});
 
 // GLOBAL MODAL CLOSE (Clicking the dark background) DEPRECATED cuz ASS (it stopped working flawlessly when I wanted stacked modals to not increase opacity)
 // document.addEventListener('click', (e) => {
@@ -968,79 +947,6 @@ document.getElementById('btn-reset-colors').addEventListener('click', () => {
         document.getElementById('color-accent').value = "#89b4fa";
         document.getElementById('color-success').value = "#a6e3a1";
         document.getElementById('color-danger').value = "#f38ba8";
-    }
-});
-
-// PRIVACY MODAL
-const privacyModal = document.getElementById('privacy-modal');
-document.getElementById('btn-privacy').addEventListener('click', () => {
-    privacyModal.style.display = 'flex';
-});
-document.getElementById('btn-close-privacy').addEventListener('click', () => {
-    privacyModal.style.display = 'none';
-});
-
-// Source Modal
-const licenseModal = document.getElementById('license-modal');
-const btnSourceLicense = document.getElementById('btn-source-license');
-const btnCloseLicense = document.getElementById('btn-close-license');
-
-if (btnSourceLicense) {
-    btnSourceLicense.addEventListener('click', () => {
-        licenseModal.style.display = 'flex';
-    });
-}
-
-if (btnCloseLicense) {
-    btnCloseLicense.addEventListener('click', () => {
-        licenseModal.style.display = 'none';
-    });
-}
-
-if (licenseModal) {
-    licenseModal.addEventListener('click', (e) => {
-        if (e.target === licenseModal) {
-            licenseModal.style.display = 'none';
-        }
-    });
-}
-
-// NATIVE SVG CAPTURE ENGINE
-document.addEventListener('click', (e) => {
-    if (e.target && e.target.closest('#btn-capture-bracket')) {
-        exportBracketSVG(currentTournament.settings.name);
-    }
-});
-
-// Close on outside click
-privacyModal.addEventListener('click', (e) => {
-    if (e.target === privacyModal) {
-        privacyModal.style.display = 'none';
-    }
-});
-
-// smh had to actually implement these instead of my 0.8 sloppy trick 
-// smh had to even make each thing own themselves
-// Safely close modals on outside click
-// 1. Warning Modal
-document.getElementById('warning-modal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) e.target.style.display = 'none';
-});
-
-// 2. End Stage Modal
-document.getElementById('end-stage-modal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) e.target.style.display = 'none';
-});
-
-// 3. Global Settings Modal
-document.getElementById('settings-modal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) e.target.style.display = 'none';
-});
-
-// 4. Tiebreaker Modal + mem purge
-document.getElementById('tiebreaker-modal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-        document.getElementById('btn-close-tb-builder').click();
     }
 });
 
