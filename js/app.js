@@ -8,6 +8,7 @@ import { saveTournamentLocally, loadTournamentLocally, getAppMeta, setAppMeta } 
 import { exportTournamentJSON, parseTournamentImportJSON } from './store/export.js';
 import { openTournamentLibraryModal } from './ui/libraryModal.js';
 import { initModalStacker } from './ui/modalStacker.js';
+import { initTiebreakerModal, getPendingTiebreakers } from './ui/tiebreakerModal.js';
 
 // Auto-inject SVGs into the HTML
 document.querySelectorAll('[data-icon]').forEach(el => {
@@ -38,9 +39,10 @@ let _stageMousedown = null;
 let _stageMousemove = null;
 let _stageMouseup = null;
 
+// inits
 initModalStacker();
 initStaticModals(() => currentTournament.settings.name);
-
+initTiebreakerModal();
 
 // SETTINGS MODAL LOGIC
 
@@ -86,22 +88,6 @@ document.getElementById('btn-open-settings').addEventListener('click', async () 
     document.getElementById('setting-custom-colors').style.display = (ui.theme === "custom") ? "grid" : "none";
 });
 
-// TIEBREAKER BUILDER LOGIC
-const TB_NAMES = {
-    "placement": "Tournament Placement",
-    "points": "Match Points", "game_points": "Game Points", "dpw_rating": "DPW Rating", 
-    "team_score": "Team Score (TS)", "game_differential": "Game W-L Differential",
-    "head_to_head": "Head-to-Head", "buchholz": "Buchholz", "median_buchholz": "Median Buchholz",
-    "elo": "Starting ELO", "seed": "Registration Seed"
-};
-
-const TB_DEFAULTS = {
-    "single_elimination": ["placement", "seed"],
-    "double_elimination": ["placement", "seed"],
-    "round_robin": ["points", "game_differential", "head_to_head", "seed"],
-    "swiss": ["points", "buchholz", "game_differential", "head_to_head", "seed"],
-    "dpw_swiss": ["dpw_rating", "team_score", "head_to_head", "buchholz", "seed"]
-};
 
 // Init state dynamically based on what the browser cached in the dropdown
 const initialFormat = document.getElementById('blueprint-type').value;
@@ -695,14 +681,14 @@ document.getElementById('btn-add-stage').addEventListener('click', () => {
             document.getElementById('blueprint-cut').value = '';
             saveTournamentLocally(currentTournament);
             updateUI();
-        }, { tiebreakers: [...pendingTiebreakers] }); 
+        }, { tiebreakers: getPendingTiebreakers() });
         
         return;
     }
 
     // Standard Formats
     // Inject the active tiebreakers configured in the builder (cloned so they don't mutate later)
-    const newStage = { type: type, tiebreakers: [...pendingTiebreakers] };
+    const newStage = { type: type, tiebreakers: getPendingTiebreakers() };
     
     if (!isNaN(rounds) && rounds > 0) newStage.maxRounds = rounds;
     if (!isNaN(cut) && cut > 0) newStage.cutToTop = cut;
@@ -752,121 +738,6 @@ document.getElementById('setup-blueprint-group').addEventListener('click', (e) =
         });
     }
 });
-
-// BLUEPRINTS
-document.getElementById('blueprint-type').addEventListener('change', (e) => {
-    const format = e.target.value;
-    pendingTiebreakers = [...(TB_DEFAULTS[format] || ["points"])];
-    // Update button text to notify user
-    document.getElementById('btn-open-tb-builder').innerHTML = `<span data-icon="scale" data-size="16"></span> Tiebreakers: ${pendingTiebreakers.length} Rules`;
-    // Re-run the injector for this specific element so the icon renders
-    const span = document.getElementById('btn-open-tb-builder').querySelector('span');
-    span.innerHTML = getIcon('scale', 16);
-});
-
-const tbModal = document.getElementById('tiebreaker-modal');
-
-function renderTBList() {
-    const list = document.getElementById('tb-active-list');
-    list.innerHTML = '';
-    const isDPW = document.getElementById('blueprint-type').value === "dpw_swiss";
-
-    pendingTiebreakers.forEach((rule, index) => {
-        const isLocked = isDPW && rule === "dpw_rating"; // DPW Rating is mandatory for DPW Swiss
-
-        list.innerHTML += `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:5px 10px; border:1px solid var(--border-main); border-radius:4px;">
-                <span style="font-size:13px; color:${isLocked ? 'var(--warning)' : 'var(--text-main)'}"><b>${index + 1}.</b> ${TB_NAMES[rule] || rule} ${isLocked ? '(Locked)' : ''}</span>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn-tb-up" data-index="${index}" ${index === 0 || isLocked || (index===1 && pendingTiebreakers[0]==="dpw_rating" && isDPW) ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↑</button>
-                    <button class="btn-tb-down" data-index="${index}" ${index === pendingTiebreakers.length - 1 || isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↓</button>
-                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="padding:2px 8px; border:none; border-radius:3px; font-weight:bold; opacity:0.5; cursor:not-allowed; background:var(--border-main); color:var(--text-muted);"' : 'style="padding:2px 8px; border:none; border-radius:3px; font-weight:bold; background:var(--danger); color:var(--text-on-accent); cursor:pointer;"'}>X</button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function renderTBListOverride(targetArray) {
-    const list = document.getElementById('tb-active-list');
-    list.innerHTML = '';
-    const isDPW = document.getElementById('blueprint-type').value === "dpw_swiss";
-
-    targetArray.forEach((rule, index) => {
-        const isLocked = isDPW && rule === "dpw_rating";
-        list.innerHTML += `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:5px 10px; border:1px solid #45475a; border-radius:4px;">
-                <span style="font-size:13px; color:${isLocked ? '#f9e2af' : 'white'}"><b>${index + 1}.</b> ${TB_NAMES[rule] || rule} ${isLocked ? '(Locked)' : ''}</span>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn-tb-up" data-index="${index}" ${index === 0 || isLocked || (index===1 && targetArray[0]==="dpw_rating" && isDPW) ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↑</button>
-                    <button class="btn-tb-down" data-index="${index}" ${index === targetArray.length - 1 || isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↓</button>
-                    <button class="btn-tb-remove" data-index="${index}" ${isLocked ? 'disabled style="opacity:0.3; cursor:not-allowed; color:gray;"' : 'style="color:var(--danger); cursor:pointer;"'}>X</button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-document.getElementById('btn-open-tb-builder').addEventListener('click', () => {
-    // If editing a specific stage, load its array. Otherwise, load global pending
-    const targetArray = window.activeEditTiebreakersTarget || pendingTiebreakers;
-    
-    // Temporarily swap pendingTiebreakers reference
-    window.tempEditArray = targetArray;
-    
-    renderTBListOverride(targetArray);
-    tbModal.style.display = 'flex';
-});
-
-document.getElementById('btn-close-tb-builder').addEventListener('click', () => {
-    window.activeEditTiebreakersTarget = null;
-    window.activeEditTiebreakersCallback = null;
-    tbModal.style.display = 'none';
-});
-document.getElementById('btn-save-tb').addEventListener('click', () => {
-    // if overriding, fire callback
-    if (window.activeEditTiebreakersCallback) {
-        window.activeEditTiebreakersCallback(window.tempEditArray);
-        // clean up
-        window.activeEditTiebreakersTarget = null;
-        window.activeEditTiebreakersCallback = null;
-    } else {
-        pendingTiebreakers = window.tempEditArray;
-        document.getElementById('btn-open-tb-builder').innerHTML = `<span data-icon="scale" data-size="16"></span> Tiebreakers: ${pendingTiebreakers.length} Rules`;
-        const span = document.getElementById('btn-open-tb-builder').querySelector('span');
-        if (span) span.innerHTML = getIcon('scale', 16);
-    }
-    tbModal.style.display = 'none';
-});
-// Adding a rule
-document.getElementById('btn-tb-add').addEventListener('click', () => {
-    const rule = document.getElementById('tb-add-select').value;
-    const targetArray = window.tempEditArray || pendingTiebreakers;
-    if (targetArray.includes(rule)) {
-        alert("Rule already active!");
-        return;
-    }
-    targetArray.push(rule);
-    renderTBListOverride(targetArray);
-});
-
-// Moving / Removing rules
-document.getElementById('tb-active-list').addEventListener('click', (e) => {
-    if (e.target.tagName !== 'BUTTON') return;
-    const index = parseInt(e.target.getAttribute('data-index'));
-    const targetArray = window.tempEditArray || pendingTiebreakers;
-    
-    if (e.target.classList.contains('btn-tb-remove')) {
-        targetArray.splice(index, 1);
-    } else if (e.target.classList.contains('btn-tb-up')) {
-        [targetArray[index - 1], targetArray[index]] = [targetArray[index], targetArray[index - 1]];
-    } else if (e.target.classList.contains('btn-tb-down')) {
-        [targetArray[index + 1], targetArray[index]] = [targetArray[index], targetArray[index + 1]];
-    }
-    
-    renderTBListOverride(targetArray);
-});
-
 
 // GLOBAL MODAL CLOSE (Clicking the dark background) DEPRECATED cuz ASS (it stopped working flawlessly when I wanted stacked modals to not increase opacity)
 // document.addEventListener('click', (e) => {
