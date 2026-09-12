@@ -103,11 +103,15 @@ input:focus, select:focus, textarea:focus {
     border-color: var(--accent) !important; /* Replace it with the theme accent color */
 }
 
-input, button {
+input, button, select, textarea {
     padding: 10px;
     border-radius: 4px;
     border: none;
     font-size: 14px;
+}
+
+.match-score-input {
+    border-radius: 3px;
 }
 
 input {
@@ -467,11 +471,15 @@ body.layout-classic #setting-custom-colors {
     border-radius: 0 !important;
 }
 
-/* 1. Global Sharp Edges (Inputs, Buttons, Modals) */
-body.layout-classic button,
-body.layout-classic input,
-body.layout-classic select,
-body.layout-classic textarea {
+/* 1. Global Sharp Edges */
+body.layout-classic,
+body.layout-classic *,
+body.layout-classic *::before,
+body.layout-classic *::after {
+    border-radius: 0 !important;
+}
+
+body.layout-classic ::-webkit-scrollbar-thumb {
     border-radius: 0 !important;
 }
 
