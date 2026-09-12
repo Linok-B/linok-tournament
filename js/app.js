@@ -3,7 +3,7 @@ import { renderBracket, renderStandings } from './ui/renderer.js';
 import { validateDPWStageReadiness } from './ui/dpwSetup.js';
 import { getIcon } from './ui/icons.js';
 import { initStaticModals } from './ui/staticModals.js';
-import { saveTournamentLocally, loadTournamentLocally } from './store/localData.js';
+import { saveTournamentLocally, loadTournamentLocally, ensureEmergencyBuffer } from './store/localData.js';
 import { exportTournamentJSON, parseTournamentImportJSON } from './store/export.js';
 import { openTournamentLibraryModal } from './ui/libraryModal.js';
 import { initModalStacker } from './ui/modalStacker.js';
@@ -11,6 +11,7 @@ import { initTiebreakerModal } from './ui/tiebreakerModal.js';
 import { initSettingsModal, applyUITheme, updateTitle } from './ui/settingsModal.js';
 import { renderBlueprintList, initBlueprintBuilder } from './ui/blueprintBuilder.js';
 import { initMatchController } from './ui/matchController.js';
+
 
 // Auto-inject SVGs into the HTML
 document.querySelectorAll('[data-icon]').forEach(el => {
@@ -32,10 +33,13 @@ try {
         if (!Array.isArray(currentTournament.stages)) currentTournament.stages = [];
         if (!currentTournament.settings) currentTournament.settings = new Tournament().settings;
     }
+    // Arm the reserve buffer in the background
+    ensureEmergencyBuffer();
 } catch (err) {
     console.error("Corrupted tournament state detected on load. Resetting workspace:", err);
     currentTournament = new Tournament();
     await saveTournamentLocally(currentTournament);
+    ensureEmergencyBuffer();
 }
 
 // inits
