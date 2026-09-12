@@ -57,7 +57,6 @@ function applyStageDragAndDrop(currentTournament, onUpdate) {
     let draggingElement = null;
     let placeholder = null;
     let offsetY = 0;
-    let lastHoverCheck = 0;
 
     // Clean up old listeners
     if (_stageMousedown) container.removeEventListener('mousedown', _stageMousedown);
@@ -65,6 +64,8 @@ function applyStageDragAndDrop(currentTournament, onUpdate) {
     if (_stageMouseup) document.removeEventListener('mouseup', _stageMouseup);
 
     _stageMousedown = (e) => {
+        if (e.button !== 0) return;
+        if (draggingElement) return;
         if (!e.target.classList.contains('stage-drag-handle')) return;
         e.preventDefault();
         
@@ -94,20 +95,20 @@ function applyStageDragAndDrop(currentTournament, onUpdate) {
         if (!draggingElement) return;
         draggingElement.style.top = `${e.clientY - offsetY}px`;
 
-        if (e.timeStamp - lastHoverCheck > 16) {
-            lastHoverCheck = e.timeStamp;
-            const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
-            const hoveredCard = elementsUnderMouse.find(el => el.classList && el.classList.contains('blueprint-stage-card') && el !== draggingElement && el !== placeholder);
+        // checks vertical bounds against unlocked stage cards
+        const unlockedCards = Array.from(container.querySelectorAll('.blueprint-stage-card[data-locked="false"]'))
+            .filter(el => el !== draggingElement && el !== placeholder);
 
-            if (hoveredCard && hoveredCard.parentNode === container) {
-                // failsafe cuz cannot swap with or position above locked/started stages
-                if (hoveredCard.getAttribute('data-locked') === 'true') return;
+        const hoveredCard = unlockedCards.find(card => {
+            const rect = card.getBoundingClientRect();
+            return e.clientY >= rect.top && e.clientY <= rect.bottom;
+        });
 
-                const hoverRect = hoveredCard.getBoundingClientRect();
-                const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
-                if (e.clientY < hoverMiddleY) container.insertBefore(placeholder, hoveredCard);
-                else container.insertBefore(placeholder, hoveredCard.nextSibling);
-            }
+        if (hoveredCard) {
+            const hoverRect = hoveredCard.getBoundingClientRect();
+            const hoverMiddleY = hoverRect.top + (hoverRect.height / 2);
+            if (e.clientY < hoverMiddleY) container.insertBefore(placeholder, hoveredCard);
+            else container.insertBefore(placeholder, hoveredCard.nextSibling);
         }
     };
 
@@ -115,40 +116,61 @@ function applyStageDragAndDrop(currentTournament, onUpdate) {
         if (!draggingElement) return;
         document.body.style.cursor = 'default';
 
+        const el = draggingElement;
+        const ph = placeholder;
+
+        draggingElement = null;
+        placeholder = null;
+
+        // snapshot prior pipeline in case storage write fails
+        const previousPipeline = [...currentTournament.settings.pipeline];
+
         try {
-            if (placeholder && placeholder.parentNode === container) {
-                container.insertBefore(draggingElement, placeholder);
-                placeholder.remove();
+            if (ph && ph.parentNode === container) {
+                container.insertBefore(el, ph);
+                ph.remove();
             }
 
-            // Reset ONLY drag positioning, do NOT destroy inline row styles
-            draggingElement.classList.remove('drag-active-element');
-            draggingElement.style.position = '';
-            draggingElement.style.zIndex = '';
-            draggingElement.style.width = '';
-            draggingElement.style.height = '';
-            draggingElement.style.top = '';
-            draggingElement.style.left = '';
-            draggingElement.style.pointerEvents = '';
+            el.classList.remove('drag-active-element');
+            el.style.position = '';
+            el.style.zIndex = '';
+            el.style.width = '';
+            el.style.height = '';
+            el.style.top = '';
+            el.style.left = '';
+            el.style.pointerEvents = '';
 
-            // Save new order to pipeline (only reorders unlocked stages)
             const lockedCount = currentTournament.stages.length;
             const lockedPipeline = currentTournament.settings.pipeline.slice(0, lockedCount);
             
             const unlockedDOMs = Array.from(container.querySelectorAll('.blueprint-stage-card[data-locked="false"]'));
-            const unlockedIndices = unlockedDOMs.map(el => parseInt(el.getAttribute('data-index')));
+            const unlockedIndices = unlockedDOMs.map(card => parseInt(card.getAttribute('data-index')));
             
             const reorderedUnlocked = unlockedIndices.map(oldIdx => currentTournament.settings.pipeline[oldIdx]);
             currentTournament.settings.pipeline = [...lockedPipeline, ...reorderedUnlocked];
 
-            await saveTournamentLocally(currentTournament);
+            // Hopemaxxing UI update
             if (typeof onUpdate === 'function') onUpdate();
+
+            // storage write w/ retry & rollback reconciliation
+            try {
+                await saveTournamentLocally(currentTournament);
+            } catch (saveErr) {
+                console.warn("Storage write failed. Retrying once...", saveErr);
+                try {
+                    await saveTournamentLocally(currentTournament);
+                } catch (retryErr) {
+                    console.error("Critical storage error: could not save reordered stages.", retryErr);
+                    // Rollback state and UI so screen matches true storage
+                    currentTournament.settings.pipeline = previousPipeline;
+                    if (typeof onUpdate === 'function') onUpdate();
+                    alert("Storage Error: Failed to save the new stage order to storage.");
+                }
+            }
         } catch (err) {
-            console.error("Stage reorder failed:", err);
+            console.error("Stage reorder error:", err);
+            currentTournament.settings.pipeline = previousPipeline;
             if (typeof onUpdate === 'function') onUpdate();
-        } finally {
-            draggingElement = null;
-            placeholder = null;
         }
     };
 
