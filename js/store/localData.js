@@ -223,7 +223,7 @@ export async function ensureEmergencyBuffer() {
             await performTransaction('app_meta', 'readwrite', (store) => {
                 return store.put({ key: 'emergency_buffer', data: dummyBytes, allocatedAt: Date.now() });
             });
-            console.log(`[Storage] Emergency buffer armed (${BUFFER_SIZE_KB} KB allocated).`);
+            // console.log(`[Storage] Emergency buffer armed (${BUFFER_SIZE_KB} KiB allocated).`);
         }
     } catch (err) {
         if (isQuotaError(err)) {
