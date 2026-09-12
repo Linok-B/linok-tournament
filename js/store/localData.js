@@ -180,3 +180,62 @@ export async function updateLibraryOrder(orderedIds) {
         tx.onerror = () => reject(tx.error);
     });
 }
+
+
+// emergency storage buffer (quota reserve) system
+const BUFFER_SIZE_KB = 1024;
+
+function isQuotaError(err) {
+    if (!err) return false;
+    return err.name === 'QuotaExceededError' ||
+           err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+           err.code === 22 ||
+           (typeof err.message === 'string' && err.message.toLowerCase().includes('quota'));
+}
+
+export async function ensureEmergencyBuffer() {
+    try {
+        const existing = await performTransaction('app_meta', 'readonly', (store) => store.get('emergency_buffer'));
+        if (!existing) {
+            // Pre-allocate dummy bytes
+            const dummyBytes = new Uint8Array(BUFFER_SIZE_KB * 1024);
+            await performTransaction('app_meta', 'readwrite', (store) => {
+                return store.put({ key: 'emergency_buffer', data: dummyBytes, allocatedAt: Date.now() });
+            });
+            console.log(`[Storage] Emergency buffer armed (${BUFFER_SIZE_KB} KB allocated).`);
+        }
+    } catch (err) {
+        if (isQuotaError(err)) {
+            console.warn('[Storage] Quota too tight to arm emergency buffer.');
+        } else {
+            console.error('[Storage] Error ensuring emergency buffer:', err);
+        }
+    }
+}
+
+export async function releaseEmergencyBuffer() {
+    try {
+        const record = await performTransaction('app_meta', 'readonly', (store) => store.get('emergency_buffer'));
+        if (record) {
+            await performTransaction('app_meta', 'readwrite', (store) => store.delete('emergency_buffer'));
+            console.warn(`[Storage] EMERGENCY BUFFER SACRIFICED: ${BUFFER_SIZE_KB} KB freed.`);
+            return true;
+        }
+    } catch (e) {
+        console.error('[Storage] Failed to release emergency buffer:', e);
+    }
+    return false;
+}
+
+export async function getEmergencyBufferStatus() {
+    try {
+        const record = await performTransaction('app_meta', 'readonly', (store) => store.get('emergency_buffer'));
+        return {
+            armed: !!record,
+            sizeKB: record ? BUFFER_SIZE_KB : 0,
+            allocatedAt: record ? record.allocatedAt : null
+        };
+    } catch (e) {
+        return { armed: false, sizeKB: 0, allocatedAt: null };
+    }
+}
