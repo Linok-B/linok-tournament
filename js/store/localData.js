@@ -24,12 +24,33 @@ export async function saveTournamentLocally(tournamentObject) {
         syncUIToLocalStorage(tournamentObject.settings.ui);
     }
 
-    // Save to active workspace
-    await performTransaction('active_workspace', 'readwrite', (store) => {
+    const writeOp = () => performTransaction('active_workspace', 'readwrite', (store) => {
         return store.put({ key: 'current', tournament: tournamentObject });
     });
 
-    // Check if autosave to lib toggle is enabled
+    try {
+        await writeOp();
+    } catch (err) {
+        if (isQuotaError(err)) {
+            console.warn("[Storage] QuotaExceededError hit. Attempting to release emergency buffer...");
+            const freed = await releaseEmergencyBuffer();
+            if (freed) {
+                await writeOp();
+                alert(
+                    "CRITICAL STORAGE WARNING:\n\n" +
+                    "Your device ran out of storage space!\n" +
+                    "The Emergency Reserve Quota was sacrificed to safely save your tournament.\n\n" +
+                    "Action Required: Export your tournament to a file immediately and delete old tournaments from the Library to clear space."
+                );
+            } else {
+                alert("CRITICAL STORAGE ERROR: Device storage is completely full and no emergency buffer was available. Please export a backup JSON now before closing this tab!");
+                throw err;
+            }
+        } else {
+            throw err;
+        }
+    }
+
     const autoSaveSetting = await getAppMeta('autoSaveToLibrary');
     if (autoSaveSetting === true) {
         await saveTournamentToLibrary(tournamentObject);
