@@ -40,7 +40,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
         modal.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-main); padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:var(--accent); display:flex; align-items:center; gap:8px;">
-                    ${getIcon('folderOpen', 22)} Tournament Library
+                    ${getIcon('archive', 22)} Tournament Library
                 </h2>
                 <button id="btn-close-library" style="background:transparent; color:var(--text-muted); border:none; cursor:pointer; font-weight:bold; font-size:18px;">X</button>
             </div>
