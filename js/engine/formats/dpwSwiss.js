@@ -139,7 +139,7 @@ export async function advanceStage(stageData, config, allPlayers) {
     
     let pairingPool = [...playersToPair];
     if (hasDummy) {
-        pairingPool.push({ id: "__BYE_DUMMY__", name: "BYE", isDummy: true, stats: { dpwRating: -9999 } });
+        pairingPool.push({ id: "__BYE_DUMMY__", name: "BYE", isDummy: true, stats: { dpwRating: -Infinity } });
     }
 
     const N = pairingPool.length;
