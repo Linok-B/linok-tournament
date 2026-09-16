@@ -160,8 +160,8 @@ export function calculateTiebreakers(players, stagesConfig) {
             }
             
             if (rule === "seed") {
-                const aSeed = a.originalSeed ?? a.seed ?? 999999;
-                const bSeed = b.originalSeed ?? b.seed ?? 999999;
+                const aSeed = a.originalSeed ?? a.seed ?? Infinity;
+                const bSeed = b.originalSeed ?? b.seed ?? Infinity;
                 if (aSeed !== bSeed) return aSeed - bSeed;
             }
         } 
