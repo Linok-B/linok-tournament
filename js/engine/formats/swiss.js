@@ -146,7 +146,7 @@ export async function advanceStage(stageData, config, allPlayers) {
 
     if (hasDummy) {
         dummyIndex = pairingPool.length;
-        pairingPool.push({ id: "__BYE_DUMMY__", name: "BYE", isDummy: true, stats: { points: -99999 } });
+        pairingPool.push({ id: "__BYE_DUMMY__", name: "BYE", isDummy: true, stats: { points: -Infinity } });
     }
 
     const N = pairingPool.length;
