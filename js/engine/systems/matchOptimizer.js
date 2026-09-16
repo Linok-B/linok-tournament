@@ -9,12 +9,12 @@ export function optimizeMatchOrder(matches, rankedPlayers) {
         if (mA.isBye && mB.isBye) return 0;
 
         // 2. Best player rank on the board (lower index = higher standing)
-        const rankA1 = playerRankMap.get(mA.player1?.id) ?? 999999;
-        const rankA2 = playerRankMap.get(mA.player2?.id) ?? 999999;
+        const rankA1 = playerRankMap.get(mA.player1?.id) ?? Infinity;
+        const rankA2 = playerRankMap.get(mA.player2?.id) ?? Infinity;
         const bestA = Math.min(rankA1, rankA2);
 
-        const rankB1 = playerRankMap.get(mB.player1?.id) ?? 999999;
-        const rankB2 = playerRankMap.get(mB.player2?.id) ?? 999999;
+        const rankB1 = playerRankMap.get(mB.player1?.id) ?? Infinity;
+        const rankB2 = playerRankMap.get(mB.player2?.id) ?? Infinity;
         const bestB = Math.min(rankB1, rankB2);
 
         if (bestA !== bestB) return bestA - bestB;
