@@ -1,5 +1,15 @@
 import { saveTournamentLocally, getAppMeta, setAppMeta } from '../store/localData.js';
 
+// Calculates perceived brightness (0 to 255) of a hex color
+function getHexBrightness(hex) {
+    if (!hex || typeof hex !== 'string' || hex[0] !== '#') return 0;
+    const clean = hex.slice(1);
+    const r = parseInt(clean.substring(0, 2), 16) || 0;
+    const g = parseInt(clean.substring(2, 4), 16) || 0;
+    const b = parseInt(clean.substring(4, 6), 16) || 0;
+    return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
 export function updateTitle(tournament) {
     const titleEl = document.getElementById('main-tournament-title');
     if (titleEl) titleEl.innerText = tournament.settings.name;
@@ -28,7 +38,14 @@ export function applyUITheme(tournament) {
         root.style.setProperty('--danger', ui.customColors.danger);
         root.style.setProperty('--text-main', ui.customColors.textMain || '#ffffff');
         root.style.setProperty('--text-muted', ui.customColors.textMuted || '#a6adc8');
+
+        // Dynamic light/dark detection based on Base Dark color brightness
+        const brightness = getHexBrightness(ui.customColors.bgDark);
+        root.style.setProperty('color-scheme', brightness >= 128 ? 'light' : 'dark');
     } else {
+        // Catppuccin and Arcade are dark themes
+        root.style.setProperty('color-scheme', 'dark');
+
         // Clear manual overrides so CSS classes take over again
         root.style.removeProperty('--bg-dark');
         root.style.removeProperty('--bg-panel');
