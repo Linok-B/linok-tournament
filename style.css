@@ -1,6 +1,7 @@
 /* ROOT VARIABLES & GLOBAL RESETS */
 
 :root {
+    color-scheme: dark;
     --bg-dark: #1e1e2e;
     --bg-panel: #2a2a3e;
     --bg-bracket: #11111b;
@@ -155,6 +156,10 @@ input[type="color"] {
     transform: translate(-25%, -25%);
     cursor: pointer;
     background: none;
+}
+
+input[type="number"] {
+    color-scheme: inherit;
 }
 
 /* custom checkbox slop that surely works one-shot w/o looking ass or breaking */
