@@ -13,6 +13,7 @@ export function calculateTiebreakers(players, stagesConfig) {
         p.stats.median_buchholz = 0;
         p.stats.opponents = [];
         p.stats.h2hWins = new Map();
+        p.stats.h2hGameDiff = new Map();
     });
 
     stagesConfig.forEach(stage => {
@@ -29,6 +30,18 @@ export function calculateTiebreakers(players, stagesConfig) {
                     const p2 = players.find(x => x.id === p2id);
                     if (p1) p1.stats.opponents.push(p2id);
                     if (p2) p2.stats.opponents.push(p1id);
+
+                    // Cache H2H mutual game score differential
+                    const s1 = match.score1 || 0;
+                    const s2 = match.score2 || 0;
+                    if (p1) {
+                        const curDiff1 = p1.stats.h2hGameDiff.get(p2id) || 0;
+                        p1.stats.h2hGameDiff.set(p2id, curDiff1 + (s1 - s2));
+                    }
+                    if (p2) {
+                        const curDiff2 = p2.stats.h2hGameDiff.get(p1id) || 0;
+                        p2.stats.h2hGameDiff.set(p1id, curDiff2 + (s2 - s1));
+                    }
                 }
 
                 // Cache Head-to-Head WIN COUNTS
@@ -121,6 +134,12 @@ export function calculateTiebreakers(players, stagesConfig) {
                 // Lower = Better
                 if (aTS !== bTS) return aTS - bTS;
             }
+
+            if (rule === "match_differential") {
+                const aDiff = (a.stats?.matchWins ?? 0) - (a.stats?.matchLosses ?? 0);
+                const bDiff = (b.stats?.matchWins ?? 0) - (b.stats?.matchLosses ?? 0);
+                if (bDiff !== aDiff) return bDiff - aDiff;
+            }
             
             if (rule === "game_differential") {
                 const aDiff = (a.stats?.gameWins ?? 0) - (a.stats?.gameLosses ?? 0);
@@ -149,6 +168,16 @@ export function calculateTiebreakers(players, stagesConfig) {
                     // If they played each other and one won more times, that player is ranked higher
                     if (aWinsVsB !== bWinsVsA) {
                         return bWinsVsA - aWinsVsB;
+                    }
+                }
+            }
+
+            if (rule === "h2h_game_diff") {
+                if (a.id && b.id) {
+                    const aDiffVsB = a.stats?.h2hGameDiff?.get(b.id) || 0;
+                    const bDiffVsA = b.stats?.h2hGameDiff?.get(a.id) || 0;
+                    if (aDiffVsB !== bDiffVsA) {
+                        return bDiffVsA - aDiffVsB;
                     }
                 }
             }
