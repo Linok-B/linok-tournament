@@ -42,7 +42,7 @@ export const STANDINGS_COLUMNS = {
     },
     team_score: {
         id: "team_score",
-        name: "Team Score (TS)",
+        name: "Team Score",
         getHeaderHTML: () => "TS",
         getValue: (p) => formatMetricNumber(p.metadata?.dpwTS ?? 0),
         style: "text-align: right; font-variant-numeric: tabular-nums;",
@@ -50,7 +50,7 @@ export const STANDINGS_COLUMNS = {
     },
     match_record: {
         id: "match_record",
-        name: "Match Record (W-L-D)",
+        name: "Match Record",
         getHeaderHTML: (recFormat) => `Matches<br><span style="font-size: 10px; font-weight: normal; color: var(--text-muted); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; display: inline-block;">${recFormat.toUpperCase().split('').join('-')}</span>`,
         getValue: (p, recFormat) => {
             const w = p.stats?.matchWins ?? 0;
@@ -63,7 +63,7 @@ export const STANDINGS_COLUMNS = {
     },
     game_record: {
         id: "game_record",
-        name: "Game Record (W-L-D)",
+        name: "Game Record",
         getHeaderHTML: (recFormat) => `Games<br><span style="font-size: 10px; font-weight: normal; color: var(--text-muted); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; display: inline-block;">${recFormat.toUpperCase().split('').join('-')}</span>`,
         getValue: (p, recFormat) => {
             const w = p.stats?.gameWins ?? 0;
@@ -76,7 +76,7 @@ export const STANDINGS_COLUMNS = {
     },
     match_differential: {
         id: "match_differential",
-        name: "Match W-L Differential",
+        name: "Match Differential",
         getHeaderHTML: () => "Match Diff",
         getValue: (p) => formatDifferential((p.stats?.matchWins ?? 0) - (p.stats?.matchLosses ?? 0)),
         style: "text-align: right; font-variant-numeric: tabular-nums;",
@@ -84,7 +84,7 @@ export const STANDINGS_COLUMNS = {
     },
     game_differential: {
         id: "game_differential",
-        name: "Game W-L Differential",
+        name: "Game Differential",
         getHeaderHTML: () => "Game Diff",
         getValue: (p) => formatDifferential((p.stats?.gameWins ?? 0) - (p.stats?.gameLosses ?? 0)),
         style: "text-align: right; font-variant-numeric: tabular-nums;",
@@ -228,13 +228,12 @@ export function openStandingsColumnsModal(stageConfig, onSave) {
 
                 <label class="custom-checkbox-label">
                     <input type="checkbox" id="chk-autofill-cols" ${draftAutoFill ? 'checked' : ''}>
-                    <span>Auto-fill remaining slots (up to 5 columns)</span>
+                    <span>Auto-fill remaining slots</span>
                 </label>
             </div>
 
-            <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; display:flex; justify-content:space-between;">
-                <span>Active Columns (${draftColumns.length}/5)</span>
-                ${draftAuto ? '<span style="color:var(--accent); font-weight:bold;">(Auto-Controlled)</span>' : ''}
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+                Active Columns (${draftColumns.length}/5)
             </div>
 
             <!-- Columns List -->
@@ -252,7 +251,7 @@ export function openStandingsColumnsModal(stageConfig, onSave) {
                             <div style="display:flex; gap:4px;">
                                 <button class="btn-col-up" data-index="${index}" ${draftAuto || index === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↑</button>
                                 <button class="btn-col-down" data-index="${index}" ${draftAuto || index === draftColumns.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>↓</button>
-                                <button class="btn-col-del" data-index="${index}" ${draftAuto ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="color:var(--danger); cursor:pointer;"'}>X</button>
+                                <button class="btn-col-del" data-index="${index}" ${draftAuto ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>X</button>
                             </div>
                         </div>
                     `;
@@ -264,7 +263,7 @@ export function openStandingsColumnsModal(stageConfig, onSave) {
                 <select id="sel-add-col" ${draftAuto || isMax ? 'disabled' : ''} style="flex-grow:1; padding:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px; ${draftAuto || isMax ? 'opacity:0.5; cursor:not-allowed;' : ''}">
                     ${Object.values(STANDINGS_COLUMNS).map(col => {
                         const alreadyAdded = draftColumns.includes(col.id);
-                        return `<option value="${col.id}" ${alreadyAdded ? 'disabled' : ''}>${col.name} ${alreadyAdded ? '(Added)' : ''}</option>`;
+                        return `<option value="${col.id}" ${alreadyAdded ? 'disabled' : ''}>${col.name}${alreadyAdded ? ' — Added' : ''}</option>`;
                     }).join('')}
                 </select>
                 <button id="btn-add-col" ${draftAuto || isMax ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="background:var(--success); color:var(--text-on-accent); border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">
