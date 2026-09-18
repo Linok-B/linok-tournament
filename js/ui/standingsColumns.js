@@ -158,7 +158,12 @@ export function resolveStageColumns(stageConfig, tournamentSettings = {}) {
         const seen = new Set();
 
         tiebreakers.forEach(tb => {
-            const colId = TB_TO_COLUMN_MAP[tb];
+            let colId = TB_TO_COLUMN_MAP[tb];
+            // Backwards compatibility for older stages set to display Game Points
+            if (tb === "points" && stageConfig?.pointsColumnDisplay === "game_points") {
+                colId = "game_points";
+            }
+
             if (colId && STANDINGS_COLUMNS[colId] && !seen.has(colId)) {
                 seen.add(colId);
                 columnIds.push(colId);
