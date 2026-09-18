@@ -1,5 +1,6 @@
 import { getIcon } from './icons.js';
 import { openSwissConfigModal } from './swissConfigModal.js';
+import { openStandingsColumnsModal } from './standingsColumns.js';
 
 export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     const modal = document.getElementById('stage-settings-modal');
@@ -46,6 +47,13 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
                 <option value="match_points" ${config.pointsColumnDisplay !== "game_points" ? 'selected' : ''}>Match Points</option>
                 <option value="game_points" ${config.pointsColumnDisplay === "game_points" ? 'selected' : ''}>Game Points</option>
             </select>
+        </div>
+
+        <!-- Row 2.5: Standings Columns Configuration -->
+        <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 12px;">
+            <button type="button" id="btn-stage-cols-edit" style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; justify-content:center; align-items:center; gap:8px;">
+                ${getIcon('gear', 14)} Configure Standings Columns
+            </button>
         </div>
     `;
 
@@ -119,6 +127,16 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
                 tempTiebreakers = newRules; // Update draft, NOT config like before...
             };
             document.getElementById('btn-open-tb-builder').click();
+        };
+    }
+
+    // 3.5. Open Stage Columns Editor
+    const colsBtn = document.getElementById('btn-stage-cols-edit');
+    if (colsBtn) {
+        colsBtn.onclick = () => {
+            openStandingsColumnsModal(config, () => {
+                // Draft updated in-place on config
+            });
         };
     }
 
