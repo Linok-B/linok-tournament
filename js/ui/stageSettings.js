@@ -40,17 +40,8 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
             </div>
         </div>
         
-        <!-- Row 2: Leaderboard Points Display -->
-        <div>
-            <label style="font-size:11px; color:var(--text-muted);">Leaderboard Points Display</label>
-            <select id="edit-stage-display" style="width: 100%; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
-                <option value="match_points" ${config.pointsColumnDisplay !== "game_points" ? 'selected' : ''}>Match Points</option>
-                <option value="game_points" ${config.pointsColumnDisplay === "game_points" ? 'selected' : ''}>Game Points</option>
-            </select>
-        </div>
-
-        <!-- Row 2.5: Standings Columns Configuration -->
-        <div style="margin-top: 10px; border-top: 1px solid var(--border-main); padding-top: 12px;">
+        <!-- Row 2: Standings Columns Configuration -->
+        <div style="margin-top: 5px;">
             <button type="button" id="btn-stage-cols-edit" style="width: 100%; padding: 8px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 4px; cursor: pointer; font-weight: bold; display:flex; justify-content:center; align-items:center; gap:8px;">
                 ${getIcon('gear', 14)} Configure Standings Columns
             </button>
@@ -160,10 +151,6 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
                 config.maxRounds = Math.max(roundsPlayed, val);
                 if (isStarted) stage.data.totalRounds = config.maxRounds;
             }
-        }
-
-        if (document.getElementById('edit-stage-display')) {
-            config.pointsColumnDisplay = document.getElementById('edit-stage-display').value;
         }
 
         if (document.getElementById('edit-stage-pairing') && !isStarted) {
