@@ -51,7 +51,7 @@ export const STANDINGS_COLUMNS = {
     match_record: {
         id: "match_record",
         name: "Match Record (W-L-D)",
-        getHeaderHTML: (recFormat) => `Matches<br><span style="font-size: 10px; font-weight: normal; color: var(--text-muted); letter-spacing: 0.5px;">${recFormat.toUpperCase().split('').join('-')}</span>`,
+        getHeaderHTML: (recFormat) => `Matches<br><span style="font-size: 10px; font-weight: normal; color: var(--text-muted); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; display: inline-block;">${recFormat.toUpperCase().split('').join('-')}</span>`,
         getValue: (p, recFormat) => {
             const w = p.stats?.matchWins ?? 0;
             const l = p.stats?.matchLosses ?? 0;
@@ -59,12 +59,12 @@ export const STANDINGS_COLUMNS = {
             return recFormat === "wdl" ? `${w}-${d}-${l}` : `${w}-${l}-${d}`;
         },
         style: "text-align: center; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: center;"
+        headerStyle: "text-align: center; font-variant-numeric: tabular-nums;"
     },
     game_record: {
         id: "game_record",
         name: "Game Record (W-L-D)",
-        getHeaderHTML: (recFormat) => `Games<br><span style="font-size: 10px; font-weight: normal; color: var(--text-muted); letter-spacing: 0.5px;">${recFormat.toUpperCase().split('').join('-')}</span>`,
+        getHeaderHTML: (recFormat) => `Games<br><span style="font-size: 10px; font-weight: normal; color: var(--text-muted); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; display: inline-block;">${recFormat.toUpperCase().split('').join('-')}</span>`,
         getValue: (p, recFormat) => {
             const w = p.stats?.gameWins ?? 0;
             const l = p.stats?.gameLosses ?? 0;
@@ -72,7 +72,7 @@ export const STANDINGS_COLUMNS = {
             return recFormat === "wdl" ? `${w}-${d}-${l}` : `${w}-${l}-${d}`;
         },
         style: "text-align: center; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: center;"
+        headerStyle: "text-align: center; font-variant-numeric: tabular-nums;"
     },
     match_differential: {
         id: "match_differential",
