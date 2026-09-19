@@ -224,7 +224,7 @@ export async function openTournamentLibraryModal(currentTournament, onSwitchTour
 
                 await updateLibraryOrder(orderedIds);
             } catch (err) {
-                console.error("Library reorder failed:", err);
+                // console.error("Library reorder failed:", err);
             }
         };
 
