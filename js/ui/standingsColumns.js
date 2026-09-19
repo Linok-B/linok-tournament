@@ -14,8 +14,8 @@ export function formatDifferential(val) {
     return num.toString();
 }
 
-// Approximate rendered widths of the 10px header labels (Note: might need tweaking if font differs, or something else billshits)
-const LABEL_PX = { W: 9, D: 7, L: 5.5 };
+// Approximate rendered widths of the 10px header labels (Note: might need tweaking if font differs, or something else bullshits)
+const LABEL_PX = { W: 9.4, D: 7.2, L: 5.6 };
 
 const PAD = 'calc(0.5ch + 1px)';
 const HDR_VAL = 'font-size: 10px; color: var(--text-muted); font-weight: normal;';
@@ -25,35 +25,20 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const vals = [v1, v2, v3];
     const widths = [w1, w2, w3];
 
-    // Free space (inside the column, excluding padding) on each side of a centered value, as a CSS length. digits are 1ch each. Header gas fixed label px width.
     const slack = (i) => isHeader
         ? `(${widths[i]}ch - ${LABEL_PX[vals[i]] ?? 6}px)`
         : `${widths[i] - String(vals[i]).length}ch`;
 
-    // Boundary between column i and i+1 = sum of full column widths so far
-    // Each column is width + 1ch + 2px (half-digit padding + 1px, on both sides).
-    const boundary = (i) => {
-        let ch = 0;
-        for (let k = 0; k <= i; k++) ch += widths[k] + 1;
-        return `${ch}ch + ${(i + 1) * 2}px`;
-    };
-
-    // Midpoint between the right edge of the left value and the left edge of the right value
-    const hyphenLeft = (i) =>
-        `calc(${boundary(i)} + (${slack(i + 1)} - ${slack(i)}) / 4)`;
-
     const valStyle = isHeader ? HDR_VAL : '';
     const hyphenStyle = isHeader ? HDR_HYPHEN : '';
 
-    const cols = vals.map((v, i) =>
-        `<span style="display:inline-block; box-sizing:content-box; width:${widths[i]}ch; padding:0 ${PAD}; text-align:center;"><span style="${valStyle}">${v}</span></span>`
-    ).join('');
+    const col = (i) =>
+        `<span style="display:inline-flex; justify-content:center; flex:none; box-sizing:content-box; width:${widths[i]}ch; padding:0 ${PAD};"><span style="${valStyle}">${vals[i]}</span></span>`;
 
-    const hyphens = [0, 1].map(i =>
-        `<span style="position:absolute; top:0; bottom:0; left:${hyphenLeft(i)}; transform:translateX(-50%); display:flex; align-items:center; pointer-events:none; color:var(--text-muted); ${hyphenStyle}">-</span>`
-    ).join('');
+    const hyphen = (i) =>
+        `<span style="display:inline-flex; justify-content:center; flex:none; width:0; position:relative; left:calc((${slack(i + 1)} - ${slack(i)}) / 4); color:var(--text-muted);"><span style="${hyphenStyle}">-</span></span>`;
 
-    return `<div style="position:relative; display:inline-flex; align-items:center; vertical-align:top; font-variant-numeric:tabular-nums;">${cols}${hyphens}</div>`;
+    return `<div style="display:inline-flex; align-items:baseline; font-variant-numeric:tabular-nums;">${col(0)}${hyphen(0)}${col(1)}${hyphen(1)}${col(2)}</div>`;
 }
 
 // Scans maximum digits per column
@@ -133,8 +118,8 @@ export const STANDINGS_COLUMNS = {
             const [v1, v2, v3] = recFormat === "wdl" ? [w, d, l] : [w, l, d];
             return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
-        style: "text-align: left; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: left; font-variant-numeric: tabular-nums;"
+        style: "text-align: right; font-variant-numeric: tabular-nums;",
+        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
     },
     game_record: {
         id: "game_record",
@@ -152,8 +137,8 @@ export const STANDINGS_COLUMNS = {
             const [v1, v2, v3] = recFormat === "wdl" ? [w, d, l] : [w, l, d];
             return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
-        style: "text-align: left; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: left; font-variant-numeric: tabular-nums;"
+        style: "text-align: right; font-variant-numeric: tabular-nums;",
+        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
     },
     match_differential: {
         id: "match_differential",
