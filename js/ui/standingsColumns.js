@@ -17,12 +17,8 @@ export function formatDifferential(val) {
 const HDR_VAL = 'font-size: 10px; color: var(--text-muted); font-weight: normal;';
 const HDR_HYPHEN = 'font-size: 10px; font-weight: normal;';
 
-// Header hitboxes in "ch" of the LABEL's own font (1 = a 0 at that font and size and whatever)
-// D and L = 1, W = 1 + 0.2 (0.1 per side) (only for hyphen placement)
+// Header hitboxes in "ch" of the label's own font (1 = a "0" there)(only used for hyphen placement)
 const LABEL_HIT_CH = { W: 1.2, D: 1, L: 1 };
-
-const anchor = (left, inner, extra = '') =>
-    `<span style="display:inline-flex; justify-content:center; flex:none; width:0; position:relative; left:${left}; ${extra}">${inner}</span>`;
 
 export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const vals = [v1, v2, v3];
@@ -30,30 +26,34 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const valStyle = isHeader ? HDR_VAL : '';
     const hyphenStyle = isHeader ? HDR_HYPHEN : '';
 
-    // Column width = digits + 1 digit of padding + 2px
-    const col = (i) =>
-        `<span style="display:inline-block; flex:none; box-sizing:content-box; width:calc(${widths[i] + 1}ch + 2px); white-space:nowrap;">` +
-            anchor('50%', `<span style="${valStyle}">${vals[i]}</span>`) +
-        `</span>`;
+    const cols = vals.map((v, i) =>
+        `<span style="display:inline-block; box-sizing:content-box; width:calc(${widths[i] + 1}ch + 2px); text-align:center;"><span style="${valStyle}">${v}</span></span>`
+    ).join('');
 
-    // hyphens ought to be drawn at the midpoint between the right side of the item at their left, and the left side of the item at their right
+    // Hyphen i sits between column i and i+1.
+    // boundary  = sum of the column widths up to and including column i
+    // midpoint  = boundary + ((cwR - cwL) + (hitL - hitR)) / 4
     const hyphen = (i) => {
         const l = i, r = i + 1;
-        let outer = (widths[r] - widths[l]) / 4;   // cell-font ch
-        let inner = 0;                             // label-font ch
+        let boundaryCh = 0;
+        for (let k = 0; k <= i; k++) boundaryCh += widths[k] + 1;
+        const boundaryPx = (i + 1) * 2;
+
+        let outer = (widths[r] - widths[l]) / 4;   // in ch of the numbers' font
+        let inner = 0;                             // in ch of the labels' font
         if (isHeader) {
             inner = ((LABEL_HIT_CH[vals[l]] ?? 1) - (LABEL_HIT_CH[vals[r]] ?? 1)) / 4;
         } else {
             outer += (String(vals[l]).length - String(vals[r]).length) / 4;
         }
-        return anchor(
-            `${outer}ch`,
-            `<span style="position:relative; left:${inner}ch; ${hyphenStyle}">-</span>`,
-            'color:var(--text-muted);'
-        );
+
+        return `<span style="position:absolute; top:0; left:calc(${boundaryCh + outer}ch + ${boundaryPx}px); width:0; display:flex; justify-content:center; align-items:baseline; pointer-events:none; color:var(--text-muted);">` +
+            `<span style="width:0; overflow:hidden; visibility:hidden;">0</span>` +
+            `<span style="position:relative; left:${inner}ch; ${hyphenStyle}">-</span>` +
+        `</span>`;
     };
 
-    return `<div style="display:inline-flex; align-items:baseline; font-variant-numeric:tabular-nums;">${col(0)}${hyphen(0)}${col(1)}${hyphen(1)}${col(2)}</div>`;
+    return `<div style="position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums;">${cols}${hyphen(0)}${hyphen(1)}</div>`;
 }
 
 // Scans maximum digits per column
