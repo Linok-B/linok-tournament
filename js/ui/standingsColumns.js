@@ -17,14 +17,17 @@ export function formatDifferential(val) {
 const HDR_VAL = 'font-size: 10px; color: var(--text-muted); font-weight: normal;';
 const HDR_HYPHEN = 'font-size: 10px; font-weight: normal;';
 
-// Header hitboxes in "ch" of the label's own font (1 = a "0" there)(only used for hyphen placement)
-const LABEL_HIT_CH = { W: 1.2, D: 1, L: 1 };
+// Header hitboxes in ch of the label's own font (1 = a 0 there)
+// Note for self: Tweak the 1.4 value to perfectly match the specific width of the W (honestly it might be a 1.3...)
+const LABEL_HIT_CH = { W: 1.4, D: 1, L: 1 };
 
 export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const vals = [v1, v2, v3];
     const widths = [w1, w2, w3];
     const valStyle = isHeader ? HDR_VAL : '';
     const hyphenStyle = isHeader ? HDR_HYPHEN : '';
+    
+    const hyphenColor = 'var(--text-muted)';
 
     const cols = vals.map((v, i) =>
         `<span style="display:inline-block; box-sizing:content-box; width:calc(${widths[i] + 1}ch + 2px); text-align:center;"><span style="${valStyle}">${v}</span></span>`
@@ -47,8 +50,9 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
             outer += (String(vals[l]).length - String(vals[r]).length) / 4;
         }
 
-        return `<span style="position:absolute; top:0; left:calc(${boundaryCh + outer}ch + ${boundaryPx}px); width:0; display:flex; justify-content:center; align-items:baseline; pointer-events:none; color:var(--text-muted);">` +
-            `<span style="width:0; overflow:hidden; visibility:hidden;">0</span>` +
+        return `<span style="position:absolute; top:0; left:calc(${boundaryCh + outer}ch + ${boundaryPx}px); width:0; display:flex; justify-content:center; align-items:baseline; pointer-events:none; color:${hyphenColor};">` +
+            // comment
+            `<span style="width:0; overflow:hidden; visibility:hidden; ${valStyle}">0</span>` +
             `<span style="position:relative; left:${inner}ch; ${hyphenStyle}">-</span>` +
         `</span>`;
     };
