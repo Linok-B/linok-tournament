@@ -14,25 +14,37 @@ export function syncUIToLocalStorage(uiSettings) {
 // autosave working tournament
 export async function saveTournamentLocally(tournamentObject) {
     if (!tournamentObject) return;
+    let safePayload;
+    try {
+        safePayload = JSON.parse(JSON.stringify(tournamentObject));
+    } catch (cloneErr) {
+        console.error("--------------------------------------------------");
+        console.error("[Storage] DATA CLONE ERROR PREVENTED!");
+        console.error("The tournament object contains uncloneable data (e.g., DOM nodes, functions, or circular references).");
+        console.error("This is likely being added by the Hopeful UI (onComplete) before the save finishes.");
+        console.error("Original Error:", cloneErr);
+        console.error("--------------------------------------------------");
+        
+        throw new Error("Tournament object contains uncloneable UI data.");
+    }
 
-    // Stamp ID and modified timestamp if missing
-    if (!tournamentObject.id) tournamentObject.id = crypto.randomUUID();
-    tournamentObject.updatedAt = Date.now();
+    if (!safePayload.id) safePayload.id = crypto.randomUUID();
+    safePayload.updatedAt = Date.now();
 
-    // Cache theme for index.html head script
-    if (tournamentObject.settings?.ui) {
-        syncUIToLocalStorage(tournamentObject.settings.ui);
+    if (safePayload.settings?.ui) {
+        syncUIToLocalStorage(safePayload.settings.ui);
     }
 
     const writeOp = () => performTransaction('active_workspace', 'readwrite', (store) => {
-        return store.put({ key: 'current', tournament: tournamentObject });
+        return store.put({ key: 'current', tournament: safePayload });
     });
 
     try {
         await writeOp();
     } catch (err) {
+        console.error("[Storage] saveTournamentLocally failed:", err);
+        
         if (isQuotaError(err)) {
-            // console.warn("[Storage] QuotaExceededError hit. Attempting to release emergency buffer...");
             const freed = await releaseEmergencyBuffer();
             if (freed) {
                 await writeOp();
@@ -43,7 +55,7 @@ export async function saveTournamentLocally(tournamentObject) {
                     "Action Required: Export your tournament to a file immediately and delete old tournaments from the Library to clear space."
                 );
             } else {
-                alert("CRITICAL STORAGE ERROR: Device storage is completely full and no emergency buffer was available. Please export a backup JSON now before closing this tab!");
+                alert("CRITICAL STORAGE ERROR: Device storage is completely full. Please export a backup JSON now!");
                 throw err;
             }
         } else {
@@ -53,7 +65,7 @@ export async function saveTournamentLocally(tournamentObject) {
 
     const autoSaveSetting = await getAppMeta('autoSaveToLibrary');
     if (autoSaveSetting === true) {
-        await saveTournamentToLibrary(tournamentObject);
+        await saveTournamentToLibrary(safePayload);
     }
 }
 
