@@ -11,6 +11,7 @@ import { initTiebreakerModal } from './ui/tiebreakerModal.js';
 import { initSettingsModal, applyUITheme, updateTitle } from './ui/settingsModal.js';
 import { renderBlueprintList, initBlueprintBuilder } from './ui/blueprintBuilder.js';
 import { initMatchController } from './ui/matchController.js';
+import { initStorageGuard, checkStorageHealth } from './ui/storageGuard.js';
 
 
 // Auto-inject SVGs into the HTML
@@ -49,6 +50,7 @@ initTiebreakerModal();
 initSettingsModal(() => currentTournament, updateUI);
 initBlueprintBuilder(() => currentTournament, updateUI);
 initMatchController(() => currentTournament, updateUI);
+initStorageGuard(() => currentTournament);
 
 // Master UI Sync
 function updateUI() {
@@ -140,6 +142,7 @@ document.getElementById('btn-clear-players').addEventListener('click', async () 
 
 // Tournament Lifecycle Controls
 document.getElementById('btn-start-elim').addEventListener('click', async () => {
+    await checkStorageHealth(() => currentTournament);
     if (currentTournament.status !== "setup") {
         alert("Tournament is already active!");
         return;
