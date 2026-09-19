@@ -29,6 +29,9 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const hyphenStyle = isHeader ? HDR_HYPHEN : '';
     const hyphenColor = 'var(--text-muted)';
 
+    // force normal weight slop and zero letter spacing so ch units calculate identically in both <th> (which apparently defaults to bold) and <td>.
+    const containerStyle = "position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums; font-weight:normal; letter-spacing:0;";
+
     const cols = vals.map((v, i) =>
         `<span style="display:inline-block; box-sizing:content-box; width:calc(${widths[i] + 1}ch + 2px); text-align:center;"><span style="${valStyle}">${v}</span></span>`
     ).join('');
@@ -52,13 +55,12 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
         }
 
         return `<span style="position:absolute; top:0; left:calc(${boundaryCh + outer}ch + ${boundaryPx}px); width:0; display:flex; justify-content:center; align-items:baseline; pointer-events:none; color:${hyphenColor};">` +
-            // comment
             `<span style="width:0; overflow:hidden; visibility:hidden;">0</span>` +
             `<span style="position:relative; left:${inner}ch; ${hyphenStyle}">-</span>` +
         `</span>`;
     };
 
-    return `<div style="position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums;">${cols}${hyphen(0)}${hyphen(1)}</div>`;
+    return `<div style="${containerStyle}">${cols}${hyphen(0)}${hyphen(1)}</div>`;
 }
 
 // Scans maximum digits per column
@@ -139,7 +141,7 @@ export const STANDINGS_COLUMNS = {
             return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
         style: "text-align: right; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
+        headerStyle: "text-align: right; font-variant-numeric: tabular-nums; font-weight: normal;"
     },
     game_record: {
         id: "game_record",
@@ -158,7 +160,7 @@ export const STANDINGS_COLUMNS = {
             return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
         style: "text-align: right; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
+        headerStyle: "text-align: right; font-variant-numeric: tabular-nums; font-weight: normal;"
     },
     match_differential: {
         id: "match_differential",
