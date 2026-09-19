@@ -14,21 +14,24 @@ export function formatDifferential(val) {
     return num.toString();
 }
 
-// 5-Slot-aligned record renderer
-export function renderAlignedRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
-    const subColor = isHeader ? 'color: var(--text-muted); font-size: 10px; font-weight: normal;' : 'color: var(--text-main);';
+// relative typographic formatter
+export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
+    if (isHeader) {
+        return `
+            <span style="display: inline-flex; align-items: baseline; justify-content: flex-end; font-variant-numeric: tabular-nums;">
+                <span style="display: inline-block; width: ${w1}ch; text-align: center;"><small style="font-size: 0.75em; color: var(--text-muted); font-weight: normal;">${v1}</small></span><small style="font-size: 0.75em; color: var(--text-muted);">-</small><span style="display: inline-block; width: ${w2}ch; text-align: center;"><small style="font-size: 0.75em; color: var(--text-muted); font-weight: normal;">${v2}</small></span><small style="font-size: 0.75em; color: var(--text-muted);">-</small><span style="display: inline-block; width: ${w3}ch; text-align: center;"><small style="font-size: 0.75em; color: var(--text-muted); font-weight: normal;">${v3}</small></span>
+            </span>
+        `.trim();
+    }
+
     return `
-        <span style="display: inline-flex; align-items: baseline; justify-content: flex-end; font-variant-numeric: tabular-nums; ${subColor}">
-            <span style="display: inline-block; width: ${w1}ch; text-align: center;">${v1}</span>
-            <span style="display: inline-block; width: 0.8ch; text-align: center; color: var(--text-muted); opacity: 0.7;">-</span>
-            <span style="display: inline-block; width: ${w2}ch; text-align: center;">${v2}</span>
-            <span style="display: inline-block; width: 0.8ch; text-align: center; color: var(--text-muted); opacity: 0.7;">-</span>
-            <span style="display: inline-block; width: ${w3}ch; text-align: center;">${v3}</span>
+        <span style="display: inline-flex; align-items: baseline; justify-content: flex-end; font-variant-numeric: tabular-nums;">
+            <span style="display: inline-block; width: ${w1}ch; text-align: center;">${v1}</span>-<span style="display: inline-block; width: ${w2}ch; text-align: center;">${v2}</span>-<span style="display: inline-block; width: ${w3}ch; text-align: center;">${v3}</span>
         </span>
     `.trim();
 }
 
-// Scans maximum digits independently per slot
+// Scans maximum digits
 function getSlotWidths(players, isGames = false) {
     let maxW = 0, maxL = 0, maxD = 0;
 
@@ -44,15 +47,15 @@ function getSlotWidths(players, isGames = false) {
         if (d > maxD) maxD = d;
     }
 
-    // digit count
     const digitsW = maxW > 0 ? maxW.toString().length : 1;
     const digitsL = maxL > 0 ? maxL.toString().length : 1;
     const digitsD = maxD > 0 ? maxD.toString().length : 1;
 
+    // at least 1.2ch for W so the letter W never clips
     return {
-        w: Math.max(digitsW, 1.3),
-        l: Math.max(digitsL, 1.1),
-        d: Math.max(digitsD, 1.1)
+        w: Math.max(digitsW, 1.2),
+        l: Math.max(digitsL, 1.0),
+        d: Math.max(digitsD, 1.0)
     };
 }
 
@@ -93,18 +96,18 @@ export const STANDINGS_COLUMNS = {
     match_record: {
         id: "match_record",
         name: "Match Record",
-        getHeaderHTML: (recFormat, widths = { w: 1.3, l: 1.1, d: 1.1 }) => {
+        getHeaderHTML: (recFormat, widths = { w: 1.2, l: 1.0, d: 1.0 }) => {
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [l1, l2, l3] = recFormat === "wdl" ? ["W", "D", "L"] : ["W", "L", "D"];
-            return `Matches<br>${renderAlignedRecord(l1, l2, l3, w1, w2, w3, true)}`;
+            return `Matches<br>${renderRecord(l1, l2, l3, w1, w2, w3, true)}`;
         },
-        getValue: (p, recFormat, widths = { w: 1.3, l: 1.1, d: 1.1 }) => {
+        getValue: (p, recFormat, widths = { w: 1.2, l: 1.0, d: 1.0 }) => {
             const w = p.stats?.matchWins ?? 0;
             const l = p.stats?.matchLosses ?? 0;
             const d = p.stats?.matchDraws ?? 0;
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [v1, v2, v3] = recFormat === "wdl" ? [w, d, l] : [w, l, d];
-            return renderAlignedRecord(v1, v2, v3, w1, w2, w3, false);
+            return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
         style: "text-align: right; font-variant-numeric: tabular-nums;",
         headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
@@ -112,18 +115,18 @@ export const STANDINGS_COLUMNS = {
     game_record: {
         id: "game_record",
         name: "Game Record",
-        getHeaderHTML: (recFormat, widths = { w: 1.3, l: 1.1, d: 1.1 }) => {
-            const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
+        getHeaderHTML: (recFormat, widths = { w: 1.2, l: 1.0, d: 1.0 }) => {
+            const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.d, widths.l];
             const [l1, l2, l3] = recFormat === "wdl" ? ["W", "D", "L"] : ["W", "L", "D"];
-            return `Games<br>${renderAlignedRecord(l1, l2, l3, w1, w2, w3, true)}`;
+            return `Games<br>${renderRecord(l1, l2, l3, w1, w2, w3, true)}`;
         },
-        getValue: (p, recFormat, widths = { w: 1.3, l: 1.1, d: 1.1 }) => {
+        getValue: (p, recFormat, widths = { w: 1.2, l: 1.0, d: 1.0 }) => {
             const w = p.stats?.gameWins ?? 0;
             const l = p.stats?.gameLosses ?? 0;
             const d = p.stats?.gameDraws ?? 0;
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [v1, v2, v3] = recFormat === "wdl" ? [w, d, l] : [w, l, d];
-            return renderAlignedRecord(v1, v2, v3, w1, w2, w3, false);
+            return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
         style: "text-align: right; font-variant-numeric: tabular-nums;",
         headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
@@ -247,8 +250,8 @@ export function resolveStageColumns(stageConfig, tournamentSettings = {}, player
     const needsMatchWidths = columnIds.includes("match_record");
     const needsGameWidths = columnIds.includes("game_record");
 
-    const matchWidths = (needsMatchWidths && players.length > 0) ? getSlotWidths(players, false) : { w: 1.3, l: 1.1, d: 1.1 };
-    const gameWidths = (needsGameWidths && players.length > 0) ? getSlotWidths(players, true) : { w: 1.3, l: 1.1, d: 1.1 };
+    const matchWidths = (needsMatchWidths && players.length > 0) ? getSlotWidths(players, false) : { w: 1.2, l: 1.0, d: 1.0 };
+    const gameWidths = (needsGameWidths && players.length > 0) ? getSlotWidths(players, true) : { w: 1.2, l: 1.0, d: 1.0 };
 
     // Map to column definition objects
     return columnIds.map(id => {
