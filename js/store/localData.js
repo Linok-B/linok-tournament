@@ -32,7 +32,7 @@ export async function saveTournamentLocally(tournamentObject) {
         await writeOp();
     } catch (err) {
         if (isQuotaError(err)) {
-            console.warn("[Storage] QuotaExceededError hit. Attempting to release emergency buffer...");
+            // console.warn("[Storage] QuotaExceededError hit. Attempting to release emergency buffer...");
             const freed = await releaseEmergencyBuffer();
             if (freed) {
                 await writeOp();
@@ -90,7 +90,7 @@ export async function loadTournamentLocally() {
             return parsed;
         }
     } catch (e) {
-        console.warn('Failed to parse legacy localStorage state:', e);
+        // console.warn('Failed to parse legacy localStorage state:', e);
     }
 
     return null;
@@ -227,9 +227,9 @@ export async function ensureEmergencyBuffer() {
         }
     } catch (err) {
         if (isQuotaError(err)) {
-            console.warn('[Storage] Quota too tight to arm emergency buffer.');
+            // console.warn('[Storage] Quota too tight to arm emergency buffer.');
         } else {
-            console.error('[Storage] Error ensuring emergency buffer:', err);
+            // console.error('[Storage] Error ensuring emergency buffer:', err);
         }
     }
 }
@@ -239,11 +239,11 @@ export async function releaseEmergencyBuffer() {
         const record = await performTransaction('app_meta', 'readonly', (store) => store.get('emergency_buffer'));
         if (record) {
             await performTransaction('app_meta', 'readwrite', (store) => store.delete('emergency_buffer'));
-            console.warn(`[Storage] EMERGENCY BUFFER SACRIFICED: ${BUFFER_SIZE_KB} KB freed.`);
+            // console.warn(`[Storage] EMERGENCY BUFFER SACRIFICED: ${BUFFER_SIZE_KB} KB freed.`);
             return true;
         }
     } catch (e) {
-        console.error('[Storage] Failed to release emergency buffer:', e);
+        // console.error('[Storage] Failed to release emergency buffer:', e);
     }
     return false;
 }
