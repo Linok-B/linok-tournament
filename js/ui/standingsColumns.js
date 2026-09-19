@@ -58,8 +58,8 @@ export const STANDINGS_COLUMNS = {
             const d = p.stats?.matchDraws ?? 0;
             return recFormat === "wdl" ? `${w}-${d}-${l}` : `${w}-${l}-${d}`;
         },
-        style: "text-align: center; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: center; font-variant-numeric: tabular-nums;"
+        style: "text-align: right; font-variant-numeric: tabular-nums;",
+        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
     },
     game_record: {
         id: "game_record",
@@ -71,8 +71,8 @@ export const STANDINGS_COLUMNS = {
             const d = p.stats?.gameDraws ?? 0;
             return recFormat === "wdl" ? `${w}-${d}-${l}` : `${w}-${l}-${d}`;
         },
-        style: "text-align: center; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: center; font-variant-numeric: tabular-nums;"
+        style: "text-align: right; font-variant-numeric: tabular-nums;",
+        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
     },
     match_differential: {
         id: "match_differential",
