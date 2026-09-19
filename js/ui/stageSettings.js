@@ -141,7 +141,10 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     modal.onclick = (e) => { if (e.target === modal) close(); };
 
     // 5. Save Handler (Commits draft to config)
-    document.getElementById('btn-save-stage-settings').onclick = () => {
+    document.getElementById('btn-save-stage-settings').onclick = async () => {
+        // Snapshot for rollback in case of storage failure
+        const previousConfigSnapshot = JSON.parse(JSON.stringify(config));
+
         if (roundsInput) {
             const val = parseInt(roundsInput.value);
             if (isNaN(val)) {
@@ -151,10 +154,6 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
                 config.maxRounds = Math.max(roundsPlayed, val);
                 if (isStarted) stage.data.totalRounds = config.maxRounds;
             }
-        }
-
-        if (document.getElementById('edit-stage-pairing') && !isStarted) {
-            config.swissPairingBasis = document.getElementById('edit-stage-pairing').value;
         }
 
         if (document.getElementById('edit-stage-cut') && !isStarted) {
@@ -169,7 +168,24 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         // commit tmp tiebreaker
         config.tiebreakers = tempTiebreakers; 
 
+        // hopemaxxing UI close and redraw
         close();
         onComplete();
+
+        // storage write w/ retry  rollback
+        try {
+            await saveTournamentLocally(tournament);
+        } catch (saveErr) {
+            // console.warn("Stage settings save failed. Retrying once...", saveErr);
+            try {
+                await saveTournamentLocally(tournament);
+            } catch (retryErr) {
+                // console.error("Critical storage error: could not save stage settings.", retryErr);
+                // Rollback config to prior snapshot so UI matches true storage
+                Object.assign(config, previousConfigSnapshot);
+                onComplete();
+                alert("Storage Error: Failed to save stage settings to storage.");
+            }
+        }
     };
 }
