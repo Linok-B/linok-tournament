@@ -14,47 +14,23 @@ export function formatDifferential(val) {
     return num.toString();
 }
 
-// Renders columns w/ numbers centered in their columns, and hyphens at the midpoint between their numbers
-export function renderRecordRow(v1, v2, v3, w1, w2, w3, isHeader = false) {
+export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     if (isHeader) {
         return `
-            <span style="display: inline-flex; align-items: baseline; justify-content: flex-end; font-size: 10px; font-weight: normal; color: var(--text-muted); font-variant-numeric: tabular-nums;">
-                <span style="display: inline-block; width: ${w1}ch; text-align: center;">${v1}</span>
-                <span style="display: inline-block; width: 1ch; text-align: center;">-</span>
-                <span style="display: inline-block; width: ${w2}ch; text-align: center;">${v2}</span>
-                <span style="display: inline-block; width: 1ch; text-align: center;">-</span>
-                <span style="display: inline-block; width: ${w3}ch; text-align: center;">${v3}</span>
-            </span>
+            <div style="display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums;">
+                <span style="display: inline-block; width: ${w1}ch; padding: 0 calc(0.25ch + 1px); text-align: center;"><span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">${v1}</span></span><span style="color: var(--text-muted); font-size: 10px; font-weight: normal;">-</span><span style="display: inline-block; width: ${w2}ch; padding: 0 calc(0.25ch + 1px); text-align: center;"><span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">${v2}</span></span><span style="color: var(--text-muted); font-size: 10px; font-weight: normal;">-</span><span style="display: inline-block; width: ${w3}ch; padding: 0 calc(0.25ch + 1px); text-align: center;"><span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">${v3}</span></span>
+            </div>
         `.trim();
     }
 
-    // Number lengths for this specific row
-    const len1 = v1.toString().length;
-    const len2 = v2.toString().length;
-    const len3 = v3.toString().length;
-
-    // Shift hyphens so they sit at the midpoint between their numbers
-    const shift1 = (len1 - len2) * 0.25;
-    const shift2 = (len2 - len3) * 0.25;
-
-    const padLeft1 = Math.max(0.1, 0.4 + shift1);
-    const padRight1 = Math.max(0.1, 0.4 - shift1);
-
-    const padLeft2 = Math.max(0.1, 0.4 + shift2);
-    const padRight2 = Math.max(0.1, 0.4 - shift2);
-
     return `
-        <span style="display: inline-flex; align-items: baseline; justify-content: flex-end; font-variant-numeric: tabular-nums;">
-            <span style="display: inline-block; width: ${w1}ch; text-align: center;">${v1}</span>
-            <span style="display: inline-block; padding-left: ${padLeft1.toFixed(2)}ch; padding-right: ${padRight1.toFixed(2)}ch; color: var(--text-muted);">-</span>
-            <span style="display: inline-block; width: ${w2}ch; text-align: center;">${v2}</span>
-            <span style="display: inline-block; padding-left: ${padLeft2.toFixed(2)}ch; padding-right: ${padRight2.toFixed(2)}ch; color: var(--text-muted);">-</span>
-            <span style="display: inline-block; width: ${w3}ch; text-align: center;">${v3}</span>
-        </span>
+        <div style="display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums;">
+            <span style="display: inline-block; width: ${w1}ch; padding: 0 calc(0.25ch + 1px); text-align: center;">${v1}</span><span style="color: var(--text-muted);">-</span><span style="display: inline-block; width: ${w2}ch; padding: 0 calc(0.25ch + 1px); text-align: center;">${v2}</span><span style="color: var(--text-muted);">-</span><span style="display: inline-block; width: ${w3}ch; padding: 0 calc(0.25ch + 1px); text-align: center;">${v3}</span>
+        </div>
     `.trim();
 }
 
-// Scans max digits per column
+// Scans maximum digits per column
 function getSlotWidths(players, isGames = false) {
     let maxW = 0, maxL = 0, maxD = 0;
 
@@ -121,7 +97,7 @@ export const STANDINGS_COLUMNS = {
         getHeaderHTML: (recFormat, widths = { w: 1, l: 1, d: 1 }) => {
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [l1, l2, l3] = recFormat === "wdl" ? ["W", "D", "L"] : ["W", "L", "D"];
-            return `Matches<br>${renderRecordRow(l1, l2, l3, w1, w2, w3, true)}`;
+            return `Matches<br>${renderRecord(l1, l2, l3, w1, w2, w3, true)}`;
         },
         getValue: (p, recFormat, widths = { w: 1, l: 1, d: 1 }) => {
             const w = p.stats?.matchWins ?? 0;
@@ -129,10 +105,10 @@ export const STANDINGS_COLUMNS = {
             const d = p.stats?.matchDraws ?? 0;
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [v1, v2, v3] = recFormat === "wdl" ? [w, d, l] : [w, l, d];
-            return renderRecordRow(v1, v2, v3, w1, w2, w3, false);
+            return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
-        style: "text-align: right; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
+        style: "text-align: center; font-variant-numeric: tabular-nums;",
+        headerStyle: "text-align: center; font-variant-numeric: tabular-nums;"
     },
     game_record: {
         id: "game_record",
@@ -140,7 +116,7 @@ export const STANDINGS_COLUMNS = {
         getHeaderHTML: (recFormat, widths = { w: 1, l: 1, d: 1 }) => {
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [l1, l2, l3] = recFormat === "wdl" ? ["W", "D", "L"] : ["W", "L", "D"];
-            return `Games<br>${renderRecordRow(l1, l2, l3, w1, w2, w3, true)}`;
+            return `Games<br>${renderRecord(l1, l2, l3, w1, w2, w3, true)}`;
         },
         getValue: (p, recFormat, widths = { w: 1, l: 1, d: 1 }) => {
             const w = p.stats?.gameWins ?? 0;
@@ -148,9 +124,9 @@ export const STANDINGS_COLUMNS = {
             const d = p.stats?.gameDraws ?? 0;
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [v1, v2, v3] = recFormat === "wdl" ? [w, d, l] : [w, l, d];
-            return renderRecordRow(v1, v2, v3, w1, w2, w3, false);
+            return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
-        style: "text-align: right; font-variant-numeric: tabular-nums;",
+        style: "text-align: center; font-variant-numeric: tabular-nums;",
         headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
     },
     match_differential: {
