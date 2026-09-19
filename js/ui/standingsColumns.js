@@ -29,10 +29,10 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const hyphenStyle = isHeader ? HDR_HYPHEN : '';
     const hyphenColor = 'var(--text-muted)';
 
-    // text-align: 'right' instead of 'center' to push the content to the right edge of the calc() box, so no more of the .5ch + 1px of empty right padding
-    // force normal weight slop and zero letter spacing so ch units calculate identically in both <th> (which apparently defaults to bold) and <td>.
+    // usage of transform on the wrapper to shift the whole block right to counteract the extra .5ch and 1px margin on the right
+    // Force normal font weight and zero letter spacing so ch units calculate identically in both <th> (which defaults to bold) and <td>.
     const cols = vals.map((v, i) =>
-        `<span style="display:inline-block; box-sizing:content-box; width:calc(${widths[i] + 1}ch + 2px); text-align:right;"><span style="${valStyle}">${v}</span></span>`
+        `<span style="display:inline-block; box-sizing:content-box; width:calc(${widths[i] + 1}ch + 2px); text-align:center;"><span style="${valStyle}">${v}</span></span>`
     ).join('');
 
     // Hyphen i sits between column i and i+1.
@@ -59,10 +59,13 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
         `</span>`;
     };
 
-    // ensure the container itself doesn't add unexpected left/right constraints
+    // ensure container itself doesnt add unexpected left/right constraints
     const containerStyle = "position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums; font-weight:normal; letter-spacing:0;";
+    
+    // Visually slide block™ (numbers + hyphens) to the right by exactly .5ch + 1px
+    const innerStyle = "transform: translateX(calc(0.5ch + 1px)); display: inline-block;";
 
-    return `<div style="${containerStyle}">${cols}${hyphen(0)}${hyphen(1)}</div>`;
+    return `<div style="${containerStyle}"><div style="${innerStyle}">${cols}${hyphen(0)}${hyphen(1)}</div></div>`;
 }
 
 // Scans maximum digits per column
