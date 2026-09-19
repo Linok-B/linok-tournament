@@ -755,8 +755,8 @@ export function renderStandings(tournament, containerId) {
     const sortFunction = calculateTiebreakers(playersToUse, stagesToUse);
     const sortedPlayers = [...playersToUse].sort((a, b) => sortFunction(a, b, stageTiebreakers));
 
-    // Resolve dynamic columns for this stage (or tournament defaults)
-    const activeColumns = resolveStageColumns(stageToRender?.config, tournament.settings);
+    // Resolve dynamic columns for this stage
+    const activeColumns = resolveStageColumns(stageToRender?.config, tournament.settings, sortedPlayers);
 
     let html = `
         <h2 style="margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;">Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}</h2>
