@@ -1,6 +1,7 @@
 import { getIcon } from './icons.js';
 import { openSwissConfigModal } from './swissConfigModal.js';
 import { openStandingsColumnsModal } from './standingsColumns.js';
+import { saveTournamentLocally } from './storage.js';
 
 export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     const modal = document.getElementById('stage-settings-modal');
