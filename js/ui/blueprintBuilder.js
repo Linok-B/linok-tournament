@@ -156,11 +156,11 @@ function applyStageDragAndDrop(currentTournament, onUpdate) {
             try {
                 await saveTournamentLocally(currentTournament);
             } catch (saveErr) {
-                console.warn("Storage write failed. Retrying once...", saveErr);
+                // console.warn("Storage write failed. Retrying once...", saveErr);
                 try {
                     await saveTournamentLocally(currentTournament);
                 } catch (retryErr) {
-                    console.error("Critical storage error: could not save reordered stages.", retryErr);
+                    // console.error("Critical storage error: could not save reordered stages.", retryErr);
                     // Rollback state and UI so screen matches true storage
                     currentTournament.settings.pipeline = previousPipeline;
                     if (typeof onUpdate === 'function') onUpdate();
@@ -168,7 +168,7 @@ function applyStageDragAndDrop(currentTournament, onUpdate) {
                 }
             }
         } catch (err) {
-            console.error("Stage reorder error:", err);
+            // console.error("Stage reorder error:", err);
             currentTournament.settings.pipeline = previousPipeline;
             if (typeof onUpdate === 'function') onUpdate();
         }
