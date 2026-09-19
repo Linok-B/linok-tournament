@@ -49,7 +49,7 @@ export function importTournamentJSON(file, callback) {
             const parsedData = JSON.parse(e.target.result);
             callback(true, parsedData);
         } catch (error) {
-            console.error("Failed to parse JSON", error);
+            // console.error("Failed to parse JSON", error);
             callback(false, "Invalid Tournament File. Ensure it is a valid .json export.");
         }
     };
