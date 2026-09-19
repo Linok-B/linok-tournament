@@ -2,6 +2,7 @@ import { calculateTiebreakers } from '../engine/systems/tiebreakers.js';
 import { simulatePreview } from '../engine/formats/registry.js';
 import { getIcon } from './icons.js';
 import { escapeHTML } from '../utils/helpers.js';
+import { resolveStageColumns } from './standingsColumns.js';
 
 // Holds the mathematical layout data for the Native SVG Exporter
 export const layoutState = { matchDataMap: {}, paths: "", width: 0, height: 0, rounds: 0, stage: null, isActive: false };
@@ -718,13 +719,7 @@ export function renderStandings(tournament, containerId) {
     if (viewIndex < 0) viewIndex = 0;
     
     const stageToRender = tournament.stages[viewIndex];
-    const isDPW = stageToRender && stageToRender.config.type === "dpw_swiss";
-    const displayBasis = (stageToRender && stageToRender.config.pointsColumnDisplay) || "match_points";
     const recFormat = tournament.settings.recordFormat || "wld";
-
-    let pointsLabel = "Points";
-    if (isDPW) pointsLabel = "Rating";
-    else if (displayBasis === "game_points") pointsLabel = "Game Pts";
 
     let stageTiebreakers = tournament.settings.tiebreakers; 
     if (stageToRender && stageToRender.config.tiebreakers) {
@@ -760,23 +755,22 @@ export function renderStandings(tournament, containerId) {
     const sortFunction = calculateTiebreakers(playersToUse, stagesToUse);
     const sortedPlayers = [...playersToUse].sort((a, b) => sortFunction(a, b, stageTiebreakers));
 
+    // Resolve dynamic columns for this stage (or tournament defaults)
+    const activeColumns = resolveStageColumns(stageToRender?.config, tournament.settings);
+
     let html = `
         <h2 style="margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;">Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
             <thead>
                 <tr style="border-bottom: 2px solid var(--accent);">
-                    <th style="padding: 10px;">Rank</th>
+                    <th style="padding: 10px; width: 60px;">Rank</th>
                     <th style="padding: 10px;">Name</th>
-                    <th style="padding: 10px;">${pointsLabel}</th>
-                    <th style="padding: 10px;">Match (${recFormat.toUpperCase().split('').join('-')})</th>
-                    <th style="padding: 10px;">Games (${recFormat.toUpperCase().split('').join('-')})</th>
-                    <th style="padding: 10px;">Buchholz</th>
+                    ${activeColumns.map(col => `<th style="padding: 10px; ${col.headerStyle || ''}">${col.headerHTML}</th>`).join('')}
                 </tr>
             </thead>
             <tbody>
     `;
 
-    // 2. Update the Player Loop HTML
     let currentDisplayRank = 1;
 
     sortedPlayers.forEach((player, index) => {
@@ -788,31 +782,11 @@ export function renderStandings(tournament, containerId) {
             }
         }
 
-        // 1. Calculate record formatting based on preference (W-L-D vs W-D-L)
-        const mWins = player.stats.matchWins, mLosses = player.stats.matchLosses, mDraws = player.stats.matchDraws;
-        const gWins = player.stats.gameWins, gLosses = player.stats.gameLosses, gDraws = player.stats.gameDraws;
-        
-        const mRecord = recFormat === "wld" ? `${mWins}-${mLosses}-${mDraws}` : `${mWins}-${mDraws}-${mLosses}`;
-        const gRecord = recFormat === "wld" ? `${gWins}-${gLosses}-${gDraws}` : `${gWins}-${gDraws}-${gLosses}`;
-
-        // 2. Select which points value to display
-        let displayPoints;
-        if (isDPW) {
-            displayPoints = player.stats.dpwRating ?? 1000;
-        } else if (displayBasis === "game_points") {
-            displayPoints = player.stats.gamePoints;
-        } else {
-            displayPoints = player.stats.points;
-        }
-
         html += `
             <tr style="border-bottom: 1px solid var(--border-main);">
                 <td style="padding: 10px;"><b>${currentDisplayRank}</b></td>
                 <td style="padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</td>
-                <td style="padding: 10px; font-weight: bold; color: var(--accent);">${displayPoints}</td>
-                <td style="padding: 10px;">${mRecord}</td>
-                <td style="padding: 10px;">${gRecord}</td>
-                <td style="padding: 10px;">${player.stats.buchholz}</td>
+                ${activeColumns.map(col => `<td style="padding: 10px; ${col.style || ''}">${col.formatValue(player)}</td>`).join('')}
             </tr>
         `;
     });
