@@ -19,6 +19,7 @@ const HDR_HYPHEN = 'font-size: 10px; font-weight: normal;';
 
 // Header hitboxes in ch of the label's own font (1 = a 0 there)
 // Note for self: Tweak the 1.4 value to perfectly match the specific width of the W (honestly it might be a 1.3...)
+// Double note to self: Also maybe tweak the L cuz maybe that one needs like 0.9 or something
 const LABEL_HIT_CH = { W: 1.4, D: 1, L: 1 };
 
 export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
@@ -26,7 +27,6 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const widths = [w1, w2, w3];
     const valStyle = isHeader ? HDR_VAL : '';
     const hyphenStyle = isHeader ? HDR_HYPHEN : '';
-    
     const hyphenColor = 'var(--text-muted)';
 
     const cols = vals.map((v, i) =>
@@ -44,6 +44,7 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
 
         let outer = (widths[r] - widths[l]) / 4;   // in ch of the numbers' font
         let inner = 0;                             // in ch of the labels' font
+        
         if (isHeader) {
             inner = ((LABEL_HIT_CH[vals[l]] ?? 1) - (LABEL_HIT_CH[vals[r]] ?? 1)) / 4;
         } else {
@@ -52,10 +53,13 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
 
         return `<span style="position:absolute; top:0; left:calc(${boundaryCh + outer}ch + ${boundaryPx}px); width:0; display:flex; justify-content:center; align-items:baseline; pointer-events:none; color:${hyphenColor};">` +
             // comment
-            `<span style="width:0; overflow:hidden; visibility:hidden; ${valStyle}">0</span>` +
+            `<span style="width:0; overflow:hidden; visibility:hidden;">0</span>` +
             `<span style="position:relative; left:${inner}ch; ${hyphenStyle}">-</span>` +
         `</span>`;
     };
+
+    return `<div style="position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums;">${cols}${hyphen(0)}${hyphen(1)}</div>`;
+}
 
     return `<div style="position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums;">${cols}${hyphen(0)}${hyphen(1)}</div>`;
 }
