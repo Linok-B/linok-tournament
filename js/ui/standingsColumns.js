@@ -14,20 +14,46 @@ export function formatDifferential(val) {
     return num.toString();
 }
 
-export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
-    if (isHeader) {
-        return `
-            <div style="display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums;">
-                <span style="display: inline-block; width: ${w1}ch; padding: 0 calc(0.25ch + 1px); text-align: center;"><span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">${v1}</span></span><span style="color: var(--text-muted); font-size: 10px; font-weight: normal;">-</span><span style="display: inline-block; width: ${w2}ch; padding: 0 calc(0.25ch + 1px); text-align: center;"><span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">${v2}</span></span><span style="color: var(--text-muted); font-size: 10px; font-weight: normal;">-</span><span style="display: inline-block; width: ${w3}ch; padding: 0 calc(0.25ch + 1px); text-align: center;"><span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">${v3}</span></span>
-            </div>
-        `.trim();
-    }
+// Approximate rendered widths of the 10px header labels (Note: might need tweaking if font differs, or something else billshits)
+const LABEL_PX = { W: 9, D: 7, L: 5.5 };
 
-    return `
-        <div style="display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums;">
-            <span style="display: inline-block; width: ${w1}ch; padding: 0 calc(0.25ch + 1px); text-align: center;">${v1}</span><span style="color: var(--text-muted);">-</span><span style="display: inline-block; width: ${w2}ch; padding: 0 calc(0.25ch + 1px); text-align: center;">${v2}</span><span style="color: var(--text-muted);">-</span><span style="display: inline-block; width: ${w3}ch; padding: 0 calc(0.25ch + 1px); text-align: center;">${v3}</span>
-        </div>
-    `.trim();
+const PAD = 'calc(0.5ch + 1px)';
+const HDR_VAL = 'font-size: 10px; color: var(--text-muted); font-weight: normal;';
+const HDR_HYPHEN = 'font-size: 10px; font-weight: normal;';
+
+export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
+    const vals = [v1, v2, v3];
+    const widths = [w1, w2, w3];
+
+    // Free space (inside the column, excluding padding) on each side of a centered value, as a CSS length. digits are 1ch each. Header gas fixed label px width.
+    const slack = (i) => isHeader
+        ? `(${widths[i]}ch - ${LABEL_PX[vals[i]] ?? 6}px)`
+        : `${widths[i] - String(vals[i]).length}ch`;
+
+    // Boundary between column i and i+1 = sum of full column widths so far
+    // Each column is width + 1ch + 2px (half-digit padding + 1px, on both sides).
+    const boundary = (i) => {
+        let ch = 0;
+        for (let k = 0; k <= i; k++) ch += widths[k] + 1;
+        return `${ch}ch + ${(i + 1) * 2}px`;
+    };
+
+    // Midpoint between the right edge of the left value and the left edge of the right value
+    const hyphenLeft = (i) =>
+        `calc(${boundary(i)} + (${slack(i + 1)} - ${slack(i)}) / 4)`;
+
+    const valStyle = isHeader ? HDR_VAL : '';
+    const hyphenStyle = isHeader ? HDR_HYPHEN : '';
+
+    const cols = vals.map((v, i) =>
+        `<span style="display:inline-block; box-sizing:content-box; width:${widths[i]}ch; padding:0 ${PAD}; text-align:center;"><span style="${valStyle}">${v}</span></span>`
+    ).join('');
+
+    const hyphens = [0, 1].map(i =>
+        `<span style="position:absolute; top:0; bottom:0; left:${hyphenLeft(i)}; transform:translateX(-50%); display:flex; align-items:center; pointer-events:none; color:var(--text-muted); ${hyphenStyle}">-</span>`
+    ).join('');
+
+    return `<div style="position:relative; display:inline-flex; align-items:center; vertical-align:top; font-variant-numeric:tabular-nums;">${cols}${hyphens}</div>`;
 }
 
 // Scans maximum digits per column
@@ -107,8 +133,8 @@ export const STANDINGS_COLUMNS = {
             const [v1, v2, v3] = recFormat === "wdl" ? [w, d, l] : [w, l, d];
             return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
-        style: "text-align: center; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: center; font-variant-numeric: tabular-nums;"
+        style: "text-align: left; font-variant-numeric: tabular-nums;",
+        headerStyle: "text-align: left; font-variant-numeric: tabular-nums;"
     },
     game_record: {
         id: "game_record",
@@ -126,8 +152,8 @@ export const STANDINGS_COLUMNS = {
             const [v1, v2, v3] = recFormat === "wdl" ? [w, d, l] : [w, l, d];
             return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
-        style: "text-align: center; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
+        style: "text-align: left; font-variant-numeric: tabular-nums;",
+        headerStyle: "text-align: left; font-variant-numeric: tabular-nums;"
     },
     match_differential: {
         id: "match_differential",
