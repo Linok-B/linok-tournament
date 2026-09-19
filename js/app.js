@@ -37,7 +37,7 @@ try {
     // Arm the reserve buffer in the background
     ensureEmergencyBuffer();
 } catch (err) {
-    console.error("Corrupted tournament state detected on load. Resetting workspace:", err);
+    // console.error("Corrupted tournament state detected on load. Resetting workspace:", err);
     currentTournament = new Tournament();
     await saveTournamentLocally(currentTournament);
     ensureEmergencyBuffer();
