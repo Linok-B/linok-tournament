@@ -61,9 +61,6 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     return `<div style="position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums;">${cols}${hyphen(0)}${hyphen(1)}</div>`;
 }
 
-    return `<div style="position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums;">${cols}${hyphen(0)}${hyphen(1)}</div>`;
-}
-
 // Scans maximum digits per column
 function getSlotWidths(players, isGames = false) {
     let maxW = 0, maxL = 0, maxD = 0;
