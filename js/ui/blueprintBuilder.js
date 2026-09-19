@@ -255,8 +255,7 @@ export function initBlueprintBuilder(getTournament, onUpdate) {
         if (e.target && e.target.closest('.btn-edit-stage-settings')) {
             const index = parseInt(e.target.closest('.btn-edit-stage-settings').getAttribute('data-index'));
             
-            openStageSettingsModal(index, currentTournament, async () => {
-                await saveTournamentLocally(currentTournament);
+            openStageSettingsModal(index, currentTournament, () => {
                 if (typeof onUpdate === 'function') onUpdate();
             });
         }
