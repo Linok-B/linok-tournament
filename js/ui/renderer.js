@@ -762,10 +762,10 @@ export function renderStandings(tournament, containerId) {
         <h2 style="margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;">Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
             <thead>
-                <tr style="border-bottom: 2px solid var(--accent);">
-                    <th style="padding: 10px; width: 60px;">Rank</th>
-                    <th style="padding: 10px;">Name</th>
-                    ${activeColumns.map(col => `<th style="padding: 10px; ${col.headerStyle || ''}">${col.headerHTML}</th>`).join('')}
+                <tr style="border-bottom: 2px solid var(--accent); vertical-align: top;">
+                    <th style="padding: 10px; width: 60px; vertical-align: top;">Rank</th>
+                    <th style="padding: 10px; vertical-align: top;">Name</th>
+                    ${activeColumns.map(col => `<th style="padding: 10px; vertical-align: top; ${col.headerStyle || ''}">${col.headerHTML}</th>`).join('')}
                 </tr>
             </thead>
             <tbody>
