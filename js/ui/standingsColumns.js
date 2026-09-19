@@ -14,29 +14,41 @@ export function formatDifferential(val) {
     return num.toString();
 }
 
-// Approximate rendered widths of the 10px header labels (Note: might need tweaking if font differs, or something else bullshits)
-const LABEL_PX = { W: 9.4, D: 7.2, L: 5.6 };
-
 const PAD = 'calc(0.5ch + 1px)';
 const HDR_VAL = 'font-size: 10px; color: var(--text-muted); font-weight: normal;';
 const HDR_HYPHEN = 'font-size: 10px; font-weight: normal;';
 
+// Header hitbox widths in ch of the LABEL's own font (1 = width of a "0" there).
+// D and L = 1, W = 1 + 0.2 (0.1 on each side) (only for hyphen placement)
+const LABEL_HIT_CH = { W: 1.2, D: 1, L: 1 };
+
 export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const vals = [v1, v2, v3];
     const widths = [w1, w2, w3];
-
-    const slack = (i) => isHeader
-        ? `(${widths[i]}ch - ${LABEL_PX[vals[i]] ?? 6}px)`
-        : `${widths[i] - String(vals[i]).length}ch`;
-
     const valStyle = isHeader ? HDR_VAL : '';
     const hyphenStyle = isHeader ? HDR_HYPHEN : '';
 
     const col = (i) =>
-        `<span style="display:inline-flex; justify-content:center; flex:none; box-sizing:content-box; width:${widths[i]}ch; padding:0 ${PAD};"><span style="${valStyle}">${vals[i]}</span></span>`;
+        `<span style="display:inline-block; flex:none; box-sizing:content-box; width:${widths[i]}ch; padding:0 ${PAD}; white-space:nowrap;">` +
+            `<span style="display:inline-flex; justify-content:center; width:0; position:relative; left:50%;">` +
+                `<span style="${valStyle}">${vals[i]}</span>` +
+            `</span>` +
+        `</span>`;
 
-    const hyphen = (i) =>
-        `<span style="display:inline-flex; justify-content:center; flex:none; width:0; position:relative; left:calc((${slack(i + 1)} - ${slack(i)}) / 4); color:var(--text-muted);"><span style="${hyphenStyle}">-</span></span>`;
+    // Hyphen sits on the boundary between column i and i+1, then is nudged to the midpoint of the sides of the 2 numbers it visually separates
+    const hyphen = (i) => {
+        const L = i, R = i + 1;
+        let outerCh, innerCh = 0;
+        if (isHeader) {
+            outerCh = (widths[R] - widths[L]) / 4;
+            innerCh = ((LABEL_HIT_CH[vals[L]] ?? 1) - (LABEL_HIT_CH[vals[R]] ?? 1)) / 4;
+        } else {
+            outerCh = ((widths[R] - String(vals[R]).length) - (widths[L] - String(vals[L]).length)) / 4;
+        }
+        return `<span style="display:inline-flex; justify-content:center; flex:none; width:0; position:relative; left:${outerCh}ch; color:var(--text-muted);">` +
+            `<span style="position:relative; left:${innerCh}ch; ${hyphenStyle}">-</span>` +
+        `</span>`;
+    };
 
     return `<div style="display:inline-flex; align-items:baseline; font-variant-numeric:tabular-nums;">${col(0)}${hyphen(0)}${col(1)}${hyphen(1)}${col(2)}</div>`;
 }
