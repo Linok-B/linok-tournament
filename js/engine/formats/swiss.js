@@ -4,6 +4,7 @@ import { calculateTiebreakers } from '../systems/tiebreakers.js';
 import { openSearchFallbackModal } from '../../ui/searchFallbackModal.js';
 import { optimizeMatchColors } from '../systems/colorOptimizer.js';
 import { optimizeMatchOrder } from '../systems/matchOptimizer.js';
+import { checkStorageHealth } from '../../ui/storageGuard.js';
 
 // Mulberry32 32-bit deterministic PRNG
 function createSeededRNG(seed) {
@@ -242,6 +243,7 @@ export async function advanceStage(stageData, config, allPlayers) {
         timeoutMs: config.timeoutMs || 5000
     };
 
+    await checkStorageHealth();
     let result = await requestMatchmaking(matchmakerParams);
 
     // 5. Handle Search Limit Hit / Timeout (Status 4 = Candidates, Status 5 = Timeout, Status 1 = Fallback)
