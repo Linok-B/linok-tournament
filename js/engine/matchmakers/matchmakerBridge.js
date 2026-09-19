@@ -71,7 +71,7 @@ export async function requestMatchmaking(params) {
         // Outer Watchdoggo: Terminates worker if C++ completely hangs (please never do)
         const totalTimeout = (params.timeoutMs || 5000) + 1500;
         let watchdogTimer = setTimeout(() => {
-            console.warn(`[MatchmakerBridge] WASM worker timed out after ${totalTimeout}ms. Forcing termination.`);
+            // console.warn(`[MatchmakerBridge] WASM worker didnt return after ${totalTimeout}ms. Forcing termination.`);
             
             // 1. Forcibly kill hung workers
             killWorker1();
