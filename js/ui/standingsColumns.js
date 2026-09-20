@@ -148,10 +148,10 @@ export const STANDINGS_COLUMNS = {
     match_record: {
         id: "match_record",
         name: "Match Record",
-        getHeaderHTML: (recFormat, widths = { w: 1, l: 1, d: 1 }) => {
+       getHeaderHTML: (recFormat, widths = { w: 1, l: 1, d: 1 }) => {
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [l1, l2, l3] = recFormat === "wdl" ? ["W", "D", "L"] : ["W", "L", "D"];
-            return `Matches<br>${renderRecord(l1, l2, l3, w1, w2, w3, true)}`;
+            return `<b>Matches</b><br>${renderRecord(l1, l2, l3, w1, w2, w3, true)}`;
         },
         getValue: (p, recFormat, widths = { w: 1, l: 1, d: 1 }) => {
             const w = p.stats?.matchWins ?? 0;
@@ -162,7 +162,7 @@ export const STANDINGS_COLUMNS = {
             return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
         style: "text-align: right; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: right; font-variant-numeric: tabular-nums; font-weight: normal;"
+        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
     },
     game_record: {
         id: "game_record",
@@ -170,7 +170,7 @@ export const STANDINGS_COLUMNS = {
         getHeaderHTML: (recFormat, widths = { w: 1, l: 1, d: 1 }) => {
             const [w1, w2, w3] = recFormat === "wdl" ? [widths.w, widths.d, widths.l] : [widths.w, widths.l, widths.d];
             const [l1, l2, l3] = recFormat === "wdl" ? ["W", "D", "L"] : ["W", "L", "D"];
-            return `Games<br>${renderRecord(l1, l2, l3, w1, w2, w3, true)}`;
+            return `<b>Games</b><br>${renderRecord(l1, l2, l3, w1, w2, w3, true)}`;
         },
         getValue: (p, recFormat, widths = { w: 1, l: 1, d: 1 }) => {
             const w = p.stats?.gameWins ?? 0;
@@ -181,7 +181,7 @@ export const STANDINGS_COLUMNS = {
             return renderRecord(v1, v2, v3, w1, w2, w3, false);
         },
         style: "text-align: right; font-variant-numeric: tabular-nums;",
-        headerStyle: "text-align: right; font-variant-numeric: tabular-nums; font-weight: normal;"
+        headerStyle: "text-align: right; font-variant-numeric: tabular-nums;"
     },
     match_differential: {
         id: "match_differential",
