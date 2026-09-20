@@ -145,6 +145,7 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
     document.getElementById('btn-save-stage-settings').onclick = async () => {
         // Snapshot for rollback in case of storage failure
         const previousConfigSnapshot = JSON.parse(JSON.stringify(config));
+        const previousTotalRounds = isStarted ? stage.data.totalRounds : undefined;
 
         if (roundsInput) {
             const val = parseInt(roundsInput.value);
@@ -183,7 +184,9 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
             } catch (retryErr) {
                 // console.error("Critical storage error: could not save stage settings.", retryErr);
                 // Rollback config to prior snapshot so UI matches true storage
-                Object.assign(config, previousConfigSnapshot);
+                Object.keys(config).forEach(k => delete config[k]);   // Purges keys
+                Object.assign(config, previousConfigSnapshot);        // Restores the original props
+                if (isStarted) stage.data.totalRounds = previousTotalRounds; // Restores stage.data.totalRounds
                 onComplete();
                 alert("Storage Error: Failed to save stage settings to storage.");
             }
