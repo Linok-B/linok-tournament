@@ -29,15 +29,35 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const hyphenStyle = isHeader ? HDR_HYPHEN : '';
     const hyphenColor = 'var(--text-muted)';
 
-    // usage of transform on the wrapper to shift the whole block right to counteract the extra .5ch and 1px margin on the right
-    // Force normal font weight and zero letter spacing so ch units calculate identically in both <th> (which defaults to bold) and <td>.
-    const cols = vals.map((v, i) =>
-        `<span style="display:inline-block; box-sizing:content-box; width:calc(${widths[i] + 1}ch + 2px); text-align:center;"><span style="${valStyle}">${v}</span></span>`
+    // 3 columns (that are kinda just rails) that are each (longest number + 1 digit)ch + 2px wide, and 0px tall (no height cuz it's just for horizontal positioning)
+    // They contain nothing. They only exist so the block has the right width (and so it right-aligns) and so there's a horizontal reference for everything else
+    const rail = widths.map(w =>
+        `<span style="display:inline-block; width:calc(${w + 1}ch + 2px); height:0;"></span>`
     ).join('');
 
-    // Hyphen i sits between column i and i+1.
-    // boundary  = sum of the column widths up to and including column i
-    // midpoint  = boundary + ((cwR - cwL) + (hitL - hitR)) / 4
+    // Horizontal center of column i measured from the left of the thing.
+    const centerOf = (i) => {
+        let ch = 0;
+        for (let k = 0; k < i; k++) ch += widths[k] + 1;
+        return `calc(${ch + (widths[i] + 1) / 2}ch + ${i * 2 + 1}px)`;
+    };
+
+    // Numbers and labels are a zero-width box sitting on the column's center, with the item centered on that point.
+    // The hidden 0 is a baseline strut (in the numbers' font)(for their hitboxes)
+    const items = vals.map((v, i) =>
+        `<span style="position:absolute; top:0; left:${centerOf(i)}; width:0; display:flex; justify-content:center; align-items:baseline; white-space:nowrap;">` +
+            `<span style="width:0; overflow:hidden; visibility:hidden;">0</span>` +
+            `<span style="${valStyle}">${v}</span>` +
+        `</span>`
+    ).join('');
+
+    // Hyphen i sits between item i and i+1.
+    // Both items are centered on their columns, so:
+    //   right edge of left item  = centerL + widthL/2
+    //   left edge of right item  = centerR - widthR/2
+    //   midpoint = (centerL + centerR)/2 + (widthL - widthR)/4
+    // Columns are (centerL + centerR)/2 = boundary + (cwR - cwL)/4
+    // Items are (widthL - widthR)/4
     const hyphen = (i) => {
         const l = i, r = i + 1;
         let boundaryCh = 0;
@@ -46,7 +66,7 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
 
         let outer = (widths[r] - widths[l]) / 4;   // in ch of the numbers' font
         let inner = 0;                             // in ch of the labels' font
-        
+
         if (isHeader) {
             inner = ((LABEL_HIT_CH[vals[l]] ?? 1) - (LABEL_HIT_CH[vals[r]] ?? 1)) / 4;
         } else {
@@ -59,13 +79,14 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
         `</span>`;
     };
 
-    // ensure container itself doesnt add unexpected left/right constraints
     const containerStyle = "position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums; font-weight:normal; letter-spacing:0;";
-    
-    // Visually slide block™ (numbers + hyphens) to the right by exactly .5ch + 1px
-    const innerStyle = "transform: translateX(calc(0.5ch + 1px)); display: inline-block;";
 
-    return `<div style="${containerStyle}"><div style="${innerStyle}">${cols}${hyphen(0)}${hyphen(1)}</div></div>`;
+    // Visually slide block™ (rail + items + hyphens) to the right by exactly .5ch + 1px
+    const innerStyle = "transform: translateX(calc(0.5ch + 1px)); display: inline-block; position: relative;";
+
+    const strut = `<span style="display:inline-block; width:0; overflow:hidden; visibility:hidden;">0</span>`;
+
+    return `<div style="${containerStyle}"><div style="${innerStyle}">${strut}${rail}${items}${hyphen(0)}${hyphen(1)}</div></div>`;
 }
 
 // Scans maximum digits per column
