@@ -25,14 +25,13 @@ const LABEL_HIT_CH = { W: 1.4, D: 1, L: 1 };
 export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     const vals = [v1, v2, v3];
     const widths = [w1, w2, w3];
-    const valStyle = isHeader ? HDR_VAL : '';
-    const hyphenStyle = isHeader ? HDR_HYPHEN : '';
-    const hyphenColor = 'var(--text-muted)';
+    const valClass = isHeader ? 'rec-hdr-val' : '';
+    const hyphenClass = isHeader ? 'rec-hdr-hyphen' : '';
 
     // 3 columns (that are kinda just rails) that are each (longest number + 1 digit)ch + 2px wide, and 0px tall (no height cuz it's just for horizontal positioning)
     // They contain nothing. They only exist so the block has the right width (and so it right-aligns) and so there's a horizontal reference for everything else
     const rail = widths.map(w =>
-        `<span style="display:inline-block; width:calc(${w + 1}ch + 2px); height:0;"></span>`
+        `<span class="rec-rail" style="width:calc(${w + 1}ch + 2px);"></span>`
     ).join('');
 
     // Horizontal center of column i measured from the left of the thing.
@@ -45,9 +44,9 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
     // Numbers and labels are a zero-width box sitting on the column's center, with the item centered on that point.
     // The hidden 0 is a baseline strut (in the numbers' font)(for their hitboxes)
     const items = vals.map((v, i) =>
-        `<span style="position:absolute; top:0; left:${centerOf(i)}; width:0; display:flex; justify-content:center; align-items:baseline; white-space:nowrap;">` +
-            `<span style="width:0; overflow:hidden; visibility:hidden;">0</span>` +
-            `<span style="${valStyle}">${v}</span>` +
+        `<span class="rec-item" style="left:${centerOf(i)};">` +
+            `<span class="rec-strut">0</span>` +
+            `<span class="${valClass}">${v}</span>` +
         `</span>`
     ).join('');
 
@@ -73,20 +72,16 @@ export function renderRecord(v1, v2, v3, w1, w2, w3, isHeader = false) {
             outer += (String(vals[l]).length - String(vals[r]).length) / 4;
         }
 
-        return `<span style="position:absolute; top:0; left:calc(${boundaryCh + outer}ch + ${boundaryPx}px); width:0; display:flex; justify-content:center; align-items:baseline; pointer-events:none; color:${hyphenColor};">` +
-            `<span style="width:0; overflow:hidden; visibility:hidden;">0</span>` +
-            `<span style="position:relative; left:${inner}ch; ${hyphenStyle}">-</span>` +
+        return `<span class="rec-hyphen-wrap" style="left:calc(${boundaryCh + outer}ch + ${boundaryPx}px);">` +
+            `<span class="rec-strut">0</span>` +
+            `<span class="rec-hyphen ${hyphenClass}" style="left:${inner}ch;">-</span>` +
         `</span>`;
     };
 
-    const containerStyle = "position:relative; display:inline-block; white-space:nowrap; font-variant-numeric:tabular-nums; font-weight:normal; letter-spacing:0;";
-
     // Visually slide block™ (rail + items + hyphens) to the right by exactly .5ch + 1px
-    const innerStyle = "transform: translateX(calc(0.5ch + 1px)); display: inline-block; position: relative;";
+    const strut = `<span class="rec-strut">0</span>`;
 
-    const strut = `<span style="display:inline-block; width:0; overflow:hidden; visibility:hidden;">0</span>`;
-
-    return `<div style="${containerStyle}"><div style="${innerStyle}">${strut}${rail}${items}${hyphen(0)}${hyphen(1)}</div></div>`;
+    return `<div class="rec-container"><div class="rec-inner">${strut}${rail}${items}${hyphen(0)}${hyphen(1)}</div></div>`;
 }
 
 // Scans maximum digits per column
