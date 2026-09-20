@@ -311,7 +311,71 @@ input[type="number"] {
     content-visibility: auto; /* testing */
 }
 
-/* --- BASE MATCH BOX STRUCTURE --- */
+/* STANDINGS RECORD DISPLAY CLAsSES */
+.rec-container {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-weight: normal;
+    letter-spacing: 0;
+}
+
+.rec-inner {
+    transform: translateX(calc(0.5ch + 1px));
+    display: inline-block;
+    position: relative;
+}
+
+.rec-strut {
+    display: inline-block;
+    width: 0;
+    overflow: hidden;
+    visibility: hidden;
+}
+
+.rec-rail {
+    display: inline-block;
+    height: 0;
+}
+
+.rec-item {
+    position: absolute;
+    top: 0;
+    width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    white-space: nowrap;
+}
+
+.rec-hdr-val {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: normal;
+}
+
+.rec-hyphen-wrap {
+    position: absolute;
+    top: 0;
+    width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    pointer-events: none;
+    color: var(--text-muted);
+}
+
+.rec-hyphen {
+    position: relative;
+}
+
+.rec-hdr-hyphen {
+    font-size: 10px;
+    font-weight: normal;
+}
+
+/* BASE MATCH BOX STRUCTURE */
 .match-box-content {
     display: flex;
     flex-direction: column;
