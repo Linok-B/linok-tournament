@@ -1,3 +1,5 @@
+import { isValidTournamentStructure } from './localData.js';
+
 export function exportTournamentJSON(tournamentObj) {
     // 1. Convert the active tournament object to a formatted JSON string
     const dataStr = JSON.stringify(tournamentObj, null, 2);
@@ -104,13 +106,21 @@ export function parseTournamentImportJSON(file, callback) {
                 const normalized = parsed.tournaments.map(t => {
                     if (!t.id) t.id = crypto.randomUUID();
                     return t;
-                });
+                }).filter(isValidTournamentStructure);
+
+                if (normalized.length === 0) {
+                    return callback(false, "The bundle file does not contain any valid tournament data.");
+                }
+
                 return callback(true, { type: 'bundle', tournaments: normalized });
             }
 
             // Single tourney (old or new)
-            if (parsed && (parsed.stages !== undefined || parsed.players !== undefined || parsed.settings !== undefined)) {
+            if (parsed && typeof parsed === 'object') {
                 if (!parsed.id) parsed.id = crypto.randomUUID();
+                if (!isValidTournamentStructure(parsed)) {
+                    return callback(false, "Invalid tournament file: missing required structure.");
+                }
                 return callback(true, { type: 'single', tournament: parsed });
             }
 
