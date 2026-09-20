@@ -710,11 +710,23 @@ export function applyPanAndZoom(viewport, board) {
     viewport.addEventListener('wheel', _panWheel, { passive: false });
 }
 
+// Standings dom diffing and row cache
+const standingsCache = {
+    containerId: null,
+    stageId: null,
+    columnsKey: '',
+    isLocked: null,
+    recFormat: '',
+    table: null,
+    tbody: null,
+    h2: null,
+    rows: new Map() // playerId -> {tr, cells: string[], rank: number}
+};
+
 export function renderStandings(tournament, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Determine which tiebreaker array to use
     let viewIndex = window.viewingStageIndex !== undefined ? window.viewingStageIndex : tournament.stages.length - 1;
     if (viewIndex < 0) viewIndex = 0;
     
@@ -735,10 +747,9 @@ export function renderStandings(tournament, containerId) {
     const isLocked = stageToRender && stageToRender.config.lockStandings && stageToRender.data.frozenStats && isCompleted;
 
     if (isLocked) {
-        // 1. Slice history to only evaluate matches played UP TO this stage
+        // Slice history to only evaluate matches played UP TO this stage
         stagesToUse = tournament.stages.slice(0, viewIndex + 1);
-        
-        // 2. Clone players and overwrite their stats with the frozen ones from that stage
+        // Clone players and overwrite their stats with the frozen ones from that stage
         playersToUse = tournament.players.map(p => {
             const frozen = stageToRender.data.frozenStats.find(f => f.id === p.id);
             if (frozen) {
@@ -758,22 +769,63 @@ export function renderStandings(tournament, containerId) {
     // Resolve dynamic columns for this stage
     const activeColumns = resolveStageColumns(stageToRender?.config, tournament.settings, sortedPlayers);
 
-    let html = `
-        <h2 style="margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;">Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}</h2>
-        <table style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);">
-            <thead>
-                <tr style="border-bottom: 2px solid var(--accent); vertical-align: top;">
-                    <th style="padding: 10px; width: 60px; vertical-align: top;">Rank</th>
-                    <th style="padding: 10px; vertical-align: top;">Name</th>
-                    ${activeColumns.map(col => `<th style="padding: 10px; vertical-align: top; ${col.headerStyle || ''}">${col.headerHTML}</th>`).join('')}
-                </tr>
-            </thead>
-            <tbody>
-    `;
+    // Struct cache invalid check
+    const stageId = stageToRender?.id || 'none';
+    const columnsKey = activeColumns.map(c => c.id).join(',');
+    const structureChanged = 
+        standingsCache.containerId !== containerId ||
+        standingsCache.stageId !== stageId ||
+        standingsCache.columnsKey !== columnsKey ||
+        standingsCache.isLocked !== isLocked ||
+        standingsCache.recFormat !== recFormat ||
+        !standingsCache.table ||
+        !container.contains(standingsCache.table);
 
+    if (structureChanged) {
+        // Rebuild table skeleton only when thing™ actually changes
+        container.innerHTML = '';
+        standingsCache.rows.clear();
+
+        const h2 = document.createElement('h2');
+        h2.style.cssText = "margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;";
+        h2.innerHTML = `Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}`;
+        container.appendChild(h2);
+
+        const table = document.createElement('table');
+        table.style.cssText = "width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);";
+
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr style="border-bottom: 2px solid var(--accent); vertical-align: top;">
+                <th style="padding: 10px; width: 60px; vertical-align: top;">Rank</th>
+                <th style="padding: 10px; vertical-align: top;">Name</th>
+                ${activeColumns.map(col => `<th style="padding: 10px; vertical-align: top; ${col.headerStyle || ''}">${col.headerHTML}</th>`).join('')}
+            </tr>
+        `;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        table.appendChild(tbody);
+        container.appendChild(table);
+
+        standingsCache.containerId = containerId;
+        standingsCache.stageId = stageId;
+        standingsCache.columnsKey = columnsKey;
+        standingsCache.isLocked = isLocked;
+        standingsCache.recFormat = recFormat;
+        standingsCache.table = table;
+        standingsCache.tbody = tbody;
+        standingsCache.h2 = h2;
+    }
+
+    const tbody = standingsCache.tbody;
+    const activePlayerIds = new Set();
     let currentDisplayRank = 1;
 
+    // dom diff pass
     sortedPlayers.forEach((player, index) => {
+        activePlayerIds.add(player.id);
+
         if (index > 0) {
             const prevPlayer = sortedPlayers[index - 1];
             const isTied = sortFunction(player, prevPlayer, stageTiebreakers) === 0;
@@ -782,15 +834,81 @@ export function renderStandings(tournament, containerId) {
             }
         }
 
-        html += `
-            <tr style="border-bottom: 1px solid var(--border-main);">
-                <td style="padding: 10px;"><b>${currentDisplayRank}</b></td>
-                <td style="padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</td>
-                ${activeColumns.map(col => `<td style="padding: 10px; ${col.style || ''}">${col.formatValue(player)}</td>`).join('')}
-            </tr>
-        `;
+        // build array of new cell strings for this row
+        const newCells = [
+            `<b>${currentDisplayRank}</b>`,
+            escapeHTML(player.name),
+            ...activeColumns.map(col => col.formatValue(player))
+        ];
+
+        let cached = standingsCache.rows.get(player.id);
+
+        if (!cached) {
+            // (new) row creation
+            const tr = document.createElement('tr');
+            tr.style.cssText = "border-bottom: 1px solid var(--border-main);";
+
+            // rank Cell
+            const tdRank = document.createElement('td');
+            tdRank.style.padding = '10px';
+            tdRank.innerHTML = newCells[0];
+            tr.appendChild(tdRank);
+
+            // name Cell
+            const tdName = document.createElement('td');
+            tdName.style.cssText = "padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;";
+            tdName.title = escapeHTML(player.name);
+            tdName.innerHTML = newCells[1];
+            tr.appendChild(tdName);
+
+            // dynamic data cells
+            activeColumns.forEach((col, cIdx) => {
+                const td = document.createElement('td');
+                td.style.cssText = `padding: 10px; ${col.style || ''}`;
+                td.innerHTML = newCells[2 + cIdx];
+                tr.appendChild(td);
+            });
+
+            tbody.insertBefore(tr, tbody.children[index] || null);
+            standingsCache.rows.set(player.id, { tr, cells: newCells });
+        } else {
+            // diff cell-by-cell and only touch changed dom nodes
+            const tdElements = cached.tr.children;
+
+            // diff rank
+            if (cached.cells[0] !== newCells[0]) {
+                tdElements[0].innerHTML = newCells[0];
+                cached.cells[0] = newCells[0];
+            }
+
+            // diff name
+            if (cached.cells[1] !== newCells[1]) {
+                tdElements[1].innerHTML = newCells[1];
+                tdElements[1].title = escapeHTML(player.name);
+                cached.cells[1] = newCells[1];
+            }
+
+            // diff data cellss
+            activeColumns.forEach((col, cIdx) => {
+                const cellIndex = 2 + cIdx;
+                if (cached.cells[cellIndex] !== newCells[cellIndex]) {
+                    tdElements[cellIndex].innerHTML = newCells[cellIndex];
+                    cached.cells[cellIndex] = newCells[cellIndex];
+                }
+            });
+
+            // move row if rank order shifted
+            if (tbody.children[index] !== cached.tr) {
+                tbody.insertBefore(cached.tr, tbody.children[index] || null);
+            }
+        }
     });
 
-    html += `</tbody></table>`;
-    container.innerHTML = html;
+    // remove rows of players who left the tournament (rn players can't leave so....)
+    for (const [id, cached] of standingsCache.rows.entries()) {
+        if (!activePlayerIds.has(id)) {
+            cached.tr.remove();
+            standingsCache.rows.delete(id);
+        }
+    }
 }
