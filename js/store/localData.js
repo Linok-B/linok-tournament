@@ -11,9 +11,19 @@ export function syncUIToLocalStorage(uiSettings) {
     } catch (e) {}
 }
 
+// tourney validator
+export function isValidTournamentStructure(t) {
+    if (!t || typeof t !== 'object') return false;
+    if (!t.settings || typeof t.settings !== 'object') return false;
+    if (typeof t.settings.name !== 'string') return false;
+    if (!Array.isArray(t.players)) return false;
+    if (!Array.isArray(t.stages)) return false;
+    return true;
+}
+
 // autosave working tournament
 export async function saveTournamentLocally(tournamentObject) {
-    if (!tournamentObject) return;
+    if (!tournamentObject || !isValidTournamentStructure(tournamentObject)) return;
 
     // Stamp ID and modified timestamp if missing
     if (!tournamentObject.id) tournamentObject.id = crypto.randomUUID();
@@ -66,7 +76,7 @@ export async function loadTournamentLocally() {
         return store.get('current');
     });
 
-    if (record && record.tournament) {
+    if (record && record.tournament && isValidTournamentStructure(record.tournament)) {
         return record.tournament;
     }
 
@@ -104,7 +114,7 @@ export async function clearLocalData() {
 
 // tourney lib op
 export async function saveTournamentToLibrary(tournamentObject) {
-    if (!tournamentObject) return;
+    if (!tournamentObject || !isValidTournamentStructure(tournamentObject)) return null;
     const clone = JSON.parse(JSON.stringify(tournamentObject));
     if (!clone.id) clone.id = crypto.randomUUID();
     clone.updatedAt = Date.now();
