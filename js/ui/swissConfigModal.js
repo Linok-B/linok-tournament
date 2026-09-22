@@ -14,7 +14,7 @@ export function openSwissConfigModal(config, isDPW, onSave) {
         greedyMode: config.greedyMode || "backtracking",
         blossomMode: config.blossomMode || "topk",
         orderMode: config.orderMode || "fisher_yates",
-        round1Mode: config.round1Mode || "sequential",
+        round1Mode: config.round1Mode || (isDPW ? "team_score" : "sequential"),
         cdclMode: config.cdclMode !== undefined ? config.cdclMode : 1,
         midDegreeThreshold: config.midDegreeThreshold !== undefined ? config.midDegreeThreshold : 6,
         microHuntBudget: config.microHuntBudget || 8000,
@@ -71,7 +71,8 @@ export function openSwissConfigModal(config, isDPW, onSave) {
                 <div>
                     <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Round 1 Pairing Method</label>
                     <select id="cfg-round1-mode" style="width:100%; padding:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
-                        <option value="sequential" title="Sequential Order (1v2, 3v4, 5v6...)" ${draft.round1Mode === 'sequential' ? 'selected' : ''}>Sequential Order</option>
+                        ${isDPW ? `<option value="team_score" title="Pair players by Team Score descending (highest TS vs next highest...)" ${draft.round1Mode === 'team_score' ? 'selected' : ''}>Team Score</option>` : ''}
+                        <option value="sequential" title="Sequential Order (1v2, 3v4, 5v6...)" ${draft.round1Mode === 'sequential' ? 'selected' : ''}>Sequential Seed</option>
                         <option value="folded" title="Folded Seed (1vN, 2vN-1, 3vN-2...)" ${draft.round1Mode === 'folded' ? 'selected' : ''}>Folded Seed</option>
                         <option value="halves" title="Split Halves (1 vs N/2+1, 2 vs N/2+2...)" ${draft.round1Mode === 'halves' ? 'selected' : ''}>Split Halves</option>
                     </select>
