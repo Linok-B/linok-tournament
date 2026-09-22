@@ -33,10 +33,17 @@ function seededFisherYatesShuffle(arr, seed) {
 }
 
 export function initStage(players, config) {
-    const seededPlayers = [...players].sort((a, b) => a.seed - b.seed);
+    const mode = config.round1Mode || "team_score";
+    const seededPlayers = [...players].sort((a, b) => {
+        if (mode === "team_score") {
+            const tsA = a.metadata?.dpwTS ?? 0;
+            const tsB = b.metadata?.dpwTS ?? 0;
+            if (tsB !== tsA) return tsB - tsA; // Highest TS first
+        }
+        return a.seed - b.seed; // Ties broken by seed (or default sort for other modes I guess?)
+    });
     const defaultRounds = Math.ceil(Math.log2(seededPlayers.length));
     const maxRounds = config.maxRounds || defaultRounds;
-    const mode = config.round1Mode || "sequential";
     
     const n = seededPlayers.length;
     let pairs = [];
