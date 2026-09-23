@@ -767,7 +767,7 @@ export function renderStandings(tournament, containerId) {
     const sortedPlayers = [...playersToUse].sort((a, b) => sortFunction(a, b, stageTiebreakers));
 
     // Resolve dynamic columns for this stage
-    const activeColumns = resolveStageColumns(stageToRender?.config, tournament.settings, sortedPlayers);
+    const activeColumns = resolveStageColumns(stageToRender?.config, tournament.settings, sortedPlayers, tournament, stageToRender);
 
     // Struct cache invalid check
     const stageId = stageToRender?.id || 'none';
