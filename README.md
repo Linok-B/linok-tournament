@@ -8,7 +8,7 @@ A fully client-side, zero-dependency tournament management web application. Desi
 * **Advanced Tiebreaker Builder:** Manual rule stacking (Match Points, Game Differential, H2H, Buchholz, Median Buchholz, ELO, Registration Seed, (...), and accurate placements).
 * **Multi-Stage Pipeline:** Seamlessly string formats together (e.g., Swiss into a Single Elim w/ Top 8 Cut).
 * **Theme Engine:** Fully customizable UI supporting Modern (Cards), Classic (Flat), and entirely custom HEX color palettes.
-* **Streamer Mode:** Instantly hides controls and expands the bracket for easy OBS window-capture.
+* **Streaming Mode:** Instantly hides controls and expands the bracket for easy OBS window-capture.
 * **Data Management:** Native JSON Export/Import capabilities for saving tournaments or sharing states.
 
 ## Usage
