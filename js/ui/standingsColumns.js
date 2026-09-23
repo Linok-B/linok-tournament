@@ -14,6 +14,157 @@ export function formatDifferential(val) {
     return num.toString();
 }
 
+// Resolves tournament placement
+export function getPlayerPlacement(player, currentStage, tournament) {
+    if (!tournament) return '-';
+
+    // Find the relevant elimination stage
+    let targetStage = null;
+    if (currentStage && (currentStage.config?.type === "single_elimination" || currentStage.config?.type === "double_elimination")) {
+        targetStage = currentStage;
+    } else if (tournament.stages) {
+        targetStage = [...tournament.stages].reverse().find(s => 
+            s.config?.type === "single_elimination" || s.config?.type === "double_elimination"
+        );
+    }
+
+    if (!targetStage || !targetStage.data || !targetStage.data.rounds || targetStage.data.rounds.length === 0) {
+        return '-';
+    }
+
+    const rounds = targetStage.data.rounds;
+    const isDouble = targetStage.config.type === "double_elimination";
+    const isStageComplete = targetStage.status === "completed" || targetStage.data.isComplete;
+
+    // Check if player participated in this stage
+    const participated = rounds.some(r => r.some(m => 
+        (m.player1?.id === player.id && !m.player1.isPhantom) || 
+        (m.player2?.id === player.id && !m.player2.isPhantom)
+    ));
+
+    if (!participated) {
+        return player.stats?.eliminationScore === 0 ? 'Cut' : '-';
+    }
+
+    let lastLossMatch = null;
+    let wonThirdPlace = false;
+
+    rounds.forEach(round => {
+        round.forEach(m => {
+            if (!m.winner) return;
+
+            if (m.isThirdPlaceMatch && m.winner.id === player.id) {
+                wonThirdPlace = true;
+            }
+
+            if ((m.player1?.id === player.id || m.player2?.id === player.id) && m.winner !== "tie" && m.winner.id !== player.id) {
+                if (isDouble) {
+                    if (m.bracket === "losers" || m.bracket === "grand_finals") {
+                        if (!m.bracketReset && player.id === m.player1?.id && !isStageComplete) {
+                            // Still alive waiting for GF2
+                        } else {
+                            lastLossMatch = m;
+                        }
+                    }
+                } else {
+                    lastLossMatch = m;
+                }
+            }
+        });
+    });
+
+    if (wonThirdPlace) {
+        return '3rd';
+    }
+
+    // Player was never eliminated (winner or alive)
+    if (!lastLossMatch) {
+        const activePlayerIds = new Set();
+        rounds.forEach(r => r.forEach(m => {
+            if (m.player1 && !m.player1.isPhantom) activePlayerIds.add(m.player1.id);
+            if (m.player2 && !m.player2.isPhantom) activePlayerIds.add(m.player2.id);
+        }));
+
+        const eliminatedIds = new Set();
+        rounds.forEach(r => r.forEach(m => {
+            if (m.winner && m.winner !== "tie") {
+                const loserId = m.winner.id === m.player1?.id ? m.player2?.id : m.player1?.id;
+                if (isDouble) {
+                    if (m.bracket === "losers" || (m.bracket === "grand_finals" && (m.bracketReset || isStageComplete))) {
+                        eliminatedIds.add(loserId);
+                    }
+                } else if (!m.isThirdPlaceMatch) {
+                    eliminatedIds.add(loserId);
+                }
+            }
+        }));
+
+        const survivorsCount = Array.from(activePlayerIds).filter(id => !eliminatedIds.has(id)).length;
+
+        if (survivorsCount <= 1 && isStageComplete) {
+            return '1st';
+        }
+
+        const sTier = survivorsCount > 1 ? `Top ${survivorsCount}` : '1st';
+        return `<span title="${sTier} Survivor">${sTier}*</span>`;
+    }
+
+    // Player ded in lastLossMatch
+    const roundIdx = lastLossMatch.round - 1;
+    const lossRound = rounds[roundIdx] || [];
+
+    if (!isDouble) {
+        // single elim
+        if (lastLossMatch.isThirdPlaceMatch) {
+            return '4th';
+        }
+
+        const champMatches = lossRound.filter(m => !m.isThirdPlaceMatch);
+        if (champMatches.length === 1) {
+            return '2nd';
+        }
+
+        const hadThirdPlace = rounds.some(r => r.some(m => m.isThirdPlaceMatch));
+        if (champMatches.length === 2 && !hadThirdPlace) {
+            return 'Top 4';
+        }
+
+        const tier = champMatches.length * 2;
+        return `Top ${tier}`;
+
+    } else {
+        // double elim
+        if (lastLossMatch.bracket === "grand_finals") {
+            return '2nd';
+        }
+
+        const losersMatchesInRound = lossRound.filter(m => m.bracket === "losers").length;
+        
+        // Losers finals (before GF)
+        const isGFNext = (roundIdx + 1 < rounds.length) && rounds[roundIdx + 1].some(m => m.bracket === "grand_finals");
+        if (losersMatchesInRound === 1 && isGFNext) {
+            return '3rd';
+        }
+        
+        // Losers semis (before Losers finals)
+        const isLFNext = (roundIdx + 1 < rounds.length) && rounds[roundIdx + 1].some(m => m.bracket === "losers" && rounds[roundIdx + 1].filter(x => x.bracket === "losers").length === 1);
+        if (losersMatchesInRound === 1 && isLFNext) {
+            return '4th';
+        }
+
+        const prevRound = rounds[roundIdx - 1];
+        const prevLosersCount = prevRound ? prevRound.filter(m => m.bracket === "losers").length : 0;
+        const isMinor = prevLosersCount === losersMatchesInRound || prevLosersCount === 0;
+
+        if (isMinor) {
+            return `Top ${losersMatchesInRound * 4}`;
+        } else {
+            return `Top ${losersMatchesInRound * 3}`;
+        }
+    }
+}
+
+//
 const HDR_VAL = 'font-size: 10px; color: var(--text-muted); font-weight: normal;';
 const HDR_HYPHEN = 'font-size: 10px; font-weight: normal;';
 
@@ -215,6 +366,16 @@ export const STANDINGS_COLUMNS = {
         style: "text-align: right; font-variant-numeric: tabular-nums;",
         headerStyle: "text-align: right;"
     },
+    placement: {
+        id: "placement",
+        name: "Tournament Placement",
+        getHeaderHTML: () => "Placement",
+        getValue: (p, recFormat, widths, tournament, stage) => {
+            return getPlayerPlacement(p, stage, tournament);
+        },
+        style: "text-align: right; font-weight: bold; color: var(--accent);",
+        headerStyle: "text-align: right;"
+    },
     elo: {
         id: "elo",
         name: "Starting ELO",
@@ -250,7 +411,7 @@ const TB_TO_COLUMN_MAP = {
 };
 
 // Auto-Resolver with Deduplication and Auto-Fill Toggle
-export function resolveStageColumns(stageConfig, tournamentSettings = {}, players = []) {
+export function resolveStageColumns(stageConfig, tournamentSettings = {}, players = [], tournament = null, currentStage = null) {
     const isAuto = stageConfig?.autoColumns !== false;
     const shouldAutoFill = stageConfig?.autoFillColumns !== false;
     const recFormat = tournamentSettings?.recordFormat || "wld";
@@ -313,7 +474,7 @@ export function resolveStageColumns(stageConfig, tournamentSettings = {}, player
         return {
             ...def,
             headerHTML: def.getHeaderHTML(recFormat, widths),
-            formatValue: (player) => def.getValue(player, recFormat, widths)
+            formatValue: (player) => def.getValue(player, recFormat, widths, tournament, currentStage)
         };
     }).filter(Boolean);
 }
