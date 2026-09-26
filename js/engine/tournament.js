@@ -30,7 +30,7 @@ export class Tournament {
             
             // Default to just Single Elim
             pipeline: [
-                { type: "single_elimination" }
+                { type: "single_elimination", tiebreakers: ["placement", "seed"] } //so dunno how it worked before but it broke at some point so adding this here to fix the issue of the default stage not having tiebreakers
             ],
 
             // UI STATE
