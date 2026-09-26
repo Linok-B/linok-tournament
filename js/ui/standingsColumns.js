@@ -1,4 +1,5 @@
 import { getIcon } from './icons.js';
+import { TB_DEFAULTS } from './tiebreakerModal.js';
 
 // Epsilon Number Sanitizers (Max 4 Decimals cuz I personally do at least that)
 export function formatMetricNumber(val) {
@@ -407,8 +408,17 @@ const TB_TO_COLUMN_MAP = {
     "buchholz": "buchholz",
     "median_buchholz": "median_buchholz",
     "elo": "elo",
-    "seed": "seed"
+    // "seed": "seed" // no seed cuz like genuine fodder in most cases, so no default adding it. Same reason why placement was never here to begin w/
 };
+
+// Base fallback columns (Ranked by whatever)
+const UNIVERSAL_FILL_PRIORITY = [
+    "match_record",
+    "game_record",
+    "game_differential",
+    "match_points",
+    "match_differential"
+];
 
 // Auto-Resolver with Deduplication and Auto-Fill Toggle
 export function resolveStageColumns(stageConfig, tournamentSettings = {}, players = [], tournament = null, currentStage = null) {
@@ -423,30 +433,32 @@ export function resolveStageColumns(stageConfig, tournamentSettings = {}, player
         // Manual Selection mode
         columnIds = [...(stageConfig?.customColumns || [])];
     } else {
-        // Auto-Order based on active tiebreakers
-        const tiebreakers = stageConfig?.tiebreakers || tournamentSettings?.tiebreakers || ["points"];
         const seen = new Set();
+        const stageType = stageConfig?.type || "single_elimination";
 
-        tiebreakers.forEach(tb => {
-            let colId = TB_TO_COLUMN_MAP[tb];
-            // Backwards compatibility for older stages set to display Game Points
-            if (tb === "points" && stageConfig?.pointsColumnDisplay === "game_points") {
+        const addCol = (tbRule) => {
+            if (columnIds.length >= maxCols) return;
+            let colId = TB_TO_COLUMN_MAP[tbRule];
+            if (tbRule === "points" && stageConfig?.pointsColumnDisplay === "game_points") {
                 colId = "game_points";
             }
-
             if (colId && STANDINGS_COLUMNS[colId] && !seen.has(colId)) {
                 seen.add(colId);
                 columnIds.push(colId);
             }
-        });
+        };
 
-        // Deduplication
-        columnIds = Array.from(new Set(columnIds));
+        // First host's active tiebreakers for this stage
+        const activeTiebreakers = stageConfig?.tiebreakers || tournamentSettings?.tiebreakers || ["points"];
+        activeTiebreakers.forEach(addCol);
 
-        // Auto-fill secondary columns if enabled and under budget
         if (shouldAutoFill && columnIds.length < maxCols) {
-            const fillPriority = ["match_record", "game_record", "game_differential", "buchholz"];
-            for (let fillId of fillPriority) {
+            // Seond format's native default tiebreakers
+            const formatDefaults = TB_DEFAULTS[stageType] || [];
+            formatDefaults.forEach(addCol);
+
+            // Third base Fallback slop
+            for (let fillId of UNIVERSAL_FILL_PRIORITY) {
                 if (columnIds.length >= maxCols) break;
                 if (!seen.has(fillId) && STANDINGS_COLUMNS[fillId]) {
                     seen.add(fillId);
