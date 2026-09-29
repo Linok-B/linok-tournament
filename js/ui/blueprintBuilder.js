@@ -199,6 +199,7 @@ export function initBlueprintBuilder(getTournament, onUpdate) {
                     if (!p.metadata) p.metadata = {};
                     p.metadata.dpwTS = playerTSMap[p.id] || 0;
                 });
+                dpwConfig.pairingAlgorithm = "blossom";
                 currentTournament.settings.pipeline.push(dpwConfig);
                 document.getElementById('blueprint-rounds').value = '';
                 document.getElementById('blueprint-cut').value = '';
@@ -211,6 +212,9 @@ export function initBlueprintBuilder(getTournament, onUpdate) {
 
         // Standard Formats
         const newStage = { type: type, tiebreakers: getPendingTiebreakers() };
+        if (type === "swiss") {
+            newStage.pairingAlgorithm = "blossom";
+        }
         
         if (!isNaN(rounds) && rounds > 0) newStage.maxRounds = rounds;
         if (!isNaN(cut) && cut > 0) newStage.cutToTop = cut;
@@ -241,6 +245,7 @@ export function initBlueprintBuilder(getTournament, onUpdate) {
             const stageConfig = currentTournament.settings.pipeline[index];
             
             openDPWSetupModal(currentTournament.players, stageConfig.maxRounds, stageConfig.cutToTop, async (newConfig, newPlayerTSMap) => {
+                if (stageConfig.pairingAlgorithm) newConfig.pairingAlgorithm = stageConfig.pairingAlgorithm;
                 currentTournament.settings.pipeline[index] = newConfig;
                 currentTournament.players.forEach(p => {
                     if (!p.metadata) p.metadata = {};
