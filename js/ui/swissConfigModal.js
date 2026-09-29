@@ -10,7 +10,7 @@ export function openSwissConfigModal(config, isDPW, onSave) {
     document.body.appendChild(overlay);
 
     const draft = {
-        algorithm: config.pairingAlgorithm || "mrv",
+        algorithm: config.pairingAlgorithm || "blossom",
         greedyMode: config.greedyMode || "backtracking",
         blossomMode: config.blossomMode || "topk",
         orderMode: config.orderMode || "fisher_yates",
@@ -60,10 +60,10 @@ export function openSwissConfigModal(config, isDPW, onSave) {
                 <div>
                     <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Pairing Algorithm</label>
                     <select id="cfg-algo" style="width:100%; padding:7px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); border-radius:4px;">
-                        <option value="mrv" title="Minimum Remaining Values" ${isMRV ? 'selected' : ''}>MRV</option>
-                        <option value="blossom" title="Edmonds' Blossom" ${isBlossom ? 'selected' : ''}>Blossom</option>
-                        <option value="greedy" title="Greedy sequential index scanner" ${isGreedy ? 'selected' : ''}>Greedy</option>
-                        <option value="dutch" title="Dutch System Article C3" ${isDutch ? 'selected' : ''}>Dutch System</option>
+                        <option value="blossom" title="Edmonds' Blossom" ${draft.algorithm === 'blossom' ? 'selected' : ''}>Blossom</option>
+                        <option value="mrv" title="Minimum Remaining Values" ${draft.algorithm === 'mrv' ? 'selected' : ''}>MRV</option>
+                        <option value="greedy" title="Greedy sequential index scanner" ${draft.algorithm === 'greedy' ? 'selected' : ''}>Greedy</option>
+                        <option value="dutch" title="Dutch System" ${draft.algorithm === 'dutch' ? 'selected' : ''}>Dutch System</option>
                     </select>
                 </div>
             
