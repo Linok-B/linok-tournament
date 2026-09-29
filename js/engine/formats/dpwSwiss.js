@@ -95,6 +95,8 @@ export function initStage(players, config) {
 }
 
 export async function advanceStage(stageData, config, allPlayers) {
+    // Uses explicitly configured algorithm, falling back to mrv only for legacy saves that lacked the property (I changed blossom to be the new default)
+    const algo = config.pairingAlgorithm || "mrv";
     const currentRoundNum = stageData.rounds.length;
     const lastRound = stageData.rounds[currentRoundNum - 1];
 
