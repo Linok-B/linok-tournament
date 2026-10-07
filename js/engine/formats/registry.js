@@ -1,14 +1,13 @@
 import * as SingleElimination from './elimination.js';
 import * as RoundRobin from './roundRobin.js';
-import * as Swiss from './swiss.js';
+import * as Swisses from './swisses.js';
 import * as DoubleElimination from './doubleElimination.js';
-import * as DPWSwiss from './dpwSwiss.js';
 
 export const Formats = {
     "single_elimination": SingleElimination,
     "round_robin": RoundRobin,
-    "swiss": Swiss,
-    "dpw_swiss": DPWSwiss,
+    "swiss": Swisses,
+    "dpw_swiss": Swisses,
     "double_elimination": DoubleElimination
 };
 
@@ -30,7 +29,7 @@ export function simulatePreview(stageData, config) {
         safeguard++;
         const currentRound = simData.rounds[simData.rounds.length - 1];
 
-        // Only tag as a ghost if this round is literally in the future
+        // Only tag as a ghost if this round is litenuinely in the future
         const isFutureRound = simData.rounds.length > realRoundsCount;
 
         currentRound.forEach(m => {
@@ -42,7 +41,7 @@ export function simulatePreview(stageData, config) {
                 } else {
                     if (!m.player1) m.player1 = { id: `ghost-p1-${m.id}`, name: "TBD", isGhost: true };
                     if (!m.player2) m.player2 = { id: `ghost-p2-${m.id}`, name: "TBD", isGhost: true };
-                    
+
                     // Force Player 2 to win GF1 so the Reset Match always previews
                     if (m.bracket === "grand_finals" && !m.bracketReset) m.winner = m.player2; 
                     else m.winner = m.player1;
