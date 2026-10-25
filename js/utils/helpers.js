@@ -26,3 +26,39 @@ export function formatDuration(val) {
     if (val < 86400000) return `${(val / 3600000).toFixed(2)} hours`;
     return `${(val / 86400000).toFixed(2)} days`;
 }
+
+// Parses "Name, ELO"
+export function parsePlayerLine(line, defaultElo = 1200) {
+    let nameChars = [];
+    let delimiterIndex = -1;
+    let escaped = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (escaped) {
+            nameChars.push(char);
+            escaped = false;
+            continue;
+        }
+        if (char === '\\') {
+            escaped = true;
+            continue;
+        }
+        // Unescaped comma or tab acts as the delimiter
+        if (char === ',' || char === '\t') {
+            delimiterIndex = i;
+            break;
+        }
+        nameChars.push(char);
+    }
+    const parsedName = nameChars.join('').trim();
+    let parsedElo = parseInt(defaultElo, 10) || 1200;
+    if (delimiterIndex !== -1) {
+        const rest = line.slice(delimiterIndex + 1).trim();
+        const customElo = parseInt(rest, 10);
+        if (!isNaN(customElo)) {
+            parsedElo = customElo;
+        }
+    }
+    return { name: parsedName, elo: parsedElo };
+}
