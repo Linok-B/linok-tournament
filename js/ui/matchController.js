@@ -5,6 +5,7 @@ import { exportTournamentJSON } from '../store/export.js';
 
 export function initMatchController(getTournament, onUpdate) {
     const container = document.getElementById('player-list-container');
+    const standingsContainer = document.getElementById('standings-container');
     if (!container) return;
 
     // Master click delegator for the tournament display panel
@@ -247,4 +248,24 @@ export function initMatchController(getTournament, onUpdate) {
         
         await saveTournamentLocally(currentTournament);
     });
+
+    // Standings leaderboard listener for rename player clicks
+    if (standingsContainer) {
+        standingsContainer.addEventListener('click', async (e) => {
+            const btn = e.target && e.target.closest('.btn-rename-player');
+            if (!btn) return;
+
+            const currentTournament = getTournament();
+            const playerId = btn.getAttribute('data-id');
+            const player = currentTournament.players.find(p => p.id === playerId);
+            if (!player) return;
+
+            const newName = prompt("Rename player:", player.name);
+            if (newName && newName.trim() && newName.trim() !== player.name) {
+                currentTournament.renamePlayer(playerId, newName.trim());
+                await saveTournamentLocally(currentTournament);
+                if (typeof onUpdate === 'function') onUpdate();
+            }
+        });
+    }
 }
