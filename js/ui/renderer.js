@@ -835,10 +835,12 @@ export function renderStandings(tournament, containerId) {
             }
         }
 
-        // build name cell with inline rename pencil button
+        // build name cell w/ hover pencil icon to left of name
         const nameCellHTML = `
-            <span style="max-width: 125px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</span>
-            <button class="btn-rename-player" data-id="${player.id}" title="Rename Player" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 0 4px; opacity: 0.6; display: inline-flex; align-items: center; vertical-align: middle;">${getIcon('edit', 12)}</button>
+            <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+                <button class="btn-rename-player" data-id="${player.id}" title="Rename Player" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 0; display: inline-flex; align-items: center; flex-shrink: 0;">${getIcon('edit', 12)}</button>
+                <span style="max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</span>
+            </div>
         `;
 
         // build array of new cell strings for this row
@@ -853,6 +855,7 @@ export function renderStandings(tournament, containerId) {
         if (!cached) {
             // (new) row creation
             const tr = document.createElement('tr');
+            tr.className = 'standings-row';
             tr.style.cssText = "border-bottom: 1px solid var(--border-main);";
 
             // rank Cell
