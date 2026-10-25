@@ -799,7 +799,7 @@ export function renderStandings(tournament, containerId) {
         thead.innerHTML = `
             <tr style="border-bottom: 2px solid var(--accent); vertical-align: top;">
                 <th style="padding: 10px 0 10px 10px; width: 60px; vertical-align: top;">Rank</th>
-                <th style="padding: 10px; vertical-align: top;">Name</th>
+                <th style="padding: 10px; width: 160px; min-width: 160px; max-width: 160px; box-sizing: border-box; vertical-align: top;">Name</th>
                 ${activeColumns.map(col => `<th style="padding: 10px; vertical-align: top; ${col.headerStyle || ''}">${col.headerHTML}</th>`).join('')}
             </tr>
         `;
@@ -844,7 +844,7 @@ export function renderStandings(tournament, containerId) {
         `;
 
         const nameCellHTML = `
-            <span style="max-width: 150px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</span>
+            <span style="display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</span>
         `;
 
         // build array of new cell strings for this row
@@ -870,7 +870,7 @@ export function renderStandings(tournament, containerId) {
 
             // name Cell
             const tdName = document.createElement('td');
-            tdName.style.cssText = "padding: 10px; max-width: 160px; white-space: nowrap;";
+            tdName.style.cssText = "padding: 10px; width: 160px; min-width: 160px; max-width: 160px; box-sizing: border-box; white-space: nowrap;";
             tdName.innerHTML = newCells[1];
             tr.appendChild(tdName);
 
