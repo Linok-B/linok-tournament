@@ -215,6 +215,22 @@ input[type="number"] {
     opacity: 1;
 }
 
+
+/* Standings table rename icon hidden, reveals on row hover */
+.standings-row .btn-rename-player {
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.standings-row:hover .btn-rename-player {
+    opacity: 0.7;
+}
+
+.standings-row .btn-rename-player:hover {
+    opacity: 1;
+}
+
+
 /* PLAYER CARDS & LIST COMPONENTS */
 
 .player-card {
