@@ -798,7 +798,7 @@ export function renderStandings(tournament, containerId) {
         const thead = document.createElement('thead');
         thead.innerHTML = `
             <tr style="border-bottom: 2px solid var(--accent); vertical-align: top;">
-                <th style="padding: 10px; width: 60px; vertical-align: top;">Rank</th>
+                <th style="padding: 10px 0 10px 10px; width: 60px; vertical-align: top;">Rank</th>
                 <th style="padding: 10px; vertical-align: top;">Name</th>
                 ${activeColumns.map(col => `<th style="padding: 10px; vertical-align: top; ${col.headerStyle || ''}">${col.headerHTML}</th>`).join('')}
             </tr>
@@ -864,7 +864,7 @@ export function renderStandings(tournament, containerId) {
 
             // rank Cell
             const tdRank = document.createElement('td');
-            tdRank.style.cssText = "padding: 10px; width: 60px; box-sizing: border-box;";
+            tdRank.style.cssText = "padding: 10px 0 10px 10px; width: 60px; box-sizing: border-box;";
             tdRank.innerHTML = newCells[0];
             tr.appendChild(tdRank);
 
