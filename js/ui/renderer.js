@@ -37,16 +37,17 @@ export function renderPlayerList(players, containerId) {
         card.innerHTML = `
             <div class="drag-handle" style="color: var(--accent); font-size: 16px; font-weight: bold; cursor: grab; padding: 5px; flex-shrink: 0;">⋮⋮</div>
             
-            <!-- This container GROWS to fill all available space! -->
             <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0;">
                 <strong title="${escapeHTML(player.name)}" style="color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <!-- ONLY THE NUMBER GOES IN THIS SPAN! -->
                     <span class="seed-number" style="color: var(--text-muted); margin-right: 5px;">${player.seed}</span>. ${escapeHTML(player.name)}
                 </strong>
                 <span style="font-size: 12px; color: var(--text-muted); flex-shrink: 0;">(ELO: ${player.elo})</span>
             </div>
             
-            <button class="btn-remove-player" data-id="${player.id}" style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; flex-shrink: 0;">X</button>
+            <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0;">
+                <button class="btn-rename-player" data-id="${player.id}" title="Rename Player" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">${getIcon('edit', 14)}</button>
+                <button class="btn-remove-player" data-id="${player.id}" style="background-color: var(--danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">X</button>
+            </div>
         `;
         
         container.appendChild(card);
@@ -834,10 +835,16 @@ export function renderStandings(tournament, containerId) {
             }
         }
 
+        // build name cell with inline rename pencil button
+        const nameCellHTML = `
+            <span style="max-width: 125px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</span>
+            <button class="btn-rename-player" data-id="${player.id}" title="Rename Player" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 0 4px; opacity: 0.6; display: inline-flex; align-items: center; vertical-align: middle;">${getIcon('edit', 12)}</button>
+        `;
+
         // build array of new cell strings for this row
         const newCells = [
             `<b>${currentDisplayRank}</b>`,
-            escapeHTML(player.name),
+            nameCellHTML,
             ...activeColumns.map(col => col.formatValue(player))
         ];
 
@@ -856,8 +863,7 @@ export function renderStandings(tournament, containerId) {
 
             // name Cell
             const tdName = document.createElement('td');
-            tdName.style.cssText = "padding: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;";
-            tdName.title = escapeHTML(player.name);
+            tdName.style.cssText = "padding: 10px; max-width: 160px; white-space: nowrap;";
             tdName.innerHTML = newCells[1];
             tr.appendChild(tdName);
 
@@ -884,7 +890,6 @@ export function renderStandings(tournament, containerId) {
             // diff name
             if (cached.cells[1] !== newCells[1]) {
                 tdElements[1].innerHTML = newCells[1];
-                tdElements[1].title = escapeHTML(player.name);
                 cached.cells[1] = newCells[1];
             }
 
