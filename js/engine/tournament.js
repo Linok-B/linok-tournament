@@ -495,4 +495,30 @@ export class Tournament {
         this.recalculateAllStats();
         return { success: true };
     }
+
+    renamePlayer(playerId, newName) {
+        const player = this.players.find(p => p.id === playerId);
+        if (!player || !newName || !newName.trim()) return false;
+
+        player.name = newName.trim();
+
+        // Synchronize name across all past, present, and future matches in all stages. Note to self: mayhaps consider getting settings so ts may instead happen only per stare or smth
+        this.stages.forEach(stage => {
+            stage.data.rounds?.forEach(round => {
+                round.forEach(match => {
+                    if (match.player1 && match.player1.id === playerId) {
+                        match.player1.name = player.name;
+                    }
+                    if (match.player2 && match.player2.id === playerId) {
+                        match.player2.name = player.name;
+                    }
+                    if (match.winner && match.winner.id === playerId) {
+                        match.winner.name = player.name;
+                    }
+                });
+            });
+        });
+
+        return true;
+    }
 }
