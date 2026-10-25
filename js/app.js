@@ -12,6 +12,7 @@ import { initSettingsModal, applyUITheme, updateTitle } from './ui/settingsModal
 import { renderBlueprintList, initBlueprintBuilder } from './ui/blueprintBuilder.js';
 import { initMatchController } from './ui/matchController.js';
 import { initStorageGuard, checkStorageHealth } from './ui/storageGuard.js';
+import { parsePlayerLine } from './utils/helpers.js';
 
 
 // Auto-inject SVGs into the HTML
@@ -91,13 +92,17 @@ document.getElementById('btn-add-player').addEventListener('click', async () => 
     const rawNames = nameInput.value;
     if (rawNames.trim() === '') return;
 
-    // Split by newlines, trim spaces, and filter out empty lines
-    const names = rawNames.split('\n').map(n => n.trim()).filter(n => n !== '');
+    // Split by newlines, trim, filter out empty lines
+    const lines = rawNames.split('\n').map(l => l.trim()).filter(l => l !== '');
+    const defaultElo = parseInt(eloInput.value, 10) || 1200;
     
     let lastAddedPlayer = null;
 
-    for (let name of names) {
-        const added = currentTournament.addPlayer(name, eloInput.value);
+    for (let line of lines) {
+        const { name, elo } = parsePlayerLine(line, defaultElo);
+        if (!name) continue;
+
+        const added = currentTournament.addPlayer(name, elo);
         if (!added) {
             alert("Cannot add players after the tournament has started!");
             return;
@@ -110,13 +115,11 @@ document.getElementById('btn-add-player').addEventListener('click', async () => 
     
     // Capture scroll before redraw
     const sidebar = document.querySelector('.controls-panel');
-    const currentScroll = sidebar.scrollTop;
+    const currentScroll = sidebar ? sidebar.scrollTop : 0;
     
-    // Redraw
     updateUI();
     
-    // Restore scroll, then smoothly scroll the very last added player into view (will it work, or will it remain broken... who knows! It might now cuz hardcoded magic number goes brr)
-    sidebar.scrollTop = currentScroll;
+    if (sidebar) sidebar.scrollTop = currentScroll;
     
     if (lastAddedPlayer) {
         setTimeout(() => {
@@ -125,6 +128,14 @@ document.getElementById('btn-add-player').addEventListener('click', async () => 
                 newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }, 50); // My 50ms hardcoded magic number and I for the win!
+    }
+});
+
+// Ctrl (or cmd) + Enter shortcut
+document.getElementById('player-name').addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btn-add-player').click();
     }
 });
 
