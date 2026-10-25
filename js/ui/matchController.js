@@ -198,6 +198,22 @@ export function initMatchController(getTournament, onUpdate) {
                 modal.style.display = 'none';
             };
         }
+
+        // Handle rename player button
+        if (e.target && e.target.closest('.btn-rename-player')) {
+            const btn = e.target.closest('.btn-rename-player');
+            const playerId = btn.getAttribute('data-id');
+            const player = currentTournament.players.find(p => p.id === playerId);
+            if (!player) return;
+
+            const newName = prompt("Rename player:", player.name);
+            if (newName && newName.trim() && newName.trim() !== player.name) {
+                currentTournament.renamePlayer(playerId, newName.trim());
+                await saveTournamentLocally(currentTournament);
+                if (typeof onUpdate === 'function') onUpdate();
+            }
+        }
+        
     });
 
     // Handle Custom Drag-and-Drop List Reordering
