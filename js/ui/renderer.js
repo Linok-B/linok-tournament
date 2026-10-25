@@ -835,17 +835,21 @@ export function renderStandings(tournament, containerId) {
             }
         }
 
-        // build name cell w/ hover pencil icon to left of name
-        const nameCellHTML = `
-            <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+        // Rank cell w/ edit button on the right
+        const rankCellHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; min-width: 0; gap: 4px;">
+                <b style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="${currentDisplayRank}">${currentDisplayRank}</b>
                 <button class="btn-rename-player" data-id="${player.id}" title="Rename Player" style="background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 0; display: inline-flex; align-items: center; flex-shrink: 0;">${getIcon('edit', 12)}</button>
-                <span style="max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</span>
             </div>
+        `;
+
+        const nameCellHTML = `
+            <span style="max-width: 150px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(player.name)}">${escapeHTML(player.name)}</span>
         `;
 
         // build array of new cell strings for this row
         const newCells = [
-            `<b>${currentDisplayRank}</b>`,
+            rankCellHTML,
             nameCellHTML,
             ...activeColumns.map(col => col.formatValue(player))
         ];
@@ -860,7 +864,7 @@ export function renderStandings(tournament, containerId) {
 
             // rank Cell
             const tdRank = document.createElement('td');
-            tdRank.style.padding = '10px';
+            tdRank.style.cssText = "padding: 10px; width: 60px; box-sizing: border-box;";
             tdRank.innerHTML = newCells[0];
             tr.appendChild(tdRank);
 
