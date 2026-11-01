@@ -66,7 +66,54 @@ function renderTBList(targetArray) {
     });
 }
 
+
+function injectTiebreakerModalHTML() {
+    if (document.getElementById('tiebreaker-modal')) return;
+
+    const html = `
+    <!-- TIEBREAKER BUILDER MODAL -->
+    <div id="tiebreaker-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; width: 400px; border: 2px solid var(--accent);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; color: var(--accent); display:flex; align-items:center; gap:8px;">${getIcon('scale', 24)} Tiebreaker Builder</h2>
+                <button id="btn-close-tb-builder" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
+            </div>
+            
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 0;">Rules evaluate from top to bottom. If players remain tied after all rules, they will share a rank.</p>
+            
+            <div id="tb-active-list" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; min-height: 100px;">
+                <!-- Filled by JS -->
+            </div>
+
+            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <select id="tb-add-select" style="flex-grow: 1; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                    <option value="placement">Tournament Placement (Elimination)</option>
+                    <option value="points">Match Points</option>
+                    <option value="game_points">Game Points</option>
+                    <option value="dpw_rating">DPW Rating</option>
+                    <option value="team_score">Team Score (DPW TS)</option>
+                    <option value="match_differential">Match W-L Differential</option>
+                    <option value="game_differential">Game W-L Differential</option>
+                    <option value="head_to_head">Head-to-Head</option>
+                    <option value="h2h_game_diff">H2H Game Differential</option>
+                    <option value="buchholz">Buchholz (Schedule Strength)</option>
+                    <option value="median_buchholz">Median Buchholz</option>
+                    <option value="elo">Starting ELO / Rating</option>
+                    <option value="seed">Registration Seed</option>
+                </select>
+                <button id="btn-tb-add" style="background: var(--success); color: var(--bg-dark); border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold;">+ Add</button>
+            </div>
+
+            <button id="btn-save-tb" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">Save Tiebreakers</button>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
 export function initTiebreakerModal() {
+    injectTiebreakerModalHTML();
     const tbModal = document.getElementById('tiebreaker-modal');
     const bpSelect = document.getElementById('blueprint-type');
 
