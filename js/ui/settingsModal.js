@@ -1,4 +1,170 @@
+import { getIcon } from './icons.js';
 import { saveTournamentLocally, getAppMeta, setAppMeta } from '../store/localData.js';
+
+function injectSettingsModalHTML() {
+    if (document.getElementById('settings-modal')) return;
+
+    const html = `
+    <!-- TOURNAMENT SETTINGS MODAL -->
+    <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; width: 400px; border: 2px solid var(--accent); max-height: 90vh; overflow-y: auto; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: var(--accent); display:flex; align-items:center; gap:8px;">${getIcon('gear', 24)} Global Settings</h2>
+                <button id="btn-close-settings" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
+            </div>
+            
+            <!-- Global Info -->
+            <label style="font-size: 12px; color: var(--text-muted);">Tournament Name</label>
+            <input type="text" id="setting-name" placeholder="Untitled Tournament" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 15px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+            
+            <!-- Match Points -->
+            <h4 style="margin: 0 0 5px 0; color: var(--text-main);">Match Points</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Win</label>
+                    <input type="number" id="setting-pts-win" value="3" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Draw</label>
+                    <input type="number" id="setting-pts-draw" value="1" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Loss</label>
+                    <input type="number" id="setting-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                </div>
+            </div>
+
+            <!-- Game Points -->
+            <h4 style="margin: 15px 0 5px 0; color: var(--text-main);">Game Points</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Win</label>
+                    <input type="number" id="setting-game-pts-win" value="3" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Draw</label>
+                    <input type="number" id="setting-game-pts-draw" value="1" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Loss</label>
+                    <input type="number" id="setting-game-pts-loss" value="0" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                </div>
+            </div>
+
+            <!-- Record Format -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Record Format</label>
+                    <select id="setting-record-format" style="width: 100%; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                        <option value="wld">W-L-D (Standard)</option>
+                        <option value="wdl">W-D-L (TCG)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Appearance Settings -->
+            <h4 style="margin: 0 0 10px 0; color: var(--text-main);">Appearance</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Layout</label>
+                    <select id="setting-ui-layout" style="width: 100%; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                        <option value="modern">Modern (Card UI)</option>
+                        <option value="classic">Classic (Flat UI)</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Color Theme</label>
+                    <select id="setting-ui-theme" style="width: 100%; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main);">
+                        <option value="modern">Catppuccin (Blue)</option>
+                        <option value="arcade">Arcade (Dark/Magenta)</option>
+                        <option value="custom">Custom Colors...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Custom Color Pickers -->
+            <div id="setting-custom-colors" style="display: none; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
+                <div>
+                    <label style="font-size: 10px; color: var(--text-muted);">Base Dark</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-bg-dark"></div>
+                </div>
+                <div>
+                    <label style="font-size: 10px; color: var(--text-muted);">Panels</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-bg-panel"></div>
+                </div>
+                <div>
+                    <label style="font-size: 10px; color: var(--text-muted);">Bracket BG</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-bg-bracket"></div>
+                </div>
+                
+                <div>
+                    <label style="font-size: 10px; color: var(--text-muted);">Main Text</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-text-main"></div>
+                </div>
+                <div>
+                    <label style="font-size: 10px; color: var(--text-muted);">Muted Text</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-text-muted"></div>
+                </div>
+                
+                <div>
+                    <label style="font-size: 10px; color: var(--text-muted);">Accent</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-accent"></div>
+                </div>
+                <div>
+                    <label style="font-size: 10px; color: var(--text-muted);">Win/Check</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-success"></div>
+                </div>
+                <div>
+                    <label style="font-size: 10px; color: var(--text-muted);">Loss/Drop</label>
+                    <div class="color-picker-wrapper"><input type="color" id="color-danger"></div>
+                </div>
+                <!-- Reset Button -->
+                <div style="display:flex; flex-direction:column; justify-content:flex-end;">
+                    <button id="btn-reset-colors" style="width:100%; height:30px; box-sizing:border-box; background:transparent; color:var(--text-muted); border:1px solid var(--border-main); border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; transition:0.2s; display:flex; justify-content:center; align-items:center; padding:0;">↺ Reset</button>
+                </div>
+            </div>
+
+            <!-- Toggles -->
+            <h4 style="margin: 0 0 10px 0; color: var(--text-main);">Tournament Rules</h4>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-randomize">
+                    <span>Randomize Seeds on Start</span>
+                </label>
+                <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-third-place">
+                    <span>Generate 3rd Place Match (Elimination)</span>
+                </label>
+                <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-full-bracket">
+                    <span>Show Full Bracket Preview</span>
+                </label>
+                <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-hide-byes">
+                    <span>Hide 'Bye' Matches Visually</span>
+                </label>
+                <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-show-seeds">
+                    <span>Show Player Seeds in Bracket</span>
+                </label>
+                <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-preload-wasm">
+                    <span>Preload WebAssembly Engines</span>
+                </label>
+                <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-autosave-library">
+                    <span>Auto-Save Active Tournament to Library</span>
+                </label>
+            </div>
+            
+            <button id="btn-save-settings" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer;">Save Settings</button>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
 
 // Calculates perceived brightness (0 to 255) of a hex color
 function getHexBrightness(hex) {
@@ -59,6 +225,7 @@ export function applyUITheme(tournament) {
 }
 
 export function initSettingsModal(getTournament, onSaveCallback) {
+    injectSettingsModalHTML();
     const settingsModal = document.getElementById('settings-modal');
 
     // Open Settings Modal
