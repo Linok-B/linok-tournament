@@ -134,44 +134,6 @@
         </main>
     </div>
 
-    <!-- WARNING MODAL (HIDDEN) -->
-    <div id="warning-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; max-width: 500px; border: 2px solid var(--danger); text-align: center;">
-            <h2 id="warning-modal-title" style="color: var(--danger); margin-top: 0; display: flex; justify-content: center; align-items: center; gap: 10px;">
-                <span data-icon="warning"></span> DESTRUCTIVE ACTION
-            </h2>
-            <p id="warning-modal-text">Editing this match will permanently delete all rounds and stages that happened after it.</p>
-            <p>It is highly recommended to Export a backup before continuing.</p>
-            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
-                <button id="modal-btn-cancel" style="background: var(--border-main); color: var(--text-main); border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancel</button>
-                <button id="modal-btn-export" style="background: var(--success); color: var(--text-on-accent); border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; display:flex; align-items:center; gap:8px;"><span data-icon="save"></span> Backup Data</button>
-                <button id="modal-btn-confirm" style="background: var(--danger); color: var(--text-on-accent); border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Delete & Edit</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- END STAGE EARLY MODAL -->
-    <div id="end-stage-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; max-width: 500px; border: 2px solid var(--accent); text-align: center;">
-            <h2 style="color: var(--accent); margin-top: 0; display:flex; justify-content:center; align-items:center; gap:8px;"><span data-icon="stop" data-size="28" style="fill:currentColor;"></span> FORCE END STAGE</h2>
-            <p>You have unfinished matches in the current round. How do you want to handle them?</p>
-            
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 25px;">
-                <button id="modal-btn-end-rollback" style="background: var(--danger); color: var(--text-on-accent); padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
-                    <strong>Rollback Round</strong><br><small>Delete ALL matches in this current round. Only use previous rounds for standings.</small>
-                </button>
-                
-                <button id="modal-btn-end-tie" style="background: var(--warning); color: var(--text-on-accent); padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
-                    <strong>Force Ties (TCG Rules)</strong><br><small>Keep submitted scores. Force all unfinished matches to be a 0-0 Tie.</small>
-                </button>
-                
-                <button id="modal-btn-end-cancel" style="background: var(--border-main); color: var(--text-main); padding: 10px; border-radius: 4px; border: none; cursor: pointer;">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- TOURNAMENT SETTINGS MODAL -->
     <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
         <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; width: 400px; border: 2px solid var(--accent); max-height: 90vh; overflow-y: auto; box-sizing: border-box;">
