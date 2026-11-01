@@ -111,29 +111,4 @@ export function initStaticModals(getTournamentName) {
             exportBracketSVG(name);
         }
     });
-    
-    // smh had to actually implement these instead of my 0.8 sloppy trick 
-    // smh had to even make each thing own themselves
-    // Safely close modals on outside click
-    // 1. Warning Modal
-    document.getElementById('warning-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) e.target.style.display = 'none';
-    });
-
-    // 2. End Stage Modal
-    document.getElementById('end-stage-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) e.target.style.display = 'none';
-    });
-
-    // 3. Global Settings Modal
-    document.getElementById('settings-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) e.target.style.display = 'none';
-    });
-
-    // 4. Tiebreaker Modal + mem purge
-    document.getElementById('tiebreaker-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) {
-            document.getElementById('btn-close-tb-builder')?.click();
-        }
-    });
 }
