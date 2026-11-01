@@ -143,6 +143,13 @@ export function initTiebreakerModal() {
         tbModal.style.display = 'none';
     });
 
+    // Close on outside click
+    tbModal.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            document.getElementById('btn-close-tb-builder').click();
+        }
+    });
+    
     // Save Modal
     document.getElementById('btn-save-tb').addEventListener('click', () => {
         if (window.activeEditTiebreakersCallback) {
