@@ -3,7 +3,33 @@ import { openSwissConfigModal } from './swissConfigModal.js';
 import { openStandingsColumnsModal } from './standingsColumns.js';
 import { saveTournamentLocally } from '../store/localData.js';
 
+function injectStageSettingsModalHTML() {
+    if (document.getElementById('stage-settings-modal')) return;
+
+    const html = `
+    <!-- STAGE SETTINGS MODAL -->
+    <div id="stage-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.81); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); padding: 30px; border-radius: 8px; width: 400px; border: 2px solid var(--accent); max-height: 90vh; overflow-y: auto; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 id="stage-settings-title" style="margin: 0; color: var(--accent); display:flex; align-items:center; gap:8px;">${getIcon('gear', 24)} Stage Settings</h2>
+                <button id="btn-close-stage-settings" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; font-weight: bold;">X</button>
+            </div>
+            
+            <div id="stage-settings-fields" style="display: flex; flex-direction: column; gap: 15px;">
+            
+            </div>
+            
+            <button id="btn-save-stage-settings" style="width: 100%; background: var(--accent); color: var(--bg-dark); font-weight: bold; padding: 10px; border-radius: 4px; border: none; cursor: pointer; margin-top: 20px;">Save Settings</button>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+
 export function openStageSettingsModal(stageIndex, tournament, onComplete) {
+    injectStageSettingsModalHTML();
     const modal = document.getElementById('stage-settings-modal');
     const fieldsContainer = document.getElementById('stage-settings-fields');
     
