@@ -276,6 +276,13 @@ export function initSettingsModal(getTournament, onSaveCallback) {
         settingsModal.style.display = 'none';
     });
 
+    // Close on outside click
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            settingsModal.style.display = 'none';
+        }
+    });
+
     // Theme selector change
     document.getElementById('setting-ui-theme').addEventListener('change', (e) => {
         document.getElementById('setting-custom-colors').style.display = (e.target.value === "custom") ? "grid" : "none";
