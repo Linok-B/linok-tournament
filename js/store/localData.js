@@ -227,20 +227,32 @@ function isQuotaError(err) {
 export async function ensureEmergencyBuffer() {
     try {
         const existing = await performTransaction('app_meta', 'readonly', (store) => store.get('emergency_buffer'));
-        if (!existing) {
-            // Pre-allocate dummy bytes
-            const dummyBytes = new Uint8Array(BUFFER_SIZE_KB * 1024);
+        
+        // Detects if buffer is missing OR is the old zero-filled buffer I had to replace cuz it was compressed and thus not consuming the 1MiB of memory
+        const isLegacy = existing && (!existing.v || existing.v < 2); // alright twin u gotta remember to change this number each time you update ts
+
+        if (!existing || isLegacy) {
+            const totalBytes = BUFFER_SIZE_KB * 1024;
+            const dummyBytes = new Uint8Array(totalBytes);
+            
+            // Fill with high-entropy random data so it cannot be compressed
+            const chunkSize = 65536; // 64 KiB web crypto limit accoring to google
+            for (let i = 0; i < totalBytes; i += chunkSize) {
+                crypto.getRandomValues(dummyBytes.subarray(i, i + chunkSize));
+            }
+
             await performTransaction('app_meta', 'readwrite', (store) => {
-                return store.put({ key: 'emergency_buffer', data: dummyBytes, allocatedAt: Date.now() });
+                return store.put({ 
+                    key: 'emergency_buffer', 
+                    v: 2, // Version flag // And this number too
+                    data: dummyBytes, 
+                    allocatedAt: Date.now() 
+                });
             });
-            // console.log(`[Storage] Emergency buffer armed (${BUFFER_SIZE_KB} KiB allocated).`);
         }
     } catch (err) {
-        if (isQuotaError(err)) {
-            // console.warn('[Storage] Quota too tight to arm emergency buffer.');
-        } else {
-            // console.error('[Storage] Error ensuring emergency buffer:', err);
-        }
+        // Silently fails if quota is full (you're fucked regardless) or DB is temporarily locked (sandboxed env, for example)
+        // storageGuard.js will handle alerting the user if disk space is dangerously low anyway
     }
 }
 
