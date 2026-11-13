@@ -33,42 +33,65 @@ export function openSearchFallbackModal({ limitType, n, players, candidatePairs,
 
     function renderPrompt() {
         const isTimeLimit = limitType === "timeout";
-        const limitMsg = isTimeLimit 
-            ? "The matchmaking search exceeded its allocated Time Limit before finding a CDCL-safe 1-factorable pairing."
-            : "The matchmaking search hit its Maximum Candidate Limit without finding a CDCL-safe 1-factorable pairing.";
+        const isInconclusive = limitType === "inconclusive";
+        
+        let title = "PAIRING VERIFICATION LIMIT";
+        let limitMsg = "The matchmaking engine hit its candidate limit before finding a certified 1-factorable pairing.";
+        
+        if (isTimeLimit) {
+            title = "TIME LIMIT EXCEEDED";
+            limitMsg = "The matchmaking search exceeded its allocated time allowance.";
+        } else if (isInconclusive) {
+            title = "PAIRING VERIFICATION INCONCLUSIVE";
+            limitMsg = "Candidate was identified, but could not be factor-proven within the verification budget.";
+        }
 
         modal.innerHTML = `
             <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:12px;">
                 <span style="color:var(--warning); display:flex; align-items:center;">${getIcon('warning', 28)}</span>
-                <h2 style="margin:0; color:var(--warning); text-align:center;">${isTimeLimit ? 'TIME LIMIT EXCEEDED' : 'CANDIDATE LIMIT HIT'}</h2>
+                <h2 style="margin:0; color:var(--warning); text-align:center;">${title}</h2>
             </div>
             
             <p style="font-size:13px; line-height:1.5; text-align:center; color:var(--text-main); margin-top:0;">${limitMsg}</p>
             <p style="font-size:12px; color:var(--text-muted); text-align:center;">How would you like to proceed with Round ${currentRound}?</p>
 
             <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
-                <button id="btn-fallback-resume" style="background:var(--accent); color:var(--text-on-accent); padding:12px; border-radius:4px; border:none; cursor:pointer; font-weight:bold; text-align:left;">
-                    <strong>1. Continue Searching</strong><br>
-                    <small style="font-weight:normal; opacity:0.85;">Allow more candidate checks or computation time to find a factorable pairing.</small>
-                </button>
-
+                <!-- Option 1: Accept Doomed / Inconclusive Candidate -->
                 <button id="btn-fallback-accept" style="background:var(--warning); color:var(--text-on-accent); padding:12px; border-radius:4px; border:none; cursor:pointer; font-weight:bold; text-align:left;">
-                    <strong>2. Proceed with Best Available Pairing</strong><br>
-                    <small style="font-weight:normal; opacity:0.85;">Uses the highest-ranked matching found (CDCL safety will enter passive observation mode).</small>
+                    <strong>1. Accept Candidate 1</strong><br>
+                    <small style="font-weight:normal; opacity:0.85;">Proceeds with the highest-ranked candidate found. Strict lookahead verification is bypassed for future rounds.</small>
                 </button>
 
+                <!-- Option 2: Skip to Next Candidate -->
+                <button id="btn-fallback-skip" style="background:var(--danger); color:var(--text-on-accent); padding:12px; border-radius:4px; border:none; cursor:pointer; font-weight:bold; text-align:left;">
+                    <strong>2. Try Next Candidate</strong><br>
+                    <small style="font-weight:normal; opacity:0.85;">Rejects Candidate and forces the search engine to evaluate the next Candidate.</small>
+                </button>
+
+                <!-- Option 3: Continue / More Budget -->
+                <button id="btn-fallback-resume" style="background:var(--accent); color:var(--text-on-accent); padding:12px; border-radius:4px; border:none; cursor:pointer; font-weight:bold; text-align:left;">
+                    <strong>3. Allocate More Budget and Time</strong><br>
+                    <small style="font-weight:normal; opacity:0.85;">Grant additional budget.</small>
+                </button>
+
+                <!-- Option 4: Manual Board -->
                 <button id="btn-fallback-manual" style="background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-main); padding:12px; border-radius:4px; cursor:pointer; font-weight:bold; text-align:left;">
-                    <strong>3. Manually Configure Round Pairings</strong><br>
-                    <small style="font-weight:normal; opacity:0.85; color:var(--text-muted);">Open a drag-and-drop pairing board pre-populated with the best pairing.</small>
+                    <strong>4. Manually Configure Round Pairings</strong><br>
+                    <small style="font-weight:normal; opacity:0.85; color:var(--text-muted);">Open a board pre-populated with Candidate 1.</small>
                 </button>
             </div>
         `;
 
-        document.getElementById('btn-fallback-resume').onclick = renderResumeModal;
         document.getElementById('btn-fallback-accept').onclick = () => {
             cleanup();
             onAcceptDoomed(candidatePairs);
         };
+        document.getElementById('btn-fallback-skip').onclick = () => {
+            cleanup();
+            if (typeof onSkipCandidate === 'function') onSkipCandidate();
+            else onAcceptDoomed(candidatePairs);
+        };
+        document.getElementById('btn-fallback-resume').onclick = renderResumeModal;
         document.getElementById('btn-fallback-manual').onclick = renderManualBoard;
     }
 
