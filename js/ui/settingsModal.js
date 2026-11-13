@@ -152,6 +152,10 @@ function injectSettingsModalHTML() {
                     <span>Preload WebAssembly Engines</span>
                 </label>
                 <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-scale-budget">
+                    <span>Scale Search Budget w/ Player Count & Degree</span>
+                </label>
+                <label class="custom-checkbox-label">
                     <input type="checkbox" id="setting-autosave-library">
                     <span>Auto-Save Active Tournament to Library</span>
                 </label>
@@ -249,6 +253,7 @@ export function initSettingsModal(getTournament, onSaveCallback) {
         document.getElementById('setting-hide-byes').checked = currentTournament.settings.hideByes || false;
         document.getElementById('setting-show-seeds').checked = currentTournament.settings.showSeeds || false;
         document.getElementById('setting-preload-wasm').checked = currentTournament.settings.preloadWasm || false;
+        document.getElementById('setting-scale-budget').checked = currentTournament.settings.scaleBudgetWithDegree || false;
         const autoSaveLib = await getAppMeta('autoSaveToLibrary');
         document.getElementById('setting-autosave-library').checked = autoSaveLib === true;
         
@@ -349,6 +354,7 @@ export function initSettingsModal(getTournament, onSaveCallback) {
         currentTournament.settings.hideByes = document.getElementById('setting-hide-byes').checked;
         currentTournament.settings.showSeeds = document.getElementById('setting-show-seeds').checked;
         currentTournament.settings.preloadWasm = document.getElementById('setting-preload-wasm').checked;
+        currentTournament.settings.scaleBudgetWithDegree = document.getElementById('setting-scale-budget').checked;
         await setAppMeta('autoSaveToLibrary', document.getElementById('setting-autosave-library').checked);
         
         if (currentTournament.settings.preloadWasm) {
