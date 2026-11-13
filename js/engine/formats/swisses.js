@@ -243,7 +243,30 @@ export async function advanceStage(stageData, config, allPlayers) {
     const allowBacktrack = config.greedyMode !== "plain";
     const isTopK = config.blossomMode !== "standard";
     const cdclMode = config.cdclMode !== undefined ? config.cdclMode : 1;
-    const maxCand = config.maxCandidates || (algo === "blossom" ? 100 : 1000);
+    
+    // Base params
+    let maxCand = config.maxCandidates || (algo === "blossom" ? 100 : 1000);
+    let timeBudgetMs = config.timeoutMs || 5000;
+    let microBudget = config.microHuntBudget || 1000;
+
+    // budget scaling based on player count and residual degree
+    const shouldScale = config.scaleBudgetWithDegree === true;
+    if (shouldScale) {
+        const d = Math.max(1, N - (currentRoundNum + 1));
+        
+        const nScale = Math.max(1.0, N / 16);
+
+        // tighter opponent bottlenecks at low degree so Worker 1 gets a bit more room
+        const searchScale = Math.max(1.0, nScale * (d <= 4 ? 1.5 : 1.0));
+
+        // high degree have quadratic clause mass O(N * d^2), so rmore time budget for CDCL
+        const proverScale = Math.max(1.0, nScale * Math.min(3.0, d / 6));
+
+        // only scale upward
+        maxCand = Math.max(maxCand, Math.round(maxCand * searchScale));
+        timeBudgetMs = Math.max(timeBudgetMs, Math.round(timeBudgetMs * proverScale));
+        microBudget = Math.max(microBudget, Math.round(microBudget * Math.min(searchScale, 2.0)));
+    }
 
     const matchmakerParams = {
         n: N,
@@ -251,13 +274,13 @@ export async function advanceStage(stageData, config, allPlayers) {
         isTopK: isTopK,
         allowBacktrack: allowBacktrack,
         checkUpToDegree: (stageData.passiveCDCL || cdclMode === 0) ? 0 : (cdclMode === 2 ? Math.ceil(N / 2) : (config.midDegreeThreshold || 6)),
-        midDegreeThreshold: config.midDegreeThreshold || 6,
-        microHuntBudget: config.microHuntBudget || 8000,
+        midDegreeThreshold: 0, // trickmaxxing so Worker 1's CDCL is skipped to yield candidate 1 immediately
+        microHuntBudget: microBudget,
         maxCandidates: maxCand,
         currentRound: currentRoundNum + 1,
         ranks: ranks,
         playedMatrix: playedMatrix.map(row => row.map(w => w.toString())),
-        timeoutMs: config.timeoutMs || 5000
+        timeoutMs: timeBudgetMs
     };
 
     await checkStorageHealth();
