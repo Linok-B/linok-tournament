@@ -24,4 +24,4 @@ This project utilizes code from the following open-source projects:
 - **[Emscripten](https://github.com/emscripten-core/emsdk)**: An open-source compiler toolchain for compiling C/C++ to WebAssembly. Emscripten-generated code is included in the WebAssembly (.wasm) modules and their corresponding JavaScript (.js) glue files located in ./js/engine/matchmakers/modules/.
 - **[LEMON](https://lemon.cs.elte.hu/trac/lemon)**: A C++ template library for combinatorial optimization on graphs and networks. Its Blossom algorithm implementation for maximum matching is used internally in two of the five WebAssembly (.wasm) modules located in ./js/engine/matchmakers/modules/.
 
-Portions of this software are copyright by their respective authors and are used under their respective licenses. See the [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) file for the applicable copyright notices and license details.
+Portions of this software are copyritten by their respective authors and are used under their respective licenses. See the [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) file for the applicable copyright notices and license details.
