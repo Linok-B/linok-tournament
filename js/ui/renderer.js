@@ -184,6 +184,9 @@ export function renderBracket(tournament, containerId) {
     // Check current state to draw the correct button immediately
     const isStreamerMode = document.body.classList.contains('streamer-mode');
     const eyeIcon = isStreamerMode ? getIcon('openEye', 20) : getIcon('closedEye', 20);
+    const isHeaderHidden = document.body.classList.contains('bracket-header-hidden');
+    const headerToggleIcon = getIcon('triangleUp', 16, isHeaderHidden ? 'transform: rotate(180deg);' : '');
+    const headerToggleTitle = isHeaderHidden ? 'Show Stage Header' : 'Hide Stage Header';
     const eyeBg = 'var(--bg-panel)';
     const eyeColor = 'var(--text-main)';
     
@@ -204,7 +207,11 @@ export function renderBracket(tournament, containerId) {
         <!-- THE VIEWPORT -->
         <div id="bracket-viewport" style="width: 100%; height: 70vh; box-sizing: border-box; overflow: hidden; background: var(--bg-bracket); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
             
-            <button id="btn-streamer-mode" title="Toggle Streamer Mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
+            <button id="btn-toggle-bracket-header" title="${headerToggleTitle}" style="position: absolute; top: 10px; right: 54px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; padding: 0; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
+                ${headerToggleIcon}
+            </button>
+
+            <button id="btn-streamer-mode" title="Toggle Streamer Mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; padding: 0; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
                 ${eyeIcon}
             </button>
             
