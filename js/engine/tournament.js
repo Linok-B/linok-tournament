@@ -37,6 +37,9 @@ export class Tournament {
             ui: {
                 theme: "modern",
                 layout: "modern",
+                leaderboardSide: false,
+                leaderboardInverted: false,
+                customColors: {
                 customColors: {
                     bgDark: "#1e1e2e",
                     bgPanel: "#2a2a3e",
