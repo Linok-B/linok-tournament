@@ -342,5 +342,69 @@ export function initMatchController(getTournament, onUpdate) {
                 if (typeof onUpdate === 'function') onUpdate();
             }
         });
+
+        // Workspace Splitter Drag-to-Resize
+    const splitter = document.getElementById('workspace-splitter');
+    const panels = document.getElementById('workspace-panels');
+    if (splitter && panels && standingsContainer) {
+        let isDraggingSplit = false;
+        const MIN_LB_PX = 160;
+        const MIN_BRACKET_PX = 200;
+
+        const stopSplitDrag = async (save) => {
+            if (!isDraggingSplit) return;
+            isDraggingSplit = false;
+            document.body.classList.remove('is-resizing-split');
+
+            if (save) {
+                const currentTournament = getTournament();
+                if (currentTournament) {
+                    await saveTournamentLocally(currentTournament);
+                }
+            }
+        };
+
+        splitter.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            isDraggingSplit = true;
+            document.body.classList.add('is-resizing-split');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingSplit) return;
+
+            const currentTournament = getTournament();
+            if (!currentTournament?.settings?.ui?.leaderboardSide) return;
+
+            const panelsRect = panels.getBoundingClientRect();
+            const splitterW = splitter.offsetWidth || 14;
+            const isInverted = !!currentTournament.settings.ui.leaderboardInverted;
+
+            // Normal: Bracket Left, Leaderboard Right | Inverted: Leaderboard Left, Bracket Right
+            const rawWidth = isInverted
+                ? (e.clientX - panelsRect.left - splitterW / 2)
+                : (panelsRect.right - e.clientX - splitterW / 2);
+
+            const maxAllowed = Math.max(MIN_LB_PX, panelsRect.width - MIN_BRACKET_PX - splitterW);
+            const clampedWidth = Math.round(Math.max(MIN_LB_PX, Math.min(maxAllowed, rawWidth)));
+
+            standingsContainer.style.width = `${clampedWidth}px`;
+            standingsContainer.style.maxWidth = 'calc(100% - 220px)';
+            currentTournament.settings.ui.leaderboardSplitWidth = clampedWidth;
+        });
+
+        window.addEventListener('mouseup', () => stopSplitDrag(true));
+        window.addEventListener('blur', () => stopSplitDrag(true));
+
+        splitter.addEventListener('dblclick', async () => {
+            const currentTournament = getTournament();
+            if (currentTournament?.settings?.ui) {
+                delete currentTournament.settings.ui.leaderboardSplitWidth;
+                standingsContainer.style.width = '';
+                standingsContainer.style.maxWidth = '';
+                await saveTournamentLocally(currentTournament);
+            }
+        });
     }
 }
