@@ -82,6 +82,17 @@ function injectSettingsModalHTML() {
                 </div>
             </div>
 
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                <label class="custom-checkbox-label">
+                    <input type="checkbox" id="setting-lb-side">
+                    <span>Leaderboard Side-by-Side with Bracket</span>
+                </label>
+                <label class="custom-checkbox-label" id="setting-lb-invert-wrap" style="display: none; padding-left: 26px;">
+                    <input type="checkbox" id="setting-lb-invert">
+                    <span>Invert Order</span>
+                </label>
+            </div>
+
             <!-- Custom Color Pickers -->
             <div id="setting-custom-colors" style="display: none; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
                 <div>
@@ -190,8 +201,10 @@ export function applyUITheme(tournament) {
     const ui = tournament.settings.ui || { theme: "modern", layout: "modern" };
     
     // 1. Set Layout Class
-    document.body.classList.remove('layout-classic');
+    document.body.classList.remove('layout-classic', 'layout-lb-side', 'layout-lb-inverted');
     if (ui.layout === "classic") document.body.classList.add('layout-classic');
+    if (ui.leaderboardSide) document.body.classList.add('layout-lb-side');
+    if (ui.leaderboardInverted) document.body.classList.add('layout-lb-inverted');
 
     // 2. Set Theme Class
     document.body.classList.remove('theme-arcade', 'theme-custom');
@@ -260,8 +273,15 @@ export function initSettingsModal(getTournament, onSaveCallback) {
         settingsModal.style.display = 'flex';
 
         const ui = currentTournament.settings.ui || { theme: "modern", layout: "modern", customColors: {} };
-        document.getElementById('setting-ui-layout').value = ui.layout;
-        document.getElementById('setting-ui-theme').value = ui.theme;
+        document.getElementById('setting-ui-layout').value = ui.layout || "modern";
+        document.getElementById('setting-ui-theme').value = ui.theme || "modern";
+        
+        const lbSideChk = document.getElementById('setting-lb-side');
+        const lbInvertChk = document.getElementById('setting-lb-invert');
+        const lbInvertWrap = document.getElementById('setting-lb-invert-wrap');
+        lbSideChk.checked = !!ui.leaderboardSide;
+        lbInvertChk.checked = !!ui.leaderboardInverted;
+        lbInvertWrap.style.display = lbSideChk.checked ? 'inline-flex' : 'none';
         
         if (ui.customColors) {
             document.getElementById('color-bg-dark').value = ui.customColors.bgDark || "#1e1e2e";
@@ -291,6 +311,10 @@ export function initSettingsModal(getTournament, onSaveCallback) {
     // Theme selector change
     document.getElementById('setting-ui-theme').addEventListener('change', (e) => {
         document.getElementById('setting-custom-colors').style.display = (e.target.value === "custom") ? "grid" : "none";
+    });
+
+    document.getElementById('setting-lb-side').addEventListener('change', (e) => {
+        document.getElementById('setting-lb-invert-wrap').style.display = e.target.checked ? 'inline-flex' : 'none';
     });
 
     // SMART RESET COLORS BUTTON
@@ -356,6 +380,11 @@ export function initSettingsModal(getTournament, onSaveCallback) {
         currentTournament.settings.preloadWasm = document.getElementById('setting-preload-wasm').checked;
         currentTournament.settings.scaleBudgetWithDegree = document.getElementById('setting-scale-budget').checked;
         await setAppMeta('autoSaveToLibrary', document.getElementById('setting-autosave-library').checked);
+
+        currentTournament.settings.ui.layout = document.getElementById('setting-ui-layout').value;
+        currentTournament.settings.ui.theme = document.getElementById('setting-ui-theme').value;
+        currentTournament.settings.ui.leaderboardSide = document.getElementById('setting-lb-side').checked;
+        currentTournament.settings.ui.leaderboardInverted = document.getElementById('setting-lb-invert').checked;
         
         if (currentTournament.settings.preloadWasm) {
             import('../engine/matchmakers/matchmakerBridge.js').then(({ preloadAllEngines }) => {
