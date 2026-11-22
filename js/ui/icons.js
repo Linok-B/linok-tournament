@@ -70,6 +70,10 @@ const icons = {
             <rect x="15.5" y="8.5" width="6.5" height="7" rx="1.5" class="svg-rect" fill="none" stroke="currentColor" stroke-width="2"/>
         `
     },
+    triangleUp: {
+        viewBox: "0 0 24 24",
+        html: `<polygon fill="currentColor" points="12,6 20,18 4,18"/>`
+    },
     
 };
 
