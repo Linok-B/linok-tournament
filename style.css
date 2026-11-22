@@ -504,6 +504,7 @@ body.streamer-mode .stage-tabs-container {
 }
 
 body.streamer-mode .display-panel,
+body.streamer-mode .workspace-panels,
 body.streamer-mode #player-list-container { 
     padding: 0 !important; 
     overflow: hidden; 
@@ -516,6 +517,111 @@ body.streamer-mode #bracket-viewport {
     height: 100vh !important;
     border: none !important;
     border-radius: 0 !important;
+}
+
+/* WORKSPACE AND SIDE BY SIDE LEADERBOARD */
+.workspace-panels {
+    display: flex;
+    flex-direction: column;
+    padding: 0 20px;
+}
+
+#standings-container:empty {
+    display: none;
+}
+
+.standings-heading {
+    margin-top: 40px;
+    border-top: 1px solid var(--border-main);
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.standings-layout-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.btn-standings-layout {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid var(--border-main);
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 4px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.btn-standings-layout:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    opacity: 1;
+}
+
+.standings-table th {
+    white-space: nowrap;
+}
+
+body.layout-lb-side:not(.streamer-mode) .display-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+body.layout-lb-side:not(.streamer-mode) .workspace-panels {
+    flex-direction: row-reverse; /* Normal side mode is leaderboard left, bracket right */
+    gap: 20px;
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    align-items: stretch;
+}
+
+body.layout-lb-side.layout-lb-inverted:not(.streamer-mode) .workspace-panels {
+    flex-direction: row; /* Inverted side mode */
+}
+
+body.layout-lb-side:not(.streamer-mode) #player-list-container {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+body.layout-lb-side:not(.streamer-mode) #bracket-viewport {
+    height: auto !important;
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+body.layout-lb-side:not(.streamer-mode) #standings-container {
+    flex: 0 1 auto;
+    width: fit-content;
+    max-width: 48%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+body.layout-lb-side:not(.streamer-mode) .standings-heading {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
 }
 
 /* THEME: ARCADE */
