@@ -44,9 +44,10 @@ export function exportBracketSVG(tournamentName) {
 
     // 3. Draw Round Headers mathematically
     let headersHTML = "";
+    const startRoundNum = layoutState.startRound || 1;
     for (let r = 0; r < layoutState.rounds; r++) {
         const xPos = 50 + (r * (boxWidth + gapX)) + (boxWidth / 2);
-        headersHTML += `<text x="${xPos}" y="30" fill="var(--text-main)" font-size="18" font-weight="bold" text-anchor="middle">Round ${r + 1}</text>`;
+        headersHTML += `<text x="${xPos}" y="30" fill="var(--text-main)" font-size="18" font-weight="bold" text-anchor="middle">Round ${startRoundNum + r}</text>`;
     }
     
     // 4. Draw Match Boxes
