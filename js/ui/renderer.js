@@ -207,11 +207,11 @@ export function renderBracket(tournament, containerId) {
         <!-- THE VIEWPORT -->
         <div id="bracket-viewport" style="width: 100%; height: 70vh; box-sizing: border-box; overflow: hidden; background: var(--bg-bracket); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
             
-            <button id="btn-toggle-bracket-header" title="${headerToggleTitle}" style="position: absolute; top: 10px; right: 54px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; padding: 0; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
+            <button id="btn-toggle-bracket-header" class="bracket-viewport-btn" title="${headerToggleTitle}" style="position: absolute; top: 10px; right: 54px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; padding: 0; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center;">
                 ${headerToggleIcon}
             </button>
 
-            <button id="btn-streamer-mode" title="Toggle Streamer Mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; padding: 0; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
+            <button id="btn-streamer-mode" class="bracket-viewport-btn" title="Toggle Streamer Mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; padding: 0; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center;">
                 ${eyeIcon}
             </button>
             
@@ -676,9 +676,33 @@ let _panMousedown = null;
 let _panMousemove = null;
 let _panMouseup = null;
 let _panWheel = null;
+let _viewportHideTimer = null;
 
 export function applyPanAndZoom(viewport, board) {
     let panning = false, startX = 0, startY = 0;
+    const CONTROLS_HIDE_DELAY = 1200;
+
+    if (_viewportHideTimer) {
+        clearTimeout(_viewportHideTimer);
+        _viewportHideTimer = null;
+    }
+
+    function scheduleControlsHide() {
+        clearTimeout(_viewportHideTimer);
+        _viewportHideTimer = setTimeout(() => {
+            viewport.classList.remove('controls-visible');
+        }, CONTROLS_HIDE_DELAY);
+    }
+
+    function showViewportControls(e) {
+        viewport.classList.add('controls-visible');
+        const onControlBtn = e?.target && e.target.closest('.bracket-viewport-btn');
+        if (onControlBtn) {
+            clearTimeout(_viewportHideTimer);
+        } else {
+            scheduleControlsHide();
+        }
+    }
 
     function setTransform() {
         board.style.transform = `translate(${window.bracketCamera.x}px, ${window.bracketCamera.y}px) scale(${window.bracketCamera.scale})`;
@@ -738,6 +762,9 @@ export function applyPanAndZoom(viewport, board) {
     viewport.addEventListener('mousemove', _panMousemove);
     window.addEventListener('mouseup', _panMouseup);
     viewport.addEventListener('wheel', _panWheel, { passive: false });
+    viewport.addEventListener('mouseenter', showViewportControls);
+    viewport.addEventListener('mousemove', showViewportControls);
+    viewport.addEventListener('mouseleave', scheduleControlsHide);
 }
 
 // Standings dom diffing and row cache
