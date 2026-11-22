@@ -202,13 +202,13 @@ export function renderBracket(tournament, containerId) {
         </div>
         
         <!-- THE VIEWPORT -->
-        <div id="bracket-viewport" style="width: 100%; height: 70vh; overflow: hidden; background: var(--bg-bracket); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
+        <div id="bracket-viewport" style="width: 100%; height: 70vh; box-sizing: border-box; overflow: hidden; background: var(--bg-bracket); border: 2px solid var(--border-main); border-radius: 8px; position: relative; cursor: grab;">
             
             <button id="btn-streamer-mode" title="Toggle Streamer Mode" style="position: absolute; top: 10px; right: 10px; z-index: 100; background: ${eyeBg}; color: ${eyeColor}; border: 1px solid var(--border-main); width: 36px; height: 36px; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
                 ${eyeIcon}
             </button>
             
-            <!-- We will draw the boxes and lines inside this board -->
+            <!-- draw the boxes and lines inside this board -->
             <div id="bracket-board" style="position: absolute; top: 0; left: 0; transform-origin: 0 0; contain: layout style;">
                 <svg id="bracket-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
             </div>
@@ -752,7 +752,7 @@ function syncStandingsHeading(h2, isLocked, tournament) {
     const iconRotation = isSide ? "transform: rotate(90deg);" : "";
 
     h2.innerHTML = `
-        <span>Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}</span>
+        <span class="standings-title-text">Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}</span>
         <div class="standings-layout-controls">
             <button type="button" class="btn-standings-layout btn-toggle-lb-layout" title="${toggleTitle}">
                 ${getIcon('splitSquares', 16, iconRotation)}
@@ -846,6 +846,11 @@ export function renderStandings(tournament, containerId) {
         const tbody = document.createElement('tbody');
         table.appendChild(tbody);
         container.appendChild(table);
+
+        const tableWrap = document.createElement('div');
+        tableWrap.className = 'standings-table-wrap';
+        tableWrap.appendChild(table);
+        container.appendChild(tableWrap);
 
         standingsCache.containerId = containerId;
         standingsCache.stageId = stageId;
