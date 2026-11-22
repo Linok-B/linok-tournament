@@ -75,6 +75,11 @@ function updateUI() {
         standingsDiv.innerHTML = ''; // Kill the ghost Leaderboard
     }
 
+    const splitterEl = document.getElementById('workspace-splitter');
+    if (splitterEl) {
+        splitterEl.style.display = (currentTournament.status !== "setup") ? '' : 'none';
+    }
+
     for (const [id, value] of Object.entries(draftScores)) {
         const el = document.getElementById(id);
         if (el) el.value = value;
