@@ -65,6 +65,16 @@ export function initStaticModals(getTournamentName) {
         }
     });
 
+    // Bracket Header Toggl
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'btn-toggle-bracket-header') {
+            document.body.classList.toggle('bracket-header-hidden');
+            const isHidden = document.body.classList.contains('bracket-header-hidden');
+            e.target.innerHTML = getIcon('triangleUp', 16, isHidden ? 'transform: rotate(180deg);' : '');
+            e.target.title = isHidden ? 'Show Stage Header' : 'Hide Stage Header';
+        }
+    });
+    
     // PRIVACY MODAL
     const privacyModal = document.getElementById('privacy-modal');
     document.getElementById('btn-privacy').addEventListener('click', () => {
