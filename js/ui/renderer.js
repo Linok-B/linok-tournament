@@ -266,20 +266,35 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         visualRounds = stage.data.rounds;
     }
 
-    const totalRoundsToDraw = visualRounds.length;
+    const totalRoundsAvailable = visualRounds.length;
+    if (totalRoundsAvailable === 0) return;
 
-    // CALCULATE LOSERS BRACKET OFFSET
+    const fromStart = stage.config?.rangeFromStart !== false;
+    const toEnd = stage.config?.rangeToEnd !== false;
+    let startIdx = fromStart ? 0 : Math.max(0, (stage.config.rangeStart || 1) - 1);
+    let endIdx = toEnd ? (totalRoundsAvailable - 1) : Math.min(totalRoundsAvailable - 1, (stage.config.rangeEnd || totalRoundsAvailable) - 1);
+    if (endIdx < 0) endIdx = 0;
+    if (startIdx > endIdx) startIdx = endIdx;
+
+    const visibleRoundsCount = (endIdx - startIdx) + 1;
+
+    // CALCULATE LOSERS BRACKET OFFSET (Anchored to first visible round)
     let losersOffsetY = startY; 
-    if (stage.config.type === "double_elimination") {
-        const wR1Count = visualRounds[0].filter(m => m.bracket === "winners" || !m.bracket).length;
-        losersOffsetY = startY + (wR1Count * (boxHeight + gapY)) + 150; 
+    if (stage.config.type === "double_elimination" && visualRounds[startIdx]) {
+        const startWinnersCount = visualRounds[startIdx].filter(m => m.bracket === "winners" || !m.bracket).length;
+        if (startWinnersCount > 0) {
+            losersOffsetY = startY + (startWinnersCount * (boxHeight + gapY)) + 150; 
+        } else {
+            losersOffsetY = startY;
+        }
     }
 
     // 2. PASS ONE: CALCULATE COORDINATES & DRAW BOXES
-    for (let roundIndex = 0; roundIndex < totalRoundsToDraw; roundIndex++) {
+    for (let roundIndex = startIdx; roundIndex <= endIdx; roundIndex++) {
         if (stage.data.isComplete && !visualRounds[roundIndex]) break; 
 
-        const currentX = startX + (roundIndex * (boxWidth + gapX));
+        const visCol = roundIndex - startIdx;
+        const currentX = startX + (visCol * (boxWidth + gapX));
         const header = document.createElement('h3');
         header.innerText = `Round ${roundIndex + 1}`;
         header.style.cssText = `position:absolute; left:${currentX}px; top:10px; width:${boxWidth}px; text-align:center; margin:0; color: var(--text-main);`;
@@ -289,7 +304,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         // Ensure real rounds don't accidentally contain ghosts
         if (roundIndex < stage.data.rounds.length) matchesToDraw = matchesToDraw.filter(m => !m.isGhost);
 
-        // This guarantees that 'hideByes: true' never leaves an ugly gap at the top of the screen
+        // This guarantees that hideByes: true never leaves a gap at the top
         if (stage.config.type !== "single_elimination" && stage.config.type !== "double_elimination") {
             matchesToDraw.sort((a, b) => {
                 if (a.isBye && !b.isBye) return 1;  // Push 'a' down
@@ -305,7 +320,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         // WINNERS
         wMatches.forEach((match, matchIndex) => {
             let centerY = 0;
-            if ((stage.config.type === "single_elimination" || stage.config.type === "double_elimination") && roundIndex > 0) {
+            if ((stage.config.type === "single_elimination" || stage.config.type === "double_elimination") && roundIndex > startIdx) {
                 if (match.isThirdPlaceMatch) {
                     const actualRound = visualRounds[roundIndex];
                     let finalsY = startY;
@@ -323,8 +338,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                     centerY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : (p1Y !== undefined ? p1Y : startY);
                 }
             } else {
-                const multiplier = (stage.config.type === "single_elimination" || stage.config.type === "double_elimination") ? Math.pow(2, roundIndex) : 1;
-                centerY = startY + (matchIndex * (boxHeight + gapY) * multiplier) + (boxHeight / 2);
+                centerY = startY + (matchIndex * (boxHeight + gapY)) + (boxHeight / 2);
             }
             saveBox(match, currentX, centerY);
         });
@@ -332,20 +346,24 @@ function drawBracketMath(stage, isActiveStage, tournament) {
         // LOSERS
         lMatches.forEach((match, matchIndex) => {
             let centerY = 0;
-            const prevRound = visualRounds[roundIndex - 1] || [];
-            const prevLosers = prevRound.filter(m => m.bracket === "losers");
-
-            if (prevLosers.length === 0) {
-                centerY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2) + (boxHeight / 2);
-            } else if (prevLosers.length === lMatches.length) {
-                const parent = prevLosers[matchIndex];
-                centerY = parent ? matchDataMap[parent.id]?.centerY : losersOffsetY + (matchIndex * (boxHeight + gapY) * 2) + (boxHeight / 2);
+            if (roundIndex === startIdx) {
+                centerY = losersOffsetY + (matchIndex * (boxHeight + gapY)) + (boxHeight / 2);
             } else {
-                const parent1 = prevLosers[matchIndex * 2];
-                const parent2 = prevLosers[(matchIndex * 2) + 1];
-                const p1Y = parent1 ? matchDataMap[parent1.id]?.centerY : undefined;
-                const p2Y = parent2 ? matchDataMap[parent2.id]?.centerY : undefined;
-                centerY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : (p1Y !== undefined ? p1Y : losersOffsetY);
+                const prevRound = visualRounds[roundIndex - 1] || [];
+                const prevLosers = prevRound.filter(m => m.bracket === "losers");
+
+                if (prevLosers.length === 0) {
+                    centerY = losersOffsetY + (matchIndex * (boxHeight + gapY) * 2) + (boxHeight / 2);
+                } else if (prevLosers.length === lMatches.length) {
+                    const parent = prevLosers[matchIndex];
+                    centerY = (parent && matchDataMap[parent.id]) ? matchDataMap[parent.id].centerY : losersOffsetY + (matchIndex * (boxHeight + gapY)) + (boxHeight / 2);
+                } else {
+                    const parent1 = prevLosers[matchIndex * 2];
+                    const parent2 = prevLosers[(matchIndex * 2) + 1];
+                    const p1Y = (parent1 && matchDataMap[parent1.id]) ? matchDataMap[parent1.id].centerY : undefined;
+                    const p2Y = (parent2 && matchDataMap[parent2.id]) ? matchDataMap[parent2.id].centerY : undefined;
+                    centerY = p1Y !== undefined && p2Y !== undefined ? (p1Y + p2Y) / 2 : (p1Y !== undefined ? p1Y : losersOffsetY);
+                }
             }
             saveBox(match, currentX, centerY);
         });
@@ -356,13 +374,16 @@ function drawBracketMath(stage, isActiveStage, tournament) {
             let centerY = 0;
             if (match.bracketReset) {
                 const gf1 = visualRounds[roundIndex - 1]?.find(m => m.bracket === "grand_finals");
-                centerY = gf1 ? matchDataMap[gf1.id]?.centerY : startY;
+                centerY = (gf1 && matchDataMap[gf1.id]) ? matchDataMap[gf1.id].centerY : startY + (boxHeight / 2);
             } else {
                 const wFinals = visualRounds.flat().reverse().find(m => m.bracket === "winners");
                 const lFinals = visualRounds.flat().reverse().find(m => m.bracket === "losers");
-                const wY = wFinals ? matchDataMap[wFinals.id]?.centerY : startY;
-                const lY = lFinals ? matchDataMap[lFinals.id]?.centerY : losersOffsetY;
-                centerY = (wY + lY) / 2;
+                const wY = (wFinals && matchDataMap[wFinals.id]) ? matchDataMap[wFinals.id].centerY : undefined;
+                const lY = (lFinals && matchDataMap[lFinals.id]) ? matchDataMap[lFinals.id].centerY : undefined;
+                if (wY !== undefined && lY !== undefined) centerY = (wY + lY) / 2;
+                else if (lY !== undefined) centerY = lY;
+                else if (wY !== undefined) centerY = wY;
+                else centerY = startY + (boxHeight / 2);
             }
             saveBox(match, currentX, centerY);
         });
@@ -394,8 +415,8 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 const p1Parent = findVisualParent(childData.match, childData.match.player1.id);
                 if (p1Parent) {
                     drawRoute(p1Parent, childData);
-                } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
-                    // Failsafe: If no parent found but it's a drop round (like L-R1 ghosts), draw pink drop
+                } else if (childData.match.bracket === "losers" && isDropRound(childData.match) && childData.match.round > startIdx + 1) {
+                    // Failsafe if no parent found but it's a drop round (like L-R1 ghosts): draw drop
                     drawDropLine(childData);
                 }
             }
@@ -405,7 +426,7 @@ function drawBracketMath(stage, isActiveStage, tournament) {
                 const p2Parent = findVisualParent(childData.match, childData.match.player2.id);
                 if (p2Parent) {
                     drawRoute(p2Parent, childData);
-                } else if (childData.match.bracket === "losers" && isDropRound(childData.match)) {
+                } else if (childData.match.bracket === "losers" && isDropRound(childData.match) && childData.match.round > startIdx + 1) {
                     drawDropLine(childData);
                 }
             }
@@ -498,7 +519,8 @@ function drawBracketMath(stage, isActiveStage, tournament) {
     layoutState.paths = svgPaths.join('');
     layoutState.width = maxX + 200;
     layoutState.height = maxY + 200;
-    layoutState.rounds = totalRoundsToDraw;
+    layoutState.rounds = visibleRoundsCount;
+    layoutState.startRound = startIdx + 1;
     layoutState.stage = stage;
     layoutState.isActive = isActiveStage;
 
@@ -724,6 +746,22 @@ const standingsCache = {
     rows: new Map() // playerId -> {tr, cells: string[], rank: number}
 };
 
+function syncStandingsHeading(h2, isLocked, tournament) {
+    const isSide = !!tournament.settings?.ui?.leaderboardSide;
+    const toggleTitle = isSide ? "Switch to Stacked Layout" : "Switch to Side-by-Side Layout";
+    const iconRotation = isSide ? "transform: rotate(90deg);" : "";
+
+    h2.innerHTML = `
+        <span>Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}</span>
+        <div class="standings-layout-controls">
+            <button type="button" class="btn-standings-layout btn-toggle-lb-layout" title="${toggleTitle}">
+                ${getIcon('splitSquares', 16, iconRotation)}
+            </button>
+            ${isSide ? `<button type="button" class="btn-standings-layout btn-swap-lb-side" title="Swap Leaderboard & Bracket Sides">&#8651;</button>` : ''}
+        </div>
+    `;
+}
+
 export function renderStandings(tournament, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -788,11 +826,11 @@ export function renderStandings(tournament, containerId) {
         standingsCache.rows.clear();
 
         const h2 = document.createElement('h2');
-        h2.style.cssText = "margin-top: 40px; border-top: 1px solid var(--border-main); padding-top: 20px;";
-        h2.innerHTML = `Current Standings ${isLocked ? '<span style="color:var(--warning); font-size:12px;">(Locked)</span>' : ''}`;
+        h2.className = 'standings-heading';
         container.appendChild(h2);
 
         const table = document.createElement('table');
+        table.className = 'standings-table';
         table.style.cssText = "width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-panel);";
 
         const thead = document.createElement('thead');
@@ -818,6 +856,8 @@ export function renderStandings(tournament, containerId) {
         standingsCache.tbody = tbody;
         standingsCache.h2 = h2;
     }
+
+    syncStandingsHeading(standingsCache.h2, isLocked, tournament);
 
     const tbody = standingsCache.tbody;
     const activePlayerIds = new Set();
