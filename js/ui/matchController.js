@@ -342,6 +342,7 @@ export function initMatchController(getTournament, onUpdate) {
                 if (typeof onUpdate === 'function') onUpdate();
             }
         });
+    }
 
         // Workspace Splitter Drag-to-Resize
     const splitter = document.getElementById('workspace-splitter');
