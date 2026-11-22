@@ -111,7 +111,7 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
 
         <!-- Row 1.5: Bracket Display Range -->
         <div style="border-top: 1px solid var(--border-main); padding-top: 12px;">
-            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 6px;">Bracket Display Range</label>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 6px;" title="Choose the round range to display in the bracket">Bracket Display Range</label>
             <div style="display: flex; gap: 10px; width: 100%; align-items: flex-start;">
                 <div style="flex: 1; min-width: 0;">
                     <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 2px;">From</label>
