@@ -87,7 +87,7 @@ function injectSettingsModalHTML() {
                     <input type="checkbox" id="setting-lb-side">
                     <span>Leaderboard Side-by-Side with Bracket</span>
                 </label>
-                <label class="custom-checkbox-label" id="setting-lb-invert-wrap" style="display: none; padding-left: 26px;">
+                <label class="custom-checkbox-label" id="setting-lb-invert-wrap" style="display: none; padding-left: 26px;" title="Place leaderboard on the left instead of the right">
                     <input type="checkbox" id="setting-lb-invert">
                     <span>Invert Order</span>
                 </label>
@@ -209,6 +209,18 @@ export function applyUITheme(tournament) {
     // 2. Set Theme Class
     document.body.classList.remove('theme-arcade', 'theme-custom');
     if (ui.theme === "arcade") document.body.classList.add('theme-arcade');
+
+    // 
+    const standingsEl = document.getElementById('standings-container');
+    if (standingsEl) {
+        if (ui.leaderboardSide && ui.leaderboardSplitWidth > 0) {
+            standingsEl.style.width = `${ui.leaderboardSplitWidth}px`;
+            standingsEl.style.maxWidth = 'calc(100% - 220px)';
+        } else {
+            standingsEl.style.width = '';
+            standingsEl.style.maxWidth = '';
+        }
+    }
     
     // 3. Handle Custom Colors via CSS Variables
     const root = document.documentElement;
