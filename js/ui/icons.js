@@ -66,8 +66,8 @@ const icons = {
     splitSquares: {
         viewBox: "0 0 24 24",
         html: `
-            <rect x="2.5" y="7.5" width="8" height="9" rx="1.5" class="svg-rect" fill="none" stroke="currentColor" stroke-width="2"/>
-            <rect x="13.5" y="7.5" width="8" height="9" rx="1.5" class="svg-rect" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="2" y="8.5" width="6.5" height="7" rx="1.5" class="svg-rect" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="15.5" y="8.5" width="6.5" height="7" rx="1.5" class="svg-rect" fill="none" stroke="currentColor" stroke-width="2"/>
         `
     },
     
