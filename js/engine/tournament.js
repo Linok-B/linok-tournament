@@ -40,7 +40,6 @@ export class Tournament {
                 leaderboardSide: false,
                 leaderboardInverted: false,
                 customColors: {
-                customColors: {
                     bgDark: "#1e1e2e",
                     bgPanel: "#2a2a3e",
                     bgBracket: "#11111b",
