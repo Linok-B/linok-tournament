@@ -304,9 +304,29 @@ export function initMatchController(getTournament, onUpdate) {
         await saveTournamentLocally(currentTournament);
     });
 
-    // Standings leaderboard listener for rename player clicks
+    // Standings leaderboard listener for rename player and layout toggle clicks
     if (standingsContainer) {
         standingsContainer.addEventListener('click', async (e) => {
+            const toggleBtn = e.target && e.target.closest('.btn-toggle-lb-layout');
+            if (toggleBtn) {
+                const currentTournament = getTournament();
+                if (!currentTournament.settings.ui) currentTournament.settings.ui = {};
+                currentTournament.settings.ui.leaderboardSide = !currentTournament.settings.ui.leaderboardSide;
+                await saveTournamentLocally(currentTournament);
+                if (typeof onUpdate === 'function') onUpdate();
+                return;
+            }
+
+            const swapBtn = e.target && e.target.closest('.btn-swap-lb-side');
+            if (swapBtn) {
+                const currentTournament = getTournament();
+                if (!currentTournament.settings.ui) currentTournament.settings.ui = {};
+                currentTournament.settings.ui.leaderboardInverted = !currentTournament.settings.ui.leaderboardInverted;
+                await saveTournamentLocally(currentTournament);
+                if (typeof onUpdate === 'function') onUpdate();
+                return;
+            }
+
             const btn = e.target && e.target.closest('.btn-rename-player');
             if (!btn) return;
 
