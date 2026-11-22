@@ -680,11 +680,6 @@ body.layout-lb-side:not(.streamer-mode) .standings-heading {
     border-top: none;
     padding-top: 0;
     margin-bottom: 10px;
-    justify-content: flex-start;
-}
-
-body.layout-lb-side:not(.streamer-mode) .standings-layout-controls {
-    order: -1;
 }
 
 body.is-resizing-split,
