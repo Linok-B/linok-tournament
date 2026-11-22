@@ -622,8 +622,17 @@ body.layout-lb-side:not(.streamer-mode) .stage-tabs-container {
 body.layout-lb-side:not(.streamer-mode) #bracket-viewport {
     height: auto !important;
     flex: 1 1 0;
-    min-height: 0;
+    min-height: 220px;
     box-sizing: border-box;
+}
+
+body.bracket-header-hidden .stage-tabs-container,
+body.bracket-header-hidden .stage-header-info {
+    display: none !important;
+}
+
+body.streamer-mode #btn-toggle-bracket-header {
+    display: none !important;
 }
 
 body.layout-lb-side:not(.streamer-mode) .workspace-splitter {
