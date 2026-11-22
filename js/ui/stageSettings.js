@@ -3,6 +3,41 @@ import { openSwissConfigModal } from './swissConfigModal.js';
 import { openStandingsColumnsModal } from './standingsColumns.js';
 import { saveTournamentLocally } from '../store/localData.js';
 
+function getStageTotalRounds(config, stage, tournament, maxRoundsOverride, cutOverride) {
+    if (stage && stage.data.isComplete) {
+        return Math.max(1, stage.data.rounds.length);
+    }
+
+    let n = tournament.players.length;
+    const effectiveCut = cutOverride !== undefined ? cutOverride : config.cutToTop;
+    if (!stage && effectiveCut > 0 && n > 0) {
+        n = Math.min(n, effectiveCut);
+    }
+    n = Math.max(2, n);
+
+    const type = config.type;
+    let naturalTotal = 1;
+    if (type === "single_elimination") {
+        const bSize = (stage && stage.data.bracketSize) ? stage.data.bracketSize : Math.pow(2, Math.ceil(Math.log2(n)));
+        naturalTotal = Math.max(1, Math.log2(bSize));
+    } else if (type === "double_elimination") {
+        const bSize = (stage && stage.data.bracketSize) ? stage.data.bracketSize : Math.pow(2, Math.ceil(Math.log2(n)));
+        naturalTotal = Math.max(3, (2 * Math.log2(bSize)) + 1);
+    } else if (type === "round_robin") {
+        naturalTotal = (n % 2 === 0) ? (n - 1) : n;
+    } else {
+        naturalTotal = Math.max(1, Math.ceil(Math.log2(n)));
+    }
+
+    if (maxRoundsOverride && maxRoundsOverride > 0) {
+        if (type === "single_elimination" || type === "double_elimination") {
+            return Math.max(1, Math.min(naturalTotal, maxRoundsOverride));
+        }
+        return maxRoundsOverride;
+    }
+    return naturalTotal;
+}
+
 function injectStageSettingsModalHTML() {
     if (document.getElementById('stage-settings-modal')) return;
 
@@ -51,6 +86,13 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
 
     document.getElementById('stage-settings-title').innerHTML = `${getIcon('gear', 24)} Stage ${stageIndex + 1} Settings`;
 
+    let fromStart = config.rangeFromStart !== false;
+    let toEnd = config.rangeToEnd !== false;
+    let toDirty = !toEnd && (config.rangeEndCustom === true || config.rangeEnd !== undefined);
+    let currentTotalRounds = getStageTotalRounds(config, stage, tournament, config.maxRounds, config.cutToTop);
+    let initStart = fromStart ? 1 : Math.max(1, Math.min(currentTotalRounds, config.rangeStart || 1));
+    let initEnd = toEnd ? currentTotalRounds : Math.max(initStart, Math.min(currentTotalRounds, config.rangeEnd || currentTotalRounds));
+    
     /// 1. Generate Fields
     let html = `
         <!-- Row 1: Rounds and Top Cut (Side-by-Side) -->
@@ -64,6 +106,29 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
             <div style="flex: 1; min-width: 0;">
                 <label style="font-size:11px; color:var(--text-muted); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Top Cut ${isStarted ? '(Locked)' : '(Opt)'}</label>
                 <input type="number" id="edit-stage-cut" ${isStarted ? 'disabled' : ''} value="${config.cutToTop || ''}" placeholder="All" style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); ${isStarted ? 'opacity:0.5; cursor:not-allowed;' : ''}">
+            </div>
+        </div>
+
+        <!-- Row 1.5: Bracket Display Range -->
+        <div style="border-top: 1px solid var(--border-main); padding-top: 12px;">
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 6px;">Bracket Display Range</label>
+            <div style="display: flex; gap: 10px; width: 100%; align-items: flex-start;">
+                <div style="flex: 1; min-width: 0;">
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 2px;">From</label>
+                    <input type="number" id="edit-range-start" min="1" max="${currentTotalRounds}" value="${initStart}" ${fromStart ? 'disabled' : ''} style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); ${fromStart ? 'opacity:0.5; cursor:not-allowed;' : ''}">
+                    <label class="custom-checkbox-label" style="margin-top: 6px; font-size: 11px;">
+                        <input type="checkbox" id="edit-range-from-start" ${fromStart ? 'checked' : ''}>
+                        <span>From Start</span>
+                    </label>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 2px;">To</label>
+                    <input type="number" id="edit-range-end" min="1" max="${currentTotalRounds}" value="${initEnd}" ${toEnd ? 'disabled' : ''} style="width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-main); ${toEnd ? 'opacity:0.5; cursor:not-allowed;' : ''}">
+                    <label class="custom-checkbox-label" style="margin-top: 6px; font-size: 11px;">
+                        <input type="checkbox" id="edit-range-to-end" ${toEnd ? 'checked' : ''}>
+                        <span>To End</span>
+                    </label>
+                </div>
             </div>
         </div>
         
@@ -135,6 +200,100 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
         roundsInput.onkeydown = (e) => { if (e.key === "Enter") clamp(); };
     }
 
+    const cutInput = document.getElementById('edit-stage-cut');
+    const rangeStartInput = document.getElementById('edit-range-start');
+    const rangeEndInput = document.getElementById('edit-range-end');
+    const chkFromStart = document.getElementById('edit-range-from-start');
+    const chkToEnd = document.getElementById('edit-range-to-end');
+
+    function recomputeTotalRounds() {
+        const mr = roundsInput ? parseInt(roundsInput.value) : NaN;
+        const cutVal = (cutInput && !isStarted) ? parseInt(cutInput.value) : NaN;
+        currentTotalRounds = getStageTotalRounds(
+            config,
+            stage,
+            tournament,
+            (!isNaN(mr) && mr > 0) ? mr : undefined,
+            (!isNaN(cutVal) && cutVal > 0) ? cutVal : undefined
+        );
+        rangeStartInput.max = currentTotalRounds;
+        rangeEndInput.max = currentTotalRounds;
+
+        if (chkToEnd.checked || !toDirty) {
+            rangeEndInput.value = currentTotalRounds;
+        } else {
+            let curEnd = parseInt(rangeEndInput.value);
+            if (isNaN(curEnd)) curEnd = currentTotalRounds;
+            rangeEndInput.value = Math.max(1, Math.min(currentTotalRounds, curEnd));
+        }
+
+        if (chkFromStart.checked) {
+            rangeStartInput.value = 1;
+        } else {
+            const maxAllowedStart = parseInt(rangeEndInput.value) || currentTotalRounds;
+            let curStart = parseInt(rangeStartInput.value);
+            if (isNaN(curStart)) curStart = 1;
+            rangeStartInput.value = Math.max(1, Math.min(maxAllowedStart, curStart));
+        }
+    }
+
+    function clampFrom() {
+        const maxTo = chkToEnd.checked ? currentTotalRounds : (parseInt(rangeEndInput.value) || currentTotalRounds);
+        let val = parseInt(rangeStartInput.value);
+        if (isNaN(val)) val = 1;
+        rangeStartInput.value = Math.max(1, Math.min(maxTo, val));
+    }
+
+    function clampTo() {
+        const minFrom = chkFromStart.checked ? 1 : (parseInt(rangeStartInput.value) || 1);
+        let val = parseInt(rangeEndInput.value);
+        if (isNaN(val)) val = currentTotalRounds;
+        rangeEndInput.value = Math.max(minFrom, Math.min(currentTotalRounds, val));
+    }
+
+    if (roundsInput) {
+        const prevBlur = roundsInput.onblur;
+        const prevKey = roundsInput.onkeydown;
+        roundsInput.oninput = recomputeTotalRounds;
+        roundsInput.onblur = () => { if (prevBlur) prevBlur(); recomputeTotalRounds(); };
+        roundsInput.onkeydown = (e) => { if (prevKey) prevKey(e); if (e.key === "Enter") recomputeTotalRounds(); };
+    }
+    if (cutInput && !isStarted) {
+        cutInput.oninput = recomputeTotalRounds;
+    }
+
+    chkFromStart.onchange = () => {
+        const locked = chkFromStart.checked;
+        rangeStartInput.disabled = locked;
+        rangeStartInput.style.opacity = locked ? '0.5' : '1';
+        rangeStartInput.style.cursor = locked ? 'not-allowed' : '';
+        if (locked) rangeStartInput.value = 1;
+    };
+
+    chkToEnd.onchange = () => {
+        const locked = chkToEnd.checked;
+        rangeEndInput.disabled = locked;
+        rangeEndInput.style.opacity = locked ? '0.5' : '1';
+        rangeEndInput.style.cursor = locked ? 'not-allowed' : '';
+        if (locked) {
+            toDirty = false;
+            rangeEndInput.value = currentTotalRounds;
+        }
+    };
+
+    rangeStartInput.onblur = clampFrom;
+    rangeStartInput.onkeydown = (e) => { if (e.key === "Enter") clampFrom(); };
+
+    rangeEndInput.oninput = () => { toDirty = true; };
+    rangeEndInput.onchange = () => { toDirty = true; clampTo(); };
+    rangeEndInput.onblur = clampTo;
+    rangeEndInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            toDirty = true;
+            clampTo();
+        }
+    };
+
     // 3. Open Tiebreaker Modal Handler
     const tbBtn = document.getElementById('btn-stage-tb-edit');
     if (tbBtn) {
@@ -195,6 +354,26 @@ export function openStageSettingsModal(stageIndex, tournament, onComplete) {
 
         // commit tmp tiebreaker
         config.tiebreakers = tempTiebreakers; 
+
+        // 
+        recomputeTotalRounds();
+        config.rangeFromStart = chkFromStart.checked;
+        config.rangeToEnd = chkToEnd.checked;
+        config.rangeEndCustom = !chkToEnd.checked && toDirty;
+
+        if (!config.rangeFromStart) {
+            clampFrom();
+            config.rangeStart = parseInt(rangeStartInput.value) || 1;
+        } else {
+            config.rangeStart = 1;
+        }
+
+        if (!config.rangeToEnd) {
+            clampTo();
+            config.rangeEnd = parseInt(rangeEndInput.value) || currentTotalRounds;
+        } else {
+            delete config.rangeEnd;
+        }
 
         // hopemaxxing UI close and redraw
         close();
