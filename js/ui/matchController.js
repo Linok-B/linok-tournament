@@ -344,17 +344,19 @@ export function initMatchController(getTournament, onUpdate) {
         });
     }
 
-        // Workspace Splitter Drag-to-Resize
+    // Workspace Splitter Drag-to-Resize
     const splitter = document.getElementById('workspace-splitter');
     const panels = document.getElementById('workspace-panels');
     if (splitter && panels && standingsContainer) {
         let isDraggingSplit = false;
+        let grabOffset = 0;
         const MIN_LB_PX = 160;
         const MIN_BRACKET_PX = 200;
 
         const stopSplitDrag = async (save) => {
             if (!isDraggingSplit) return;
             isDraggingSplit = false;
+            grabOffset = 0;
             document.body.classList.remove('is-resizing-split');
 
             if (save) {
@@ -368,6 +370,8 @@ export function initMatchController(getTournament, onUpdate) {
         splitter.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
             e.preventDefault();
+            const splitterRect = splitter.getBoundingClientRect();
+            grabOffset = e.clientX - (splitterRect.left + splitterRect.width / 2);
             isDraggingSplit = true;
             document.body.classList.add('is-resizing-split');
         });
@@ -379,15 +383,21 @@ export function initMatchController(getTournament, onUpdate) {
             if (!currentTournament?.settings?.ui?.leaderboardSide) return;
 
             const panelsRect = panels.getBoundingClientRect();
+            const pStyle = getComputedStyle(panels);
+            const contentLeft = panelsRect.left + (parseFloat(pStyle.paddingLeft) || 0);
+            const contentRight = panelsRect.right - (parseFloat(pStyle.paddingRight) || 0);
+            const contentWidth = contentRight - contentLeft;
+
             const splitterW = splitter.offsetWidth || 14;
+            const targetCenter = e.clientX - grabOffset;
             const isInverted = !!currentTournament.settings.ui.leaderboardInverted;
 
             // Normal: Bracket Left, Leaderboard Right | Inverted: Leaderboard Left, Bracket Right
             const rawWidth = isInverted
-                ? (e.clientX - panelsRect.left - splitterW / 2)
-                : (panelsRect.right - e.clientX - splitterW / 2);
+                ? (targetCenter - contentLeft - splitterW / 2)
+                : (contentRight - targetCenter - splitterW / 2);
 
-            const maxAllowed = Math.max(MIN_LB_PX, panelsRect.width - MIN_BRACKET_PX - splitterW);
+            const maxAllowed = Math.max(MIN_LB_PX, contentWidth - MIN_BRACKET_PX - splitterW);
             const clampedWidth = Math.round(Math.max(MIN_LB_PX, Math.min(maxAllowed, rawWidth)));
 
             standingsContainer.style.width = `${clampedWidth}px`;
